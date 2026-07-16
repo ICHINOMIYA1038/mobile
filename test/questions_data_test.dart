@@ -182,6 +182,39 @@ void main() {
     }
   });
 
+  test('期限切れの時限措置を現行制度として出題していない', () {
+    // 税の特例には期限がある。問題データは同梱なので、期限が来ても自動では直らない。
+    // 解説に書いた期限を過ぎたら、このテストが落ちて差し替えを促す。
+    // 新しい期限付き特例を追加したらここに登録すること。詳細は docs/audit-2026-07.md。
+    final deadlines = {
+      // 住宅取得等資金贈与の非課税（措法70条の2）
+      'zei-030': DateTime(2026, 12, 31),
+      // 不動産取得税3%（地方税法附則11条の2第1項）
+      'zei-001': DateTime(2027, 3, 31),
+      // 宅地評価土地の課税標準1/2（同附則11条の5第1項）
+      'zei-011': DateTime(2027, 3, 31),
+      // 住宅用家屋の登録免許税の軽減（措法73条）
+      'zei-018': DateTime(2027, 3, 31),
+    };
+
+    final now = DateTime.now();
+    for (final entry in deadlines.entries) {
+      final question = questions.firstWhere((q) => q.id == entry.key);
+      expect(
+        now.isAfter(entry.value),
+        isFalse,
+        reason: '${entry.key} が扱う特例は ${entry.value.year}年${entry.value.month}月${entry.value.day}日 に'
+            '期限を迎えました。延長されたなら解説の年を更新し、廃止されたなら問題を差し替えてください。',
+      );
+      // 期限を解説に書いておくと、学習者もいつまでの制度か分かる。
+      expect(
+        question.explanation.contains('令和'),
+        isTrue,
+        reason: '${entry.key} は期限付きの特例なので、解説に適用期限を明記してください',
+      );
+    }
+  });
+
   test('審査に出せる問題数がある', () {
     // App Store の Guideline 4.2（機能が最小限）対策。問題数はそのまま実用性の裏付けになる。
     expect(questions.length, greaterThanOrEqualTo(300));
