@@ -20,13 +20,25 @@ flutter test --run-skipped --tags release     # 提出前チェック（未対�
 | アプリアイコン | 済 | `icon/icon.svg` が元データ。変更後は `dart run flutter_launcher_icons` |
 | プライバシーマニフェスト | 済 | `ios/Runner/PrivacyInfo.xcprivacy`（Xcode 登録済み） |
 | 輸出コンプライアンス申告 | 済 | `ITSAppUsesNonExemptEncryption = false` |
-| **AdMob の実アプリID** | **未** | `ios/Runner/Info.plist` の `GADApplicationIdentifier` |
-| **AdMob の実バナーID** | **未** | `lib/data/ad_service.dart` の `_prodBannerIos` |
-| **プライバシーポリシーの公開URL** | **未** | `docs/privacy-policy.md` を公開 → `lib/ui/screens/stats_screen.dart` の `privacyPolicyUrl` |
-| **問い合わせ先** | **未** | ポリシー本文と `supportUrl` |
+| AdMob の実アプリID | 済 | iOS/Android とも設定済み（下記アカウント欄） |
+| AdMob の実バナーID | 済 | 結果画面バナー（iOS/Android） |
+| プライバシーポリシーの公開URL | 済 | `privacyPolicyUrl` → nullstead.com |
+| 問い合わせ先 | 済 | support@gikyokutosyokan.com |
 | **IAP 商品の登録** | **未** | App Store Connect で `jp.pairof.takken.remove_ads` を非消費型として登録 |
+| **nullstead.com にポリシーHTMLを設置** | **未** | `docs/privacy-policy.html` を `https://nullstead.com/takken/privacy` に配置 |
+| **Xcode で Team を設定** | **未** | `ios/Runner.xcworkspace` → Signing & Capabilities（証明書が自動生成される） |
 
 ## 2. App Store Connect の入力内容
+
+### AdMob アカウント（作成済み）
+
+| | iOS | Android |
+| --- | --- | --- |
+| アプリID | `ca-app-pub-8691137965825158~1913298149` | `ca-app-pub-8691137965825158~6905082015` |
+| バナー広告ユニットID（結果画面バナー） | `ca-app-pub-8691137965825158/6343377604` | `ca-app-pub-8691137965825158/2819065567` |
+
+パートナーでの入札（サードパーティのメディエーション/RTB）は使っていない。
+AdMob 単独運用で、非パーソナライズ広告のみ配信する方針と揃えている。
 
 ### アプリ情報
 

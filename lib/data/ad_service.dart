@@ -25,8 +25,9 @@ class AdService {
   static const _testBannerAndroid = 'ca-app-pub-3940256099942544/6300978111';
 
   /// 本番のバナーID。空文字の間はテストIDが使われる。
-  static const _prodBannerIos = '';
-  static const _prodBannerAndroid = '';
+  /// AdMob（アプリ「シンプルに学ぶ宅建」/広告ユニット「結果画面バナー」）で発行済み。
+  static const _prodBannerIos = 'ca-app-pub-8691137965825158/6343377604';
+  static const _prodBannerAndroid = 'ca-app-pub-8691137965825158/2819065567';
 
   static bool _initialized = false;
 
