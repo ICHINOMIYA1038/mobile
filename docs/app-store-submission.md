@@ -22,10 +22,9 @@ flutter test --run-skipped --tags release     # 提出前チェック（未対�
 | 輸出コンプライアンス申告 | 済 | `ITSAppUsesNonExemptEncryption = false` |
 | AdMob の実アプリID | 済 | iOS/Android とも設定済み（下記アカウント欄） |
 | AdMob の実バナーID | 済 | 結果画面バナー（iOS/Android） |
-| プライバシーポリシーの公開URL | 済 | `privacyPolicyUrl` → nullstead.com |
+| プライバシーポリシーの公開URL | 済 | `privacyPolicyUrl` → https://nullstead.com/apps/takken/privacy （本番公開・200確認済み） |
 | 問い合わせ先 | 済 | support@gikyokutosyokan.com |
 | **IAP 商品の登録** | **未** | App Store Connect で `jp.pairof.takken.remove_ads` を非消費型として登録 |
-| **nullstead.com にポリシーHTMLを設置** | **未** | `docs/privacy-policy.html` を `https://nullstead.com/takken/privacy` に配置 |
 | **Xcode で Team を設定** | **未** | `ios/Runner.xcworkspace` → Signing & Capabilities（証明書が自動生成される） |
 
 ## 2. App Store Connect の入力内容

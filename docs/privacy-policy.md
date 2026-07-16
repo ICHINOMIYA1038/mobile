@@ -79,8 +79,11 @@ support@gikyokutosyokan.com
 <!--
 公開手順のメモ（このコメントは公開ページには表示されません）:
 
-- 公開用のHTMLは docs/privacy-policy.html。この .md を変更したら、そちらも合わせて更新すること。
-- 公開先: https://nullstead.com/takken/privacy （nullstead.com に privacy-policy.html を置く）
+- 公開先: https://nullstead.com/apps/takken/privacy
+  実体は別リポジトリ ~/nullstead/web の apps/homepage/src/pages/apps/takken/privacy.astro。
+  この .md を変更したら、そちらの内容も合わせて更新すること（同じ内容を手動で二重管理している）。
+  docs/privacy-policy.html はローカル確認用に一度作ったが、実際にはサイト側の
+  Astro コンポーネントへ移植して公開したため、公開版の原本ではない。
   App Store Connect と Google Play Console の双方でこのURLの入力が必須。
 - アプリ内の privacyPolicyUrl（lib/ui/screens/stats_screen.dart）が上記URLを指している。
   公開パスを変えたら、この定数も揃えること（release_readiness_test が仮URLのままだと落ちる）。

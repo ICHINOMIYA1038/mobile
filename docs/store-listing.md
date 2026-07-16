@@ -64,8 +64,8 @@
 
 ### サポートURL / マーケティングURL
 
-- サポートURL: https://nullstead.com/takken/privacy （専用サポートページがなければポリシーで可）
-- プライバシーポリシーURL: https://nullstead.com/takken/privacy
+- サポートURL: https://nullstead.com/apps/takken/privacy （専用サポートページがなければポリシーで可）
+- プライバシーポリシーURL: https://nullstead.com/apps/takken/privacy
 
 ---
 

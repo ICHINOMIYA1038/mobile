@@ -11,10 +11,10 @@ import '../widgets/pass_gauge.dart';
 import '../widgets/question_grid.dart';
 
 /// プライバシーポリシーの公開URL。
-/// nullstead.com に docs/privacy-policy.html を置いたもの。
+/// nullstead.com（~/nullstead/web リポジトリ）の apps/takken/privacy.astro を公開したもの。
 /// App Store / Play の双方で提出必須で、アプリ内からも到達できる必要がある。
 /// 公開パスを変えたら docs/privacy-policy.md のメモも合わせること。
-const privacyPolicyUrl = 'https://nullstead.com/takken/privacy';
+const privacyPolicyUrl = 'https://nullstead.com/apps/takken/privacy';
 
 /// 問い合わせ先。誤った法令解説の報告を受けるための窓口でもある。
 /// メールアプリを開く。専用の問い合わせページを持たずに済ませている。
