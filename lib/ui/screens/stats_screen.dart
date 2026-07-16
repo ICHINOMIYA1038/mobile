@@ -7,7 +7,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../data/purchase_repository.dart';
 import '../../logic/study_controller.dart';
 import '../../main.dart';
-import '../../models/question.dart';
+import '../widgets/pass_gauge.dart';
+import '../widgets/question_grid.dart';
 
 /// プライバシーポリシーの公開URL。
 /// **公開前に実際のURLへ差し替えること。** App Store / Play の双方で提出必須で、
@@ -33,23 +34,40 @@ class StatsScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           children: [
-            _ScoreCard(controller: controller),
-            const SizedBox(height: 24),
+            // 合格までの距離。解くほどバーが伸びて目印に近づく。
+            PassGauge(
+              score: controller.predictedScore,
+              answered: controller.answeredCount,
+            ),
+            const SizedBox(height: 12),
             Text(
-              '科目別の到達度',
+              'まだ解いていない問題は0点として計算しています。解くほど実力に近づきます。',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 28),
+            Text(
+              '合格グラフ',
               style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'バーの長さは本試験の配点比率です。長い科目ほど多く出題します。',
+              '1マスが1問です。解くほど濃くなります。'
+              'マスの数は本試験の配点比率どおりなので、広い科目ほど合格に効きます。',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
+                height: 1.6,
               ),
             ),
-            const SizedBox(height: 14),
-            ...controller.categoryStats.map((s) => _CategoryRow(stats: s)),
+            const SizedBox(height: 16),
+            QuestionGrid(stats: controller.categoryStats),
+            const SizedBox(height: 28),
+            _StudySummary(controller: controller),
             const SizedBox(height: 28),
             const _RemoveAdsSection(),
             const SizedBox(height: 28),
@@ -152,148 +170,94 @@ class _VersionLabel extends StatelessWidget {
   }
 }
 
-/// 予想得点。他アプリが出す「正答率○%」より、合格まであと何点かの方が行動につながる。
-class _ScoreCard extends StatelessWidget {
-  const _ScoreCard({required this.controller});
+/// 学習の要約。合格グラフが盤面で見せるのを、数字でも補う。
+class _StudySummary extends StatelessWidget {
+  const _StudySummary({required this.controller});
 
   final StudyController controller;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final score = controller.predictedScore;
-    final answered = controller.answeredCount;
+    final scheme = theme.colorScheme;
 
-    // 合格ラインは年により概ね33〜38点で変動するため、余裕を見て36点を目安にする。
-    const target = 36;
-    final reached = score >= target;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 20),
-        child: Column(
-          children: [
-            Text(
-              '本試験の配点で換算した予想得点',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 10),
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: score.toStringAsFixed(1),
-                    style: theme.textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  TextSpan(
-                    text: ' / 50点',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              answered == 0
-                  ? 'まだ回答がありません'
-                  : reached
-                      ? '合格ラインの目安（36点）に届いています'
-                      : '合格ラインの目安まであと ${(target - score).toStringAsFixed(1)}点',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              '$answered問 回答済み ・ ${controller.masteredCount}問 定着',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 10),
-            // 数字の意味を明示する。解いていない範囲を「取れる」と誤解させない。
-            Text(
-              'まだ解いていない問題は0点として計算しています。解くほど実力に近づきます。',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _SummaryItem(
+            value: '${controller.answeredCount}',
+            label: '回答済み',
+            total: controller.totalQuestions,
+          ),
+          _SummaryItem(
+            value: '${controller.masteredCount}',
+            label: '定着',
+            total: controller.totalQuestions,
+          ),
+          _SummaryItem(
+            value: '${controller.streak.current}',
+            label: '連続学習日数',
+            unit: '日',
+          ),
+        ],
       ),
     );
   }
 }
 
-/// 科目バー。幅を配点比率に比例させ、「宅建業法が一番大事」を見た目で分からせる。
-class _CategoryRow extends StatelessWidget {
-  const _CategoryRow({required this.stats});
+class _SummaryItem extends StatelessWidget {
+  const _SummaryItem({
+    required this.value,
+    required this.label,
+    this.total,
+    this.unit,
+  });
 
-  final CategoryStats stats;
+  final String value;
+  final String label;
+  final int? total;
+  final String? unit;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      children: [
+        RichText(
+          text: TextSpan(
             children: [
-              Text(stats.category.label, style: theme.textTheme.titleSmall),
-              const SizedBox(width: 8),
-              Text(
-                '本試験${stats.category.weight}問',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
+              TextSpan(
+                text: value,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: scheme.primary,
                 ),
               ),
-              const Spacer(),
-              Text(
-                stats.answered == 0
-                    ? '—'
-                    : '正答率 ${(stats.accuracy * 100).round()}%',
-                style: theme.textTheme.labelMedium?.copyWith(
+              TextSpan(
+                text: total != null ? ' / $total' : (unit ?? ''),
+                style: theme.textTheme.labelSmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // 外側の幅＝配点比率、内側の塗り＝その科目の定着率。
-          FractionallySizedBox(
-            widthFactor: stats.category.ratio / Category.gyoho.ratio,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: stats.masteryRatio,
-                minHeight: 10,
-                backgroundColor: scheme.surfaceContainerHighest,
-                valueColor: AlwaysStoppedAnimation(scheme.primary),
-              ),
-            ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant,
           ),
-          const SizedBox(height: 6),
-          Text(
-            '${stats.total}問中 ${stats.mastered}問 定着',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

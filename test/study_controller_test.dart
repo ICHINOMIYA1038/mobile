@@ -7,6 +7,7 @@ import 'package:takken_simple/data/question_repository.dart';
 import 'package:takken_simple/logic/scheduler.dart';
 import 'package:takken_simple/logic/study_controller.dart';
 import 'package:takken_simple/models/question.dart';
+import 'package:takken_simple/models/review_state.dart';
 
 /// アセットを読まずに固定の問題を返すリポジトリ。
 class _FakeQuestionRepository implements QuestionRepository {
@@ -134,6 +135,75 @@ void main() {
     // 宅建業法なら 配点20 × (1問/10問) = 2.0点、権利関係なら 配点14 × (1問/7問) = 2.0点。
     // 修正前はどちらも科目の配点を満額（20点や14点）計上していた。
     expect(controller.predictedScore, closeTo(2.0, 0.001));
+  });
+
+  group('合格グラフ', () {
+    test('マスの数は科目の問題数と一致する（面積がそのまま配点比率になる）', () {
+      for (final stats in controller.categoryStats) {
+        expect(stats.levels.length, stats.total,
+            reason: '${stats.category.label} のマス数が問題数と違います');
+      }
+    });
+
+    test('起動直後は全マスが未学習', () {
+      final all = controller.categoryStats.expand((s) => s.levels);
+      expect(all, everyElement(MasteryLevel.untouched));
+      expect(all.length, controller.totalQuestions);
+    });
+
+    test('正解するとその科目のマスが1つ濃くなる', () async {
+      controller.startSession();
+      final question = controller.current!;
+      await controller.answer(question.answer);
+
+      final stats = controller.categoryStats
+          .firstWhere((s) => s.category.label == question.category);
+      expect(
+        stats.levels.where((l) => l == MasteryLevel.learning).length,
+        1,
+        reason: '1問正解したら learning のマスが1つできるはず',
+      );
+      expect(
+        stats.levels.where((l) => l == MasteryLevel.untouched).length,
+        stats.total - 1,
+      );
+    });
+
+    test('間違えるとそのマスは要復習として区別される', () async {
+      controller.startSession();
+      final question = controller.current!;
+      await controller.answer(!question.answer);
+
+      final stats = controller.categoryStats
+          .firstWhere((s) => s.category.label == question.category);
+      expect(stats.levels.where((l) => l == MasteryLevel.needsReview).length, 1);
+      expect(stats.levels.where((l) => l == MasteryLevel.learning), isEmpty);
+    });
+
+    test('解き進めるほど未学習のマスが減り、合格ラインに近づく', () async {
+      final before = controller.predictedScore;
+
+      controller.startSession();
+      for (var i = 0; i < 8; i++) {
+        await controller.answer(controller.current!.answer);
+        controller.next();
+      }
+
+      final untouched = controller.categoryStats
+          .expand((s) => s.levels)
+          .where((l) => l == MasteryLevel.untouched)
+          .length;
+
+      expect(untouched, controller.totalQuestions - 8);
+      // 盤面が埋まるほど得点が上がり、合格まで残りが減る。
+      expect(controller.predictedScore, greaterThan(before));
+      expect(controller.pointsToPass, lessThan(StudyController.passingScore));
+    });
+
+    test('合格ラインに届いていなければ pointsToPass が残りを示す', () {
+      expect(controller.reachedPassingScore, isFalse);
+      expect(controller.pointsToPass, StudyController.passingScore);
+    });
   });
 
   test('未回答の科目は0点として扱われる', () async {

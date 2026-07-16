@@ -1,3 +1,23 @@
+/// 1問ごとの到達度。合格グラフのマス目の濃さに対応する。
+///
+/// 解くほど濃くなり、盤面が青く埋まっていくほど合格に近づく、という見せ方をするための段階。
+enum MasteryLevel {
+  /// まだ一度も解いていない。
+  untouched,
+
+  /// 直近で間違えた。ここが弱点だと一目で分かるよう、他とは別の色で見せる。
+  needsReview,
+
+  /// 解き始めたばかり。
+  learning,
+
+  /// あと少しで定着。
+  familiar,
+
+  /// 定着済み。
+  mastered,
+}
+
 /// 1問ごとの学習履歴。ユーザーのデータはこれが全て。
 class ReviewState {
   const ReviewState({
@@ -38,6 +58,15 @@ class ReviewState {
 
   /// 「身についた」とみなす基準。3連続正解かつ間隔が21日以上。
   bool get isMastered => repetition >= 3 && intervalDays >= 21;
+
+  /// 合格グラフのマス目の濃さ。解き進めるほど段階が上がる。
+  MasteryLevel get masteryLevel {
+    if (isNew) return MasteryLevel.untouched;
+    // 間違えると repetition が 0 に戻る。直したい問題として区別する。
+    if (repetition == 0) return MasteryLevel.needsReview;
+    if (isMastered) return MasteryLevel.mastered;
+    return repetition >= 2 ? MasteryLevel.familiar : MasteryLevel.learning;
+  }
 
   bool isDue(DateTime now) {
     final due = dueAt;

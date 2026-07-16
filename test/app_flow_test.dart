@@ -84,7 +84,7 @@ void main() {
     expect(find.text('学習をはじめる'), findsOneWidget);
   });
 
-  testWidgets('成績画面に予想得点と4科目すべてが並ぶ', (tester) async {
+  testWidgets('成績画面に合格ゲージと4科目すべてが並ぶ', (tester) async {
     await launch(tester);
 
     await tester.tap(find.byIcon(Icons.bar_chart_rounded));
@@ -93,7 +93,9 @@ void main() {
     expect(find.text('本試験の配点で換算した予想得点'), findsOneWidget);
     // 得点は RichText で「0.0 / 50点」と一続きに組んでいる。
     expect(find.textContaining('0.0 / 50点', findRichText: true), findsOneWidget);
-    expect(find.text('まだ回答がありません'), findsOneWidget);
+    // 合格ラインが目的地として示される。
+    expect(find.text('合格ライン 36点'), findsOneWidget);
+    expect(find.text('1問解くごとにバーが伸びます'), findsOneWidget);
 
     for (final label in ['宅建業法', '権利関係', '法令上の制限', '税その他']) {
       expect(find.text(label), findsOneWidget);

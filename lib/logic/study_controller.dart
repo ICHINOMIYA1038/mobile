@@ -27,12 +27,17 @@ class CategoryStats {
     required this.answered,
     required this.accuracy,
     required this.scoreRatio,
+    required this.levels,
   });
 
   final Category category;
   final int total;
   final int mastered;
   final int answered;
+
+  /// この科目の全問の到達度を、問題の並び順で並べたもの。合格グラフのマス目になる。
+  /// 要素数＝その科目の問題数なので、マス目の面積がそのまま配点比率を表す。
+  final List<MasteryLevel> levels;
 
   /// 回答した問題の中での正答率。「何割わかっているか」の表示用。
   final double accuracy;
@@ -108,6 +113,18 @@ class StudyController extends ChangeNotifier {
     return total == 0 ? 0 : correct / total;
   }
 
+  /// 合格ラインの目安（50点満点中）。
+  ///
+  /// 実際の合格点は年により概ね33〜38点で変動し、事前には決まらない。
+  /// 低く見積もって届いたつもりにさせるより、余裕を見た値を目標に置く。
+  static const passingScore = 36.0;
+
+  /// 合格ラインの目安まであと何点か。届いていれば0。
+  double get pointsToPass => (passingScore - predictedScore).clamp(0, passingScore);
+
+  /// 合格ラインの目安に届いているか。
+  bool get reachedPassingScore => predictedScore >= passingScore;
+
   /// 本試験の配点で換算した予想得点（50点満点）。
   ///
   /// まだ解いていない問題は0点として扱う。「今の実力で確実に取れる点数」の下限を示すためで、
@@ -131,9 +148,12 @@ class StudyController extends ChangeNotifier {
 
       // 未回答も分母に含めた到達率。未回答の1問は0点ぶんとして効く。
       var scoreSum = 0.0;
+      final levels = <MasteryLevel>[];
 
       for (final q in qs) {
         final state = _states[q.id];
+        levels.add(state?.masteryLevel ?? MasteryLevel.untouched);
+
         if (state == null || state.isNew) continue;
         answered++;
         if (state.isMastered) mastered++;
@@ -149,20 +169,32 @@ class StudyController extends ChangeNotifier {
         answered: answered,
         accuracy: attempts == 0 ? 0 : correct / attempts,
         scoreRatio: qs.isEmpty ? 0 : scoreSum / qs.length,
+        levels: levels,
       );
     }).toList();
   }
 
+  /// 起動時の読み込みに失敗したか。true なら問題を出せないので、画面は理由を出す。
+  bool _loadFailed = false;
+  bool get loadFailed => _loadFailed;
+
   Future<void> init() async {
     _isLoading = true;
+    _loadFailed = false;
     notifyListeners();
 
-    _questions = await _questionRepo.load();
-    _states = await _progressRepo.loadStates();
-    _streak = await _progressRepo.loadStreak();
-
-    _isLoading = false;
-    notifyListeners();
+    try {
+      _questions = await _questionRepo.load();
+      _states = await _progressRepo.loadStates();
+      _streak = await _progressRepo.loadStreak();
+    } catch (_) {
+      // 何が起きても読み込み中のまま固まらせない。
+      // ここで抜けられないと、履歴を消すボタンにすら到達できず二度と開けなくなる。
+      _loadFailed = true;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// 出題を開始する。セッションの集計はここでリセットする。

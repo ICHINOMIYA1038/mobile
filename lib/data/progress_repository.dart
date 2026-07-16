@@ -13,11 +13,14 @@ class ProgressRepository {
   static const _streakKey = 'streak_v1';
 
   Future<Map<String, ReviewState>> loadStates() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_statesKey);
-    if (raw == null || raw.isEmpty) return {};
-
+    // 読み出し全体を try で囲むこと。getString は保存値の型が想定外だと
+    // それ自体が例外を投げるため、jsonDecode だけを守っても足りない。
+    // ここで例外が漏れると init() が中断し、読み込み中の画面から永久に戻れなくなる。
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_statesKey);
+      if (raw == null || raw.isEmpty) return {};
+
       final decoded = jsonDecode(raw) as Map<String, dynamic>;
       return decoded.map(
         (key, value) => MapEntry(
@@ -40,11 +43,12 @@ class ProgressRepository {
   }
 
   Future<StreakData> loadStreak() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_streakKey);
-    if (raw == null || raw.isEmpty) return const StreakData();
-
+    // loadStates と同じ理由で、getString も含めて丸ごと守る。
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_streakKey);
+      if (raw == null || raw.isEmpty) return const StreakData();
+
       return StreakData.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
       return const StreakData();
