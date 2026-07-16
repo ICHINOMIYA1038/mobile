@@ -136,7 +136,8 @@ dart run flutter_launcher_icons
 ## ストアへの提出
 
 ```sh
-flutter test --run-skipped --tags release
+flutter test --run-skipped --tags release   # 提出前チェック
+./tool/screenshots.sh                       # 掲載用スクリーンショットを生成
 ```
 
 **未対応の項目があると意図的に赤く落ちます**（テスト広告IDのまま、ポリシーURLが仮のまま等）。
