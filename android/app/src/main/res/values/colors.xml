@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- アダプティブアイコンの背景（flutter_launcher_icons が生成する）。 -->
     <color name="ic_launcher_background">#2F5D8A</color>
+    <!-- 起動画面の背景。アイコンと同じ藍にして、起動時のチラつきをなくす。 -->
+    <color name="launch_background">#2F5D8A</color>
 </resources>

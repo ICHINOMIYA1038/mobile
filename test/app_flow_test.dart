@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:takken_simple/logic/study_controller.dart';
 import 'package:takken_simple/main.dart';
+import 'package:takken_simple/ui/widgets/result_banner_ad.dart';
 
 /// 実際のアプリを起動して画面を触る。ホーム → 出題 → 解説 → 結果 → 成績 の一周を確認する。
 /// 問題データは本物の assets/questions.json を読む。
@@ -124,26 +125,25 @@ void main() {
     // 配置そのものは test/no_ads_during_study_test.dart が構造的に検証している。
     await launch(tester);
 
+    // ホームには問題文が出ないので、語句で見てよい。
     for (final banned in ['広告', 'PR', '無料版', 'アップグレード', 'プレミアム', '課金']) {
       expect(find.textContaining(banned), findsNothing,
           reason: 'ホームに "$banned" が出ています');
     }
+    expect(find.byType(ResultBannerAd), findsNothing);
 
     await tester.tap(find.text('学習をはじめる'));
     await tester.pumpAndSettle();
 
-    for (final banned in ['広告', '購入', 'アップグレード', 'プレミアム']) {
-      expect(find.textContaining(banned), findsNothing,
-          reason: '出題画面に "$banned" が出ています');
-    }
+    // 出題画面は語句で判定してはいけない。「広告に関する規制」の問題が引かれると
+    // 問題文そのものに「広告」が含まれ、出題は正しいのにテストが落ちる（実際に落ちた）。
+    // 出題はランダムなので、語句で見ると不安定なテストになる。広告ウィジェットの有無で判定する。
+    expect(find.byType(ResultBannerAd), findsNothing, reason: '出題画面に広告が出ています');
 
     // 解説を表示した状態でも同じ。
     await tester.tap(find.text('○'));
     await tester.pumpAndSettle();
 
-    for (final banned in ['広告', '購入', 'アップグレード', 'プレミアム']) {
-      expect(find.textContaining(banned), findsNothing,
-          reason: '解説画面に "$banned" が出ています');
-    }
+    expect(find.byType(ResultBannerAd), findsNothing, reason: '解説画面に広告が出ています');
   });
 }
