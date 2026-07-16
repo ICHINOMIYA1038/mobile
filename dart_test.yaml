@@ -1,0 +1,9 @@
+# 提出前チェック(release_readiness_test.dart)は、未対応の項目がある限り必ず落ちる。
+# 日常の `flutter test` まで赤くなると邪魔なので、既定では除外する。
+#
+# 提出前に実行する（skip指定を上書きするため --run-skipped が要る）:
+#   flutter test --run-skipped --tags release
+#
+tags:
+  release:
+    skip: "提出前チェックです。`flutter test --run-skipped --tags release` で実行してください"

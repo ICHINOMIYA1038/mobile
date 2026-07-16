@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Android アダプティブアイコンの前景レイヤー。
+       端末によって円・角丸などにマスクされ、安全領域は中央66%しかない。
+       そのため通常アイコンより図形を小さくし、背景は透過のままにする。 -->
+  <g transform="translate(512,512) scale(0.68) translate(-512,-512)">
+    <circle cx="348" cy="512" r="126" fill="none" stroke="#FFFFFF" stroke-width="56"/>
+    <g stroke="#9CC4EA" stroke-width="56" stroke-linecap="round">
+      <line x1="602" y1="412" x2="802" y2="612"/>
+      <line x1="802" y1="412" x2="602" y2="612"/>
+    </g>
+  </g>
+</svg>

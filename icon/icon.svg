@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- 背景: アプリのテーマ色（藍）。iOS はアイコンの透過を許さないため全面を塗る。 -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3D719F"/>
+      <stop offset="1" stop-color="#254A70"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- ○×の一問一答であることだけを伝える。装飾は足さない。
+       日本語の慣習どおり横並びにし、2つが別の記号だと分かる間隔を空ける。
+       ホーム画面の小サイズでも潰れないよう線は太く、要素は2つだけに絞る。 -->
+  <circle cx="348" cy="512" r="126" fill="none" stroke="#FFFFFF" stroke-width="56"/>
+  <g stroke="#9CC4EA" stroke-width="56" stroke-linecap="round">
+    <line x1="602" y1="412" x2="802" y2="612"/>
+    <line x1="802" y1="412" x2="602" y2="612"/>
+  </g>
+</svg>

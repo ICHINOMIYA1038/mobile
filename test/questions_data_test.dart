@@ -1,0 +1,159 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:takken_simple/models/question.dart';
+
+/// 問題データそのものの検査。
+/// 既存アプリで「誤字」「解説の誤り」「カテゴリ違い」が不満として挙がっている領域のため、
+/// 機械的に検出できるものはここで落とす。問題を追加したら必ずこのテストを通すこと。
+void main() {
+  late List<Question> questions;
+
+  setUpAll(() {
+    final raw = File('assets/questions.json').readAsStringSync();
+    final decoded = jsonDecode(raw) as Map<String, dynamic>;
+    questions = (decoded['questions'] as List<dynamic>)
+        .map((e) => Question.fromJson(e as Map<String, dynamic>))
+        .toList();
+  });
+
+  test('問題が読み込める', () {
+    expect(questions, isNotEmpty);
+  });
+
+  test('id が重複していない', () {
+    final ids = questions.map((q) => q.id).toList();
+    expect(ids.toSet().length, ids.length);
+  });
+
+  test('category がすべて Category enum と一致する', () {
+    for (final q in questions) {
+      expect(
+        Category.fromLabel(q.category),
+        isNotNull,
+        reason: '${q.id} の category "${q.category}" が Category enum にありません',
+      );
+    }
+  });
+
+  test('必須項目が空でない', () {
+    for (final q in questions) {
+      expect(q.statement.trim(), isNotEmpty, reason: '${q.id} の statement が空');
+      expect(q.explanation.trim(), isNotEmpty, reason: '${q.id} の explanation が空');
+      expect(q.reference.trim(), isNotEmpty, reason: '${q.id} の reference が空');
+      expect(q.topic.trim(), isNotEmpty, reason: '${q.id} の topic が空');
+    }
+  });
+
+  test('difficulty が 1〜3 に収まる', () {
+    for (final q in questions) {
+      expect(q.difficulty, inInclusiveRange(1, 3), reason: '${q.id} の difficulty が範囲外');
+    }
+  });
+
+  test('statement が○×で答えられる長さに収まる', () {
+    for (final q in questions) {
+      expect(
+        q.statement.length,
+        lessThan(200),
+        reason: '${q.id} の statement が長すぎます（一問一答として成立しません）',
+      );
+    }
+  });
+
+  test('解説は結論を書くだけの分量がある', () {
+    for (final q in questions) {
+      expect(
+        q.explanation.length,
+        greaterThan(20),
+        reason: '${q.id} の explanation が短すぎます（理由と正しい結論を書くこと）',
+      );
+    }
+  });
+
+  test('○と×が極端に偏っていない', () {
+    // ○ばかりだと「迷ったら○」で正解できてしまい、学習にならない。
+    final trueCount = questions.where((q) => q.answer).length;
+    final ratio = trueCount / questions.length;
+    expect(ratio, inInclusiveRange(0.35, 0.65), reason: '正解の○×比が偏っています');
+  });
+
+  test('全科目に問題が存在する', () {
+    for (final category in Category.values) {
+      expect(
+        questions.where((q) => q.category == category.label),
+        isNotEmpty,
+        reason: '${category.label} の問題がありません',
+      );
+    }
+  });
+
+  test('科目ごとの問題数が本試験の配点比率におおむね沿う', () {
+    // データ側が偏っていると、scheduler が配点どおりに出そうとしても出せる問題が尽きる。
+    for (final category in Category.values) {
+      final actual =
+          questions.where((q) => q.category == category.label).length / questions.length;
+      expect(
+        actual,
+        closeTo(category.ratio, 0.06),
+        reason: '${category.label} の問題数が配点比率から離れています',
+      );
+    }
+  });
+
+  test('同一 topic に問題が集中していない', () {
+    final counts = <String, int>{};
+    for (final q in questions) {
+      counts.update(q.topic, (v) => v + 1, ifAbsent: () => 1);
+    }
+    for (final entry in counts.entries) {
+      expect(
+        entry.value,
+        lessThanOrEqualTo(4),
+        reason: 'topic "${entry.key}" に ${entry.value}問 が集中しています',
+      );
+    }
+  });
+
+  test('問題文が重複していない', () {
+    final statements = questions.map((q) => q.statement).toList();
+    expect(
+      statements.toSet().length,
+      statements.length,
+      reason: '同じ問題文が複数の id に存在します',
+    );
+  });
+
+  test('問題文に旧法令の表現が残っていない', () {
+    // 競合アプリが「旧法令のまま」で叩かれている急所。問題文は現行法そのものなので一切許さない。
+    // （解説は「旧法の瑕疵担保責任から改められた」のような対比が有用なため対象外）
+    const stale = ['瑕疵担保責任', '錯誤無効', '錯誤により無効', '宅地造成等規制法'];
+    for (final q in questions) {
+      for (final word in stale) {
+        expect(
+          q.statement.contains(word),
+          isFalse,
+          reason: '${q.id} の問題文に旧法令の表現「$word」があります',
+        );
+      }
+    }
+  });
+
+  test('毎年数値が変わる統計問題を含んでいない', () {
+    // 問題データはアプリに同梱する固定データのため、統計を入れると翌年には誤りになる。
+    final statistics = RegExp(r'(令和\d+年|20\d\d年)(度)?の.*(地価公示|住宅着工|取引件数|変動率)');
+    for (final q in questions) {
+      expect(
+        statistics.hasMatch(q.statement),
+        isFalse,
+        reason: '${q.id} が統計問題の可能性があります',
+      );
+    }
+  });
+
+  test('審査に出せる問題数がある', () {
+    // App Store の Guideline 4.2（機能が最小限）対策。問題数はそのまま実用性の裏付けになる。
+    expect(questions.length, greaterThanOrEqualTo(300));
+  });
+}

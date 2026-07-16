@@ -1,0 +1,51 @@
+name: takken_simple
+description: "シンプルに学ぶ宅建アプリ - 広告なし・ログイン不要・完全オフラインの一問一答"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  shared_preferences: ^2.3.3
+  share_plus: ^10.1.2
+  google_mobile_ads: ^5.2.0
+  in_app_purchase: ^3.2.0
+  package_info_plus: ^8.1.1
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.2
+
+# アプリアイコン: `dart run flutter_launcher_icons` で各プラットフォームに書き出す。
+# 元データは icon/icon.svg（assets/ に置くとアプリ本体に同梱されてしまうため分けている）。
+flutter_launcher_icons:
+  image_path: "icon/icon.png"
+  ios: true
+  remove_alpha_ios: true
+  android: "ic_launcher"
+  adaptive_icon_background: "#2F5D8A"
+  adaptive_icon_foreground: "icon/icon_foreground.png"
+  macos:
+    generate: true
+    image_path: "icon/icon.png"
+  web:
+    generate: true
+    image_path: "icon/icon.png"
+    background_color: "#2F5D8A"
+    theme_color: "#2F5D8A"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/questions.json
