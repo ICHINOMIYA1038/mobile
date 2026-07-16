@@ -138,9 +138,15 @@ void main() {
   });
 
   group('URL 定数', () {
-    test('プライバシーポリシーと問い合わせのURLが https である', () {
+    test('プライバシーポリシーは https の公開ページを指す', () {
       expect(privacyPolicyUrl, startsWith('https://'));
-      expect(supportUrl, startsWith('https://'));
+      // 仮URL（pairof.jp）のまま出さない。
+      expect(privacyPolicyUrl, isNot(contains('pairof.jp')));
+    });
+
+    test('問い合わせはメールを開く', () {
+      expect(supportUrl, startsWith('mailto:'));
+      expect(supportUrl, contains('@'));
     });
   });
 

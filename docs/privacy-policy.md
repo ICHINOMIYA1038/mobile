@@ -2,7 +2,7 @@
 
 **シンプルに学ぶ宅建アプリ**（以下「本アプリ」）における個人情報の取扱いについて定めます。
 
-最終更新日: 2026年7月16日
+最終更新日: 2026年7月17日
 
 ## 要約
 
@@ -72,18 +72,19 @@ Google によるデータの取扱いについては、以下をご確認くだ�
 
 本ポリシーおよび本アプリに関するお問い合わせ先:
 
-**（メールアドレスをここに記載してください）**
+support@gikyokutosyokan.com
 
 ---
 
 <!--
 公開手順のメモ（このコメントは公開ページには表示されません）:
 
-1. 上の「お問い合わせ」に実際の連絡先を記入すること。空欄のままだと審査で指摘される。
-2. このファイルを公開URLとして配信すること（GitHub Pages / Netlify / 自前のサイトなど）。
-   App Store Connect と Google Play Console の双方でURLの入力が必須。
-3. アプリ内からもこのURLを開けるようにしてある（成績画面 → プライバシーポリシー）。
-   lib/ui/screens/stats_screen.dart の privacyPolicyUrl を実際のURLに差し替えること。
-4. 広告の実装方針を変えた場合（パーソナライズ広告に切り替える等）は必ずこの文書を更新すること。
-   実装と記載がずれている状態が最も危険。
+- 公開用のHTMLは docs/privacy-policy.html。この .md を変更したら、そちらも合わせて更新すること。
+- 公開先: https://nullstead.com/takken/privacy （nullstead.com に privacy-policy.html を置く）
+  App Store Connect と Google Play Console の双方でこのURLの入力が必須。
+- アプリ内の privacyPolicyUrl（lib/ui/screens/stats_screen.dart）が上記URLを指している。
+  公開パスを変えたら、この定数も揃えること（release_readiness_test が仮URLのままだと落ちる）。
+- 問い合わせは mailto:support@gikyokutosyokan.com（アプリ内の supportUrl も同じ）。
+- 広告の実装方針を変えた場合（パーソナライズ広告に切り替える等）は必ずこの文書とHTMLを更新すること。
+  実装と記載がずれている状態が最も危険。
 -->

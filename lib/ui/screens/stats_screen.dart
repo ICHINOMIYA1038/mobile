@@ -11,13 +11,14 @@ import '../widgets/pass_gauge.dart';
 import '../widgets/question_grid.dart';
 
 /// プライバシーポリシーの公開URL。
-/// **公開前に実際のURLへ差し替えること。** App Store / Play の双方で提出必須で、
-/// アプリ内からも到達できる必要がある。原文は docs/privacy-policy.md。
-const privacyPolicyUrl = 'https://pairof.jp/takken/privacy';
+/// nullstead.com に docs/privacy-policy.html を置いたもの。
+/// App Store / Play の双方で提出必須で、アプリ内からも到達できる必要がある。
+/// 公開パスを変えたら docs/privacy-policy.md のメモも合わせること。
+const privacyPolicyUrl = 'https://nullstead.com/takken/privacy';
 
 /// 問い合わせ先。誤った法令解説の報告を受けるための窓口でもある。
-/// **公開前に実際のURLかmailtoへ差し替えること。**
-const supportUrl = 'https://pairof.jp/takken/support';
+/// メールアプリを開く。専用の問い合わせページを持たずに済ませている。
+const supportUrl = 'mailto:support@gikyokutosyokan.com';
 
 /// 成績画面。数字は「本試験で今何点取れそうか」に寄せる。学習量そのものは目的ではない。
 class StatsScreen extends StatelessWidget {
