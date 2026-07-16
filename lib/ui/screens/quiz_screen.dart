@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../logic/study_controller.dart';
@@ -71,6 +73,8 @@ class QuizScreen extends StatelessWidget {
       Navigator.of(context).pop();
       return;
     }
+    // 次の復習日にお知らせを出せるよう予定を組み直す。待たずに画面を進めてよい。
+    unawaited(controller.finishSession());
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const ResultScreen()),
     );

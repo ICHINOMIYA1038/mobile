@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 復習のお知らせ（ローカル通知）。Android 13 以降は実行時の許可が必要。
+         時刻の正確さは要らないので SCHEDULE_EXACT_ALARM は取らない。 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- 端末を再起動しても予約済みのお知らせを復元する -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
     <application
         android:label="シンプルに学ぶ宅建"
         android:name="${applicationName}"

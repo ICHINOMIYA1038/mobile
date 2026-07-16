@@ -11,6 +11,29 @@ import '../models/review_state.dart';
 class ProgressRepository {
   static const _statesKey = 'review_states_v1';
   static const _streakKey = 'streak_v1';
+  static const _askedNotifyKey = 'asked_notification_v1';
+
+  /// 通知の許可をすでに求めたか。
+  /// iOS はダイアログを一度しか出せないため、二度目を出そうとしても意味がない。
+  /// 断られた場合に何度も訊きにいくアプリにはしない。
+  Future<bool> hasAskedNotificationPermission() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_askedNotifyKey) ?? false;
+    } catch (_) {
+      // 読めないなら「まだ訊いていない」扱いにする。最悪でも1回多く訊くだけ。
+      return false;
+    }
+  }
+
+  Future<void> markAskedNotificationPermission() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_askedNotifyKey, true);
+    } catch (_) {
+      // 記録できなくても致命的ではない。
+    }
+  }
 
   Future<Map<String, ReviewState>> loadStates() async {
     // 読み出し全体を try で囲むこと。getString は保存値の型が想定外だと

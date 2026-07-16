@@ -1,6 +1,7 @@
 // foundation にも Category があるため、こちらの Category と衝突しないよう隠す。
 import 'package:flutter/foundation.dart' hide Category;
 
+import '../data/notification_service.dart';
 import '../data/progress_repository.dart';
 import '../data/question_repository.dart';
 import '../models/question.dart';
@@ -55,13 +56,16 @@ class StudyController extends ChangeNotifier {
     QuestionRepository? questions,
     ProgressRepository? progress,
     Scheduler? scheduler,
+    NotificationService? notifications,
   })  : _questionRepo = questions ?? QuestionRepository(),
         _progressRepo = progress ?? ProgressRepository(),
-        _scheduler = scheduler ?? Scheduler();
+        _scheduler = scheduler ?? Scheduler(),
+        _notifications = notifications ?? NotificationService();
 
   final QuestionRepository _questionRepo;
   final ProgressRepository _progressRepo;
   final Scheduler _scheduler;
+  final NotificationService _notifications;
 
   List<Question> _questions = [];
   Map<String, ReviewState> _states = {};
@@ -234,6 +238,31 @@ class StudyController extends ChangeNotifier {
     await _progressRepo.saveStreak(_streak);
   }
 
+  /// 学習を終えたときに呼ぶ。次の復習日にお知らせを出せるよう予定を組み直す。
+  ///
+  /// 回答のたびではなくセッションの終わりに1回だけ行う。
+  /// 予約は全消し＋組み直しなので、1問ごとにやると無駄が大きい。
+  Future<void> finishSession() async {
+    await _notifications.scheduleReviewReminders(
+      questions: _questions,
+      states: _states,
+    );
+  }
+
+  /// 通知の許可を求める。まだ一度も訊いていないときだけ実際に訊く。
+  ///
+  /// 呼ぶのは初回の学習を終えた直後だけ。起動直後に出しても
+  /// 何のための通知か分からないユーザーは拒否するため。
+  /// 許可されたか（＝この呼び出しで実際に許可が下りたか）を返す。
+  Future<bool> maybeRequestNotificationPermission() async {
+    if (await _progressRepo.hasAskedNotificationPermission()) return false;
+    await _progressRepo.markAskedNotificationPermission();
+
+    final granted = await _notifications.requestPermission();
+    if (granted) await finishSession();
+    return granted;
+  }
+
   /// 解説を読み終えて次の問題へ。
   void next() {
     final previous = _current?.id;
@@ -249,6 +278,8 @@ class StudyController extends ChangeNotifier {
 
   Future<void> resetProgress() async {
     await _progressRepo.resetAll();
+    // 履歴が無くなれば復習の予定も無い。消し忘れると身に覚えのない通知が届く。
+    await _notifications.cancelAll();
     _states = {};
     _streak = const StreakData();
     _session.clear();
@@ -264,6 +295,8 @@ class StudyController extends ChangeNotifier {
     _states = await _progressRepo.loadStates();
     _streak = await _progressRepo.loadStreak();
     notifyListeners();
+    // 読み込んだ履歴に合わせて復習の予定も組み直す。
+    await finishSession();
     return true;
   }
 }

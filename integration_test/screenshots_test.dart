@@ -74,6 +74,9 @@ void main() {
         'best': 21,
         'lastStudyDate': DateTime(now.year, now.month, now.day).toIso8601String(),
       }),
+      // 通知の許可ダイアログは撮影の邪魔になるうえ、システムダイアログは
+      // テストから閉じられず不安定の元になる。「訊き済み」にして出さない。
+      'asked_notification_v1': true,
     });
   }
 

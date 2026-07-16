@@ -5,8 +5,31 @@ import '../theme.dart';
 import '../widgets/result_banner_ad.dart';
 
 /// セッションの結果。褒めも煽りもせず、事実と次にやることだけを示す。
-class ResultScreen extends StatelessWidget {
+class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
+
+  @override
+  State<ResultScreen> createState() => _ResultScreenState();
+}
+
+class _ResultScreenState extends State<ResultScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 初回の学習を終えたこの瞬間だけ、通知の許可を求める。
+    // 起動直後に出しても「何のための通知か」が分からず拒否されるだけで、
+    // iOS はダイアログを一度しか出せないため取り返しがつかない。
+    // ここなら直前に解いた問題をいつ復習すべきかを知らせる、という意味が伝わる。
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final granted = await StudyScope.of(context).maybeRequestNotificationPermission();
+      if (!granted || !mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('忘れかけた頃にお知らせします')),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
