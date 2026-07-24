@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- プライバシーマニフェスト（2024年5月以降 App Store で必須）。
+	     このアプリ自身は「お気に入り」のお題を端末内にしか保存せず、外部送信もトラッキングもしない。
+	     広告は非パーソナライズのみで、端末の広告IDを追跡目的には使わない。 -->
+
+	<!-- トラッキング（他社データと突き合わせた追跡）は行わない。 -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<!-- 収集するデータ。「お気に入り」は端末内のみで外部に出ないため申告対象外。
+	     広告配信のために SDK が扱う分は AdMob 側のマニフェストが申告する。 -->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+
+	<!-- 使用理由の申告が要る API。 -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<!-- shared_preferences が「お気に入り」の保存に UserDefaults を使う。
+			     CA92.1 = 自アプリ内のみで完結する読み書き。 -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
