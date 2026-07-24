@@ -17,9 +17,9 @@ class AdService {
   static const _testBannerAndroid = 'ca-app-pub-3940256099942544/6300978111';
 
   /// 本番のバナーID。空文字の間はテストIDが使われる。
-  /// AdMobで「エチュードメーカー」アプリと広告ユニットを発行したらここへ設定する。
-  static const _prodBannerIos = '';
-  static const _prodBannerAndroid = '';
+  /// AdMobで「エチュードメーカー」アプリ・広告ユニット（実演・振り返り画面バナー）を発行済み。
+  static const _prodBannerIos = 'ca-app-pub-8691137965825158/2006323561';
+  static const _prodBannerAndroid = 'ca-app-pub-8691137965825158/2956709081';
 
   static bool _initialized = false;
 

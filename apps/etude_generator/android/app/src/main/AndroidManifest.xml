@@ -30,10 +30,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- Googleのサンプル用テストアプリID。AdMobで本アプリを登録したら実IDに差し替えること。 -->
+        <!-- AdMob「エチュードメーカー (Android)」の実アプリID。 -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-8691137965825158~6967006205"/>
         <!-- 非パーソナライズ広告のみを配信するため、広告IDによる追跡は行わない。 -->
         <meta-data
             android:name="com.google.android.gms.ads.flag.OPTIMIZE_INITIALIZATION"
