@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'data/favorites_repository.dart';
 import 'data/prompt_generator.dart';
 import 'models/etude_prompt.dart';
+import 'ui/widgets/ad_banner_slot.dart';
 
 void main() => runApp(const EtudeApp());
 
@@ -1393,7 +1394,9 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 16),
+            const AdBannerSlot(),
+            const SizedBox(height: 16),
             const Text(
               '全員に見せてよい条件',
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
@@ -1536,7 +1539,9 @@ class ReflectionScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 25),
+            const SizedBox(height: 20),
+            const AdBannerSlot(),
+            const SizedBox(height: 20),
             FilledButton.icon(
               onPressed: () => Navigator.of(context).pushReplacement(
                 MaterialPageRoute(

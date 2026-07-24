@@ -30,6 +30,14 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Googleのサンプル用テストアプリID。AdMobで本アプリを登録したら実IDに差し替えること。 -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
+        <!-- 非パーソナライズ広告のみを配信するため、広告IDによる追跡は行わない。 -->
+        <meta-data
+            android:name="com.google.android.gms.ads.flag.OPTIMIZE_INITIALIZATION"
+            android:value="true"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
