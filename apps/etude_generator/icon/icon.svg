@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- 背景: アプリのテーマ色（珊瑚色〜テラコッタ）。iOSは透過を許さないため全面を塗る。 -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E18379"/>
+      <stop offset="1" stop-color="#9D554F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- スポットライトが一人の演者を照らす様子だけを伝える。装飾は足さない。
+       小サイズでも潰れないよう、要素はスポットライトの三角・人物のシルエット・足元の光だまりの3つに絞る。 -->
+  <polygon points="512,168 706,610 318,610" fill="#FFFCF7" opacity="0.34"/>
+  <circle cx="512" cy="656" r="80" fill="#FFFCF7"/>
+  <path d="M 512 748 C 600 748 672 806 672 878 L 672 884 L 352 884 L 352 878 C 352 806 424 748 512 748 Z" fill="#FFFCF7"/>
+  <ellipse cx="512" cy="918" rx="150" ry="20" fill="#FFFCF7" opacity="0.34"/>
+</svg>

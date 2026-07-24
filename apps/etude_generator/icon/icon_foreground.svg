@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Android adaptive icon前景。安全円(直径約66%)に収まるよう縮小・中央寄せしたマーク。 -->
+  <polygon points="512,237 662,550 362,550" fill="#FFFCF7" opacity="0.32"/>
+  <circle cx="512" cy="630" r="61" fill="#FFFCF7"/>
+  <path d="M 512 702 C 579 702 634 747 634 803 L 634 806 L 390 806 L 390 803 C 390 747 445 702 512 702 Z" fill="#FFFCF7"/>
+</svg>

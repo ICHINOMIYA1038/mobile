@@ -1,0 +1,1980 @@
+import 'dart:async';
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+
+import 'data/favorites_repository.dart';
+import 'data/prompt_generator.dart';
+import 'models/etude_prompt.dart';
+
+void main() => runApp(const EtudeApp());
+
+class EtudeApp extends StatelessWidget {
+  const EtudeApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    const seed = Color(0xFF7A3E65);
+    return MaterialApp(
+      title: 'エチュードメーカー',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: seed),
+        scaffoldBackgroundColor: const Color(0xFFFFF8FC),
+        useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          centerTitle: false,
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+        ),
+        cardTheme: CardThemeData(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+        ),
+      ),
+      home: const TitleScreen(),
+    );
+  }
+}
+
+class TitleScreen extends StatefulWidget {
+  const TitleScreen({super.key});
+
+  @override
+  State<TitleScreen> createState() => _TitleScreenState();
+}
+
+class _TitleScreenState extends State<TitleScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..forward();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    return Scaffold(
+      body: CustomPaint(
+        painter: const _TitleBackgroundPainter(),
+        child: Stack(
+          children: [
+            const Positioned(top: 82, right: 24, child: _HandmadeStar()),
+            Positioned(
+              top: 178,
+              right: -24,
+              child: Transform.rotate(
+                angle: -.11,
+                child: Container(
+                  width: 112,
+                  height: 32,
+                  color: const Color(0x99D8B99F),
+                ),
+              ),
+            ),
+            SafeArea(
+              child: FadeTransition(
+                opacity: fade,
+                child: SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0, 0.04),
+                    end: Offset.zero,
+                  ).animate(fade),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(26, 22, 26, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: _BrandMark(),
+                        ),
+                        const Spacer(flex: 2),
+                        Transform.rotate(
+                          angle: -.012,
+                          child: Container(
+                            padding: const EdgeInsets.fromLTRB(20, 24, 20, 25),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFFCF7),
+                              border: Border.all(
+                                color: const Color(0xFFDED4CA),
+                              ),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(8),
+                                topRight: Radius.circular(24),
+                                bottomLeft: Radius.circular(22),
+                                bottomRight: Radius.circular(10),
+                              ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x1C201B18),
+                                  blurRadius: 24,
+                                  offset: Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'IMPROVISATION NOTE  /  01',
+                                  style: TextStyle(
+                                    color: Color(0xFFE18379),
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                Text(
+                                  'エチュード\nメーカー',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displaySmall
+                                      ?.copyWith(
+                                        color: const Color(0xFF282528),
+                                        fontWeight: FontWeight.w800,
+                                        height: 1.35,
+                                        letterSpacing: -.8,
+                                      ),
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  '人数とジャンルを選ぶだけ。\n役・場所・秘密まで、即興のお題を一瞬で。',
+                                  style: TextStyle(
+                                    color: Color(0xFF746D68),
+                                    height: 1.7,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        const _TitleFeatureRow(),
+                        const Spacer(flex: 3),
+                        _TitleStartButton(
+                          onPressed: () =>
+                              Navigator.of(context).pushReplacement(
+                                PageRouteBuilder(
+                                  transitionDuration: const Duration(
+                                    milliseconds: 500,
+                                  ),
+                                  pageBuilder: (_, _, _) =>
+                                      const GeneratorScreen(),
+                                  transitionsBuilder:
+                                      (_, animation, _, child) =>
+                                          FadeTransition(
+                                            opacity: animation,
+                                            child: child,
+                                          ),
+                                ),
+                              ),
+                        ),
+                        const SizedBox(height: 13),
+                        const Text(
+                          '登録不要  /  すぐに使えます',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF8D837D),
+                            fontSize: 11,
+                            letterSpacing: .5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TitleBackgroundPainter extends CustomPainter {
+  const _TitleBackgroundPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawColor(const Color(0xFFF5F0E8), BlendMode.src);
+    final dotPaint = Paint()..color = const Color(0xFFDDD5CB);
+    for (double y = 16; y < size.height; y += 24) {
+      for (double x = 16; x < size.width; x += 24) {
+        canvas.drawCircle(Offset(x, y), .65, dotPaint);
+      }
+    }
+    final line = Paint()
+      ..color = const Color(0xFFE1A19A).withValues(alpha: .35)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
+    final path = Path()
+      ..moveTo(-20, size.height * .72)
+      ..cubicTo(
+        size.width * .18,
+        size.height * .65,
+        size.width * .24,
+        size.height * .8,
+        size.width * .44,
+        size.height * .73,
+      );
+    canvas.drawPath(path, line);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _HandmadeStar extends StatelessWidget {
+  const _HandmadeStar();
+
+  @override
+  Widget build(BuildContext context) => Transform.rotate(
+    angle: .12,
+    child: const Text(
+      '✦',
+      style: TextStyle(color: Color(0xFFE18379), fontSize: 36),
+    ),
+  );
+}
+
+class _TitleStartButton extends StatelessWidget {
+  const _TitleStartButton({required this.onPressed});
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: const Color(0xFF282528),
+    borderRadius: const BorderRadius.only(
+      topLeft: Radius.circular(14),
+      topRight: Radius.circular(25),
+      bottomLeft: Radius.circular(24),
+      bottomRight: Radius.circular(13),
+    ),
+    child: InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(20),
+      child: const SizedBox(
+        height: 64,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'はじめる',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            SizedBox(width: 12),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Color(0xFFE99A90),
+                shape: BoxShape.circle,
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(7),
+                child: Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Color(0xFF282528),
+                  size: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _BrandMark extends StatelessWidget {
+  const _BrandMark();
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE99A90),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(10),
+            topRight: Radius.circular(16),
+            bottomLeft: Radius.circular(15),
+            bottomRight: Radius.circular(9),
+          ),
+        ),
+        child: const Icon(
+          Icons.theater_comedy_rounded,
+          color: Color(0xFF282528),
+        ),
+      ),
+      const SizedBox(width: 13),
+      const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'ÉTUDE',
+            style: TextStyle(
+              color: Color(0xFF282528),
+              fontWeight: FontWeight.w800,
+              letterSpacing: 3,
+              fontSize: 17,
+            ),
+          ),
+          Text(
+            'PROMPT STUDIO',
+            style: TextStyle(
+              color: Color(0xFF8D837D),
+              letterSpacing: 1.7,
+              fontSize: 9,
+            ),
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+class _TitleFeatureRow extends StatelessWidget {
+  const _TitleFeatureRow();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    decoration: BoxDecoration(
+      color: const Color(0xFFEDE5DB),
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(18),
+        topRight: Radius.circular(11),
+        bottomLeft: Radius.circular(12),
+        bottomRight: Radius.circular(19),
+      ),
+      border: Border.all(color: const Color(0xFFD8CEC4)),
+    ),
+    child: const Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        _TitleFeature(icon: Icons.groups_rounded, label: '2〜4人'),
+        _TitleFeature(icon: Icons.shuffle_rounded, label: 'ランダム'),
+        _TitleFeature(icon: Icons.bookmark_rounded, label: '保存'),
+      ],
+    ),
+  );
+}
+
+class _TitleFeature extends StatelessWidget {
+  const _TitleFeature({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      Icon(icon, color: const Color(0xFF9D554F), size: 21),
+      const SizedBox(height: 5),
+      Text(
+        label,
+        style: const TextStyle(color: Color(0xFF4A4542), fontSize: 12),
+      ),
+    ],
+  );
+}
+
+class GeneratorScreen extends StatefulWidget {
+  const GeneratorScreen({super.key});
+
+  @override
+  State<GeneratorScreen> createState() => _GeneratorScreenState();
+}
+
+class _GeneratorScreenState extends State<GeneratorScreen> {
+  final _generator = PromptGenerator();
+  final _favoritesRepository = FavoritesRepository();
+  int _players = 2;
+  String _genre = '日常';
+  int _duration = 5;
+  EtudePrompt? _prompt;
+  List<EtudePrompt> _favorites = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    final favorites = await _favoritesRepository.load();
+    if (mounted) setState(() => _favorites = favorites);
+  }
+
+  void _generate() {
+    setState(() {
+      _prompt = _generator.generate(
+        players: _players,
+        genre: _genre,
+        durationMinutes: _duration,
+      );
+    });
+  }
+
+  Future<void> _toggleFavorite(EtudePrompt prompt) async {
+    final exists = _favorites.any((item) => item.id == prompt.id);
+    setState(() {
+      _favorites = exists
+          ? _favorites.where((item) => item.id != prompt.id).toList()
+          : [prompt, ..._favorites];
+    });
+    await _favoritesRepository.save(_favorites);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF5F0E8),
+        title: const Text(
+          'ÉTUDE',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 4,
+          ),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'お気に入り',
+            icon: Badge(
+              isLabelVisible: _favorites.isNotEmpty,
+              label: Text('${_favorites.length}'),
+              child: const Icon(Icons.bookmark_rounded),
+            ),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => FavoritesScreen(
+                  prompts: _favorites,
+                  onRemove: _toggleFavorite,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: CustomPaint(
+        painter: const _NotebookBackgroundPainter(),
+        child: SafeArea(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+            children: [
+              const Text(
+                '今日のエチュード',
+                style: TextStyle(
+                  color: Color(0xFF262326),
+                  fontSize: 30,
+                  height: 1.2,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1,
+                ),
+              ),
+              const SizedBox(height: 18),
+              _SettingsCard(
+                players: _players,
+                genre: _genre,
+                duration: _duration,
+                onPlayersChanged: (value) => setState(() => _players = value),
+                onGenreChanged: (value) => setState(() => _genre = value),
+                onDurationChanged: (value) => setState(() => _duration = value),
+              ),
+              const SizedBox(height: 18),
+              _GenerateButton(hasPrompt: _prompt != null, onPressed: _generate),
+              const SizedBox(height: 24),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 360),
+                switchInCurve: Curves.easeOutCubic,
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween(
+                      begin: const Offset(0, .04),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                ),
+                child: _prompt == null
+                    ? const _EmptyPrompt()
+                    : PromptCard(
+                        key: ValueKey(_prompt!.id),
+                        prompt: _prompt!,
+                        isFavorite: _favorites.any(
+                          (item) => item.id == _prompt!.id,
+                        ),
+                        onFavorite: () => _toggleFavorite(_prompt!),
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NotebookBackgroundPainter extends CustomPainter {
+  const _NotebookBackgroundPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawColor(const Color(0xFFF5F0E8), BlendMode.src);
+    final dotPaint = Paint()..color = const Color(0xFFDDD5CB);
+    for (double y = 18; y < size.height; y += 24) {
+      for (double x = 18; x < size.width; x += 24) {
+        canvas.drawCircle(Offset(x, y), .65, dotPaint);
+      }
+    }
+    final doodle = Paint()
+      ..color = const Color(0xFFE1A19A).withValues(alpha: .22)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawArc(
+      Rect.fromCircle(center: Offset(size.width + 8, 55), radius: 78),
+      1.4,
+      3.5,
+      false,
+      doodle,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _GenerateButton extends StatelessWidget {
+  const _GenerateButton({required this.hasPrompt, required this.onPressed});
+  final bool hasPrompt;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: const Color(0xFF282528),
+    borderRadius: const BorderRadius.only(
+      topLeft: Radius.circular(15),
+      topRight: Radius.circular(25),
+      bottomLeft: Radius.circular(24),
+      bottomRight: Radius.circular(14),
+    ),
+    child: InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE99A90),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.casino_rounded, color: Color(0xFF282528)),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    hasPrompt ? 'もう一度' : 'お題をつくる',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Text(
+                    'TAP TO SHUFFLE',
+                    style: TextStyle(
+                      color: Color(0xFFBDB5B1),
+                      fontSize: 9,
+                      letterSpacing: 1.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _SettingsCard extends StatelessWidget {
+  const _SettingsCard({
+    required this.players,
+    required this.genre,
+    required this.duration,
+    required this.onPlayersChanged,
+    required this.onGenreChanged,
+    required this.onDurationChanged,
+  });
+
+  final int players;
+  final String genre;
+  final int duration;
+  final ValueChanged<int> onPlayersChanged;
+  final ValueChanged<String> onGenreChanged;
+  final ValueChanged<int> onDurationChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFCF7),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(26),
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(15),
+        ),
+        border: Border.all(color: const Color(0xFFE4DBD1)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x160F0D0C),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: Color(0xFFE99A90),
+                    shape: BoxShape.circle,
+                  ),
+                  child: SizedBox(width: 9, height: 9),
+                ),
+                SizedBox(width: 9),
+                Text(
+                  'HOW SHALL WE PLAY?',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const _OptionLabel(number: '01', label: '人数'),
+            const SizedBox(height: 9),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final value in [2, 3, 4])
+                  _PaperChoice(
+                    label: '$value人',
+                    selected: players == value,
+                    onTap: () => onPlayersChanged(value),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 19),
+            const _OptionLabel(number: '02', label: 'ジャンル'),
+            const SizedBox(height: 9),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final value in PromptGenerator.genres)
+                  _PaperChoice(
+                    label: value,
+                    selected: genre == value,
+                    onTap: () => onGenreChanged(value),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 19),
+            const _OptionLabel(number: '03', label: '時間'),
+            const SizedBox(height: 9),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final value in PromptGenerator.durations)
+                  _PaperChoice(
+                    label: '$value分',
+                    selected: duration == value,
+                    onTap: () => onDurationChanged(value),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OptionLabel extends StatelessWidget {
+  const _OptionLabel({required this.number, required this.label});
+  final String number;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Text(
+        number,
+        style: const TextStyle(
+          color: Color(0xFFE18379),
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      const SizedBox(width: 9),
+      Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+    ],
+  );
+}
+
+class _PaperChoice extends StatelessWidget {
+  const _PaperChoice({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF282528) : const Color(0xFFF4EEE6),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(8),
+            topRight: Radius.circular(selected ? 14 : 10),
+            bottomLeft: Radius.circular(selected ? 13 : 10),
+            bottomRight: const Radius.circular(8),
+          ),
+          border: Border.all(
+            color: selected ? const Color(0xFF282528) : const Color(0xFFE0D6CB),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : const Color(0xFF4A4542),
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _EmptyPrompt extends StatelessWidget {
+  const _EmptyPrompt();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+    decoration: BoxDecoration(
+      color: const Color(0x66FFFCF7),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: const Color(0xFFD8CEC4)),
+    ),
+    child: const Column(
+      children: [
+        Text('✦', style: TextStyle(color: Color(0xFFE18379), fontSize: 28)),
+        SizedBox(height: 10),
+        Text(
+          'まだ白紙です。\n偶然から、最初の一言を。',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Color(0xFF746D68), height: 1.65),
+        ),
+      ],
+    ),
+  );
+}
+
+class PromptCard extends StatelessWidget {
+  const PromptCard({
+    super.key,
+    required this.prompt,
+    required this.isFavorite,
+    required this.onFavorite,
+  });
+
+  final EtudePrompt prompt;
+  final bool isFavorite;
+  final VoidCallback onFavorite;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFCF7),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(24),
+          bottomLeft: Radius.circular(25),
+          bottomRight: Radius.circular(12),
+        ),
+        border: Border.all(color: const Color(0xFFDED4CA)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1F201B18),
+            blurRadius: 22,
+            offset: Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            top: -7,
+            left: 54,
+            right: 54,
+            child: Container(
+              height: 18,
+              decoration: BoxDecoration(
+                color: const Color(0xFFD8B99F).withValues(alpha: .68),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 26, 22, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        prompt.title,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          height: 1.3,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -.5,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: isFavorite ? 'お気に入りから削除' : 'お気に入りに追加',
+                      onPressed: onFavorite,
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFF3E9DF),
+                      ),
+                      icon: Icon(
+                        isFavorite
+                            ? Icons.bookmark_rounded
+                            : Icons.bookmark_border_rounded,
+                        color: const Color(0xFFE18379),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${prompt.players}人・${prompt.genre}・${prompt.durationMinutes}分',
+                  style: const TextStyle(
+                    color: Color(0xFF8B817B),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: .6,
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Divider(color: Color(0xFFE3D8CE), height: 1),
+                ),
+                _PromptRow(
+                  icon: Icons.groups_rounded,
+                  label: '関係',
+                  value: prompt.relationship,
+                ),
+                _PromptRow(
+                  icon: Icons.place_rounded,
+                  label: '場所',
+                  value: prompt.place,
+                ),
+                _PromptRow(
+                  icon: Icons.bolt_rounded,
+                  label: '状況',
+                  value: prompt.situation,
+                ),
+                _PromptRow(
+                  icon: Icons.person_rounded,
+                  label: '役',
+                  value: '${prompt.players}人分の役を、開始時に個別表示します',
+                ),
+                _PromptRow(
+                  icon: Icons.lock_rounded,
+                  label: '秘密',
+                  value: '役を引いた本人だけに表示します',
+                ),
+                _PromptRow(
+                  icon: Icons.rule_rounded,
+                  label: '制約',
+                  value: prompt.constraint,
+                ),
+                const SizedBox(height: 4),
+                FilledButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => RoleDrawScreen(prompt: prompt),
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF282528),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(56),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(21),
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(11),
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: const Text(
+                    'このエチュードを実行する',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class RoleDrawScreen extends StatefulWidget {
+  const RoleDrawScreen({super.key, required this.prompt});
+  final EtudePrompt prompt;
+
+  @override
+  State<RoleDrawScreen> createState() => _RoleDrawScreenState();
+}
+
+class _RoleDrawScreenState extends State<RoleDrawScreen> {
+  late final List<String> _roles = List<String>.from(widget.prompt.characters)
+    ..shuffle(Random());
+  int _playerIndex = 0;
+  bool _revealed = false;
+  bool _ready = false;
+
+  String get _playerName => '${_japaneseNumber(_playerIndex + 1)}人目';
+
+  static String _japaneseNumber(int value) => switch (value) {
+    1 => '一',
+    2 => '二',
+    3 => '三',
+    4 => '四',
+    _ => '$value',
+  };
+
+  void _advance() {
+    if (!_revealed) {
+      setState(() => _revealed = true);
+      return;
+    }
+    if (_playerIndex == _roles.length - 1) {
+      setState(() => _ready = true);
+      return;
+    }
+    setState(() {
+      _playerIndex++;
+      _revealed = false;
+    });
+  }
+
+  void _reviewRoles() {
+    setState(() {
+      _playerIndex = 0;
+      _revealed = false;
+      _ready = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      backgroundColor: const Color(0xFFF5F0E8),
+      title: const Text(
+        '役を引く',
+        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+      ),
+    ),
+    body: CustomPaint(
+      painter: const _NotebookBackgroundPainter(),
+      child: SizedBox.expand(
+        child: SafeArea(
+          top: false,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: _ready ? _buildReady() : _buildDraw(),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  Widget _buildDraw() => CustomScrollView(
+    key: ValueKey('$_playerIndex-$_revealed'),
+    slivers: [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 30),
+        sliver: SliverFillRemaining(
+          hasScrollBody: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '${_playerIndex + 1} / ${_roles.length}',
+                style: const TextStyle(
+                  color: Color(0xFFE18379),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _revealed ? 'あなたの役です' : '$_playerNameの方へ',
+                style: const TextStyle(
+                  color: Color(0xFF282528),
+                  fontSize: 29,
+                  height: 1.25,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -.8,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _revealed
+                    ? '役を覚えたら、画面を伏せて次の人へ渡してください。'
+                    : 'ほかの人に見えないように、画面を受け取ってください。',
+                style: const TextStyle(color: Color(0xFF746D68), height: 1.55),
+              ),
+              const Spacer(),
+              _RolePaper(
+                revealed: _revealed,
+                role: _roles[_playerIndex],
+                playerName: _playerName,
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                onPressed: _advance,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF282528),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(62),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                icon: Icon(
+                  _revealed
+                      ? Icons.arrow_forward_rounded
+                      : Icons.touch_app_rounded,
+                ),
+                label: Text(
+                  !_revealed
+                      ? '$_playerNameの役を引く'
+                      : _playerIndex == _roles.length - 1
+                      ? '配役完了'
+                      : '次の人へ',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
+
+  Widget _buildReady() => Padding(
+    key: const ValueKey('ready'),
+    padding: const EdgeInsets.fromLTRB(24, 36, 24, 30),
+    child: SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            '✦  READY',
+            style: TextStyle(
+              color: Color(0xFFE18379),
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.8,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            '配役が決まりました。',
+            style: TextStyle(
+              fontSize: 29,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'お互いの役は秘密のまま。\n最初の一言から、物語を始めましょう。',
+            style: TextStyle(color: Color(0xFF746D68), height: 1.6),
+          ),
+          const SizedBox(height: 28),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFCF7),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFFDED4CA)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.prompt.title,
+                  style: const TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text('関係　${widget.prompt.relationship}'),
+                const SizedBox(height: 7),
+                Text('制約　${widget.prompt.constraint}'),
+                const SizedBox(height: 7),
+                Text('時間　${widget.prompt.durationMinutes}分'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+          OutlinedButton.icon(
+            onPressed: _reviewRoles,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF282528),
+              minimumSize: const Size.fromHeight(56),
+              side: const BorderSide(color: Color(0xFFBEB3AA)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
+            icon: const Icon(Icons.replay_rounded),
+            label: const Text(
+              '役をもう一度見返す',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(height: 10),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => PerformanceScreen(prompt: widget.prompt),
+              ),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF282528),
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(62),
+            ),
+            icon: const Icon(Icons.theater_comedy_rounded),
+            label: const Text(
+              'エチュードを始める',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class PerformanceScreen extends StatefulWidget {
+  const PerformanceScreen({super.key, required this.prompt});
+  final EtudePrompt prompt;
+
+  @override
+  State<PerformanceScreen> createState() => _PerformanceScreenState();
+}
+
+class _PerformanceScreenState extends State<PerformanceScreen> {
+  Timer? _timer;
+  late int _secondsLeft = widget.prompt.durationMinutes * 60;
+  bool _running = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || !_running) return;
+      if (_secondsLeft <= 1) {
+        setState(() => _secondsLeft = 0);
+        _finish();
+      } else {
+        setState(() => _secondsLeft--);
+      }
+    });
+  }
+
+  void _toggleTimer() => setState(() => _running = !_running);
+
+  void _finish() {
+    _timer?.cancel();
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => ReflectionScreen(prompt: widget.prompt),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String get _timeLabel {
+    final minutes = _secondsLeft ~/ 60;
+    final seconds = _secondsLeft % 60;
+    return '$minutes:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: const Color(0xFFF5F0E8),
+      title: const Text(
+        '実演中',
+        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+      ),
+      actions: [
+        TextButton(onPressed: _finish, child: const Text('終了する')),
+        const SizedBox(width: 8),
+      ],
+    ),
+    body: CustomPaint(
+      painter: const _NotebookBackgroundPainter(),
+      child: SafeArea(
+        top: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(22, 24, 22, 36),
+          children: [
+            const Text(
+              'NOW PLAYING  ●',
+              style: TextStyle(
+                color: Color(0xFFE18379),
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.7,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              widget.prompt.title,
+              style: const TextStyle(
+                color: Color(0xFF282528),
+                fontSize: 25,
+                height: 1.3,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -.6,
+              ),
+            ),
+            const SizedBox(height: 22),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 28),
+              decoration: BoxDecoration(
+                color: const Color(0xFF282528),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(13),
+                  topRight: Radius.circular(28),
+                  bottomLeft: Radius.circular(26),
+                  bottomRight: Radius.circular(12),
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x25201B18),
+                    blurRadius: 22,
+                    offset: Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    _running ? '残り時間' : '一時停止中',
+                    style: const TextStyle(
+                      color: Color(0xFFE99A90),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _timeLabel,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 64,
+                      height: 1.1,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  FilledButton.icon(
+                    onPressed: _toggleTimer,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFE99A90),
+                      foregroundColor: const Color(0xFF282528),
+                    ),
+                    icon: Icon(
+                      _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    ),
+                    label: Text(_running ? '一時停止' : '再開'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 22),
+            const Text(
+              '全員に見せてよい条件',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 10),
+            _CommonConditionCard(
+              icon: Icons.groups_rounded,
+              label: '関係',
+              value: widget.prompt.relationship,
+            ),
+            const SizedBox(height: 9),
+            _CommonConditionCard(
+              icon: Icons.place_rounded,
+              label: '場所',
+              value: widget.prompt.place,
+            ),
+            const SizedBox(height: 9),
+            _CommonConditionCard(
+              icon: Icons.bolt_rounded,
+              label: '状況',
+              value: widget.prompt.situation,
+            ),
+            const SizedBox(height: 9),
+            _CommonConditionCard(
+              icon: Icons.rule_rounded,
+              label: '制約',
+              value: widget.prompt.constraint,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _CommonConditionCard extends StatelessWidget {
+  const _CommonConditionCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFFCF7),
+      borderRadius: BorderRadius.circular(15),
+      border: Border.all(color: const Color(0xFFDED4CA)),
+    ),
+    child: Row(
+      children: [
+        Icon(icon, color: const Color(0xFF9D554F), size: 20),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 38,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF9A8E87),
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Expanded(child: Text(value, style: const TextStyle(height: 1.4))),
+      ],
+    ),
+  );
+}
+
+class ReflectionScreen extends StatelessWidget {
+  const ReflectionScreen({super.key, required this.prompt});
+  final EtudePrompt prompt;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: const Color(0xFFF5F0E8),
+      title: const Text(
+        '振り返り',
+        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+      ),
+    ),
+    body: CustomPaint(
+      painter: const _NotebookBackgroundPainter(),
+      child: SafeArea(
+        top: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(22, 30, 22, 36),
+          children: [
+            const Text(
+              'おつかれさまでした。',
+              style: TextStyle(
+                fontSize: 29,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -.8,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '答え合わせではなく、起きた物語をみんなで眺めてみましょう。',
+              style: TextStyle(color: Color(0xFF746D68), height: 1.6),
+            ),
+            const SizedBox(height: 26),
+            Container(
+              padding: const EdgeInsets.all(21),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFCF7),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(10),
+                  topRight: Radius.circular(24),
+                  bottomLeft: Radius.circular(22),
+                  bottomRight: Radius.circular(11),
+                ),
+                border: Border.all(color: const Color(0xFFDED4CA)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'TALK ABOUT IT',
+                    style: TextStyle(
+                      color: Color(0xFFE18379),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  for (final entry in _questions.indexed)
+                    _ReflectionQuestion(
+                      number: '${entry.$1 + 1}'.padLeft(2, '0'),
+                      text: entry.$2,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 25),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => RoleDrawScreen(prompt: prompt),
+                ),
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF282528),
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(58),
+              ),
+              icon: const Icon(Icons.replay_rounded),
+              label: const Text('同じお題でもう一度'),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).pop(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF282528),
+                minimumSize: const Size.fromHeight(56),
+                side: const BorderSide(color: Color(0xFFBEB3AA)),
+              ),
+              icon: const Icon(Icons.shuffle_rounded),
+              label: const Text('新しいお題を作る'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  List<String> get _questions => prompt.reflectionQuestions.isNotEmpty
+      ? prompt.reflectionQuestions
+      : const ['いちばん意外だった展開は？', '相手の演技で印象に残った瞬間は？', 'もう一度なら、何を変えてみたい？'];
+}
+
+class _ReflectionQuestion extends StatelessWidget {
+  const _ReflectionQuestion({required this.number, required this.text});
+  final String number;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 18),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          number,
+          style: const TextStyle(
+            color: Color(0xFFE18379),
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(width: 13),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontWeight: FontWeight.w700, height: 1.45),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _RolePaper extends StatelessWidget {
+  const _RolePaper({
+    required this.revealed,
+    required this.role,
+    required this.playerName,
+  });
+  final bool revealed;
+  final String role;
+  final String playerName;
+
+  @override
+  Widget build(BuildContext context) => AnimatedContainer(
+    duration: const Duration(milliseconds: 280),
+    constraints: const BoxConstraints(minHeight: 220),
+    padding: const EdgeInsets.all(28),
+    decoration: BoxDecoration(
+      color: revealed ? const Color(0xFFFFFCF7) : const Color(0xFF282528),
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(10),
+        topRight: Radius.circular(28),
+        bottomLeft: Radius.circular(26),
+        bottomRight: Radius.circular(12),
+      ),
+      border: Border.all(
+        color: revealed ? const Color(0xFFDED4CA) : const Color(0xFF282528),
+      ),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x20201B18),
+          blurRadius: 22,
+          offset: Offset(0, 10),
+        ),
+      ],
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          revealed ? 'YOUR ROLE' : 'ROLE  /  $playerName',
+          style: TextStyle(
+            color: revealed ? const Color(0xFFE18379) : const Color(0xFFE99A90),
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.8,
+          ),
+        ),
+        const SizedBox(height: 18),
+        if (revealed)
+          Text(
+            role,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF282528),
+              fontSize: 24,
+              height: 1.5,
+              fontWeight: FontWeight.w800,
+            ),
+          )
+        else
+          const Icon(
+            Icons.question_mark_rounded,
+            color: Colors.white,
+            size: 54,
+          ),
+      ],
+    ),
+  );
+}
+
+class _PromptRow extends StatelessWidget {
+  const _PromptRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3DED9),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(icon, size: 18, color: const Color(0xFF9D554F)),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Color(0xFF9A8E87),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(value, style: const TextStyle(height: 1.45)),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class FavoritesScreen extends StatefulWidget {
+  const FavoritesScreen({
+    super.key,
+    required this.prompts,
+    required this.onRemove,
+  });
+  final List<EtudePrompt> prompts;
+  final Future<void> Function(EtudePrompt) onRemove;
+
+  @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  late final List<EtudePrompt> _prompts = List.from(widget.prompts);
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      backgroundColor: const Color(0xFFF5F0E8),
+      title: const Text(
+        'お気に入り',
+        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+      ),
+    ),
+    body: CustomPaint(
+      painter: const _NotebookBackgroundPainter(),
+      child: SizedBox.expand(
+        child: _prompts.isEmpty
+            ? const _EmptyFavorites()
+            : ListView.separated(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                itemCount: _prompts.length + 1,
+                separatorBuilder: (_, index) =>
+                    SizedBox(height: index == 0 ? 22 : 14),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'とっておきの、お題。',
+                          style: TextStyle(
+                            color: Color(0xFF282528),
+                            fontSize: 28,
+                            height: 1.25,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -.8,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'また演じたい偶然を、ここに集めておけます。',
+                          style: TextStyle(
+                            color: Color(0xFF746D68),
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  final prompt = _prompts[index - 1];
+                  return _FavoriteCard(
+                    prompt: prompt,
+                    index: index,
+                    onDelete: () async {
+                      setState(() => _prompts.remove(prompt));
+                      await widget.onRemove(prompt);
+                    },
+                  );
+                },
+              ),
+      ),
+    ),
+  );
+}
+
+class _FavoriteCard extends StatelessWidget {
+  const _FavoriteCard({
+    required this.prompt,
+    required this.index,
+    required this.onDelete,
+  });
+  final EtudePrompt prompt;
+  final int index;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFFCF7),
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(9),
+        topRight: Radius.circular(21),
+        bottomLeft: Radius.circular(20),
+        bottomRight: Radius.circular(11),
+      ),
+      border: Border.all(color: const Color(0xFFDED4CA)),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x14201B18),
+          blurRadius: 16,
+          offset: Offset(0, 7),
+        ),
+      ],
+    ),
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(18, 17, 12, 17),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF3DED9),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              index.toString().padLeft(2, '0'),
+              style: const TextStyle(
+                color: Color(0xFF9D554F),
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: .5,
+              ),
+            ),
+          ),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  prompt.title,
+                  style: const TextStyle(
+                    color: Color(0xFF282528),
+                    fontSize: 17,
+                    height: 1.35,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  '${prompt.players}人・${prompt.genre}・${prompt.durationMinutes}分',
+                  style: const TextStyle(
+                    color: Color(0xFFE18379),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: .6,
+                  ),
+                ),
+                const SizedBox(height: 9),
+                Text(
+                  '${prompt.relationship}  /  ${prompt.place}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF746D68),
+                    fontSize: 12,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => RoleDrawScreen(prompt: prompt),
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF282528),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    side: const BorderSide(color: Color(0xFFBEB3AA)),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                        topRight: Radius.circular(14),
+                        bottomLeft: Radius.circular(13),
+                        bottomRight: Radius.circular(8),
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                  label: const Text(
+                    'このお題を実行する',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: '削除',
+            onPressed: onDelete,
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFF3E9DF),
+              foregroundColor: const Color(0xFF9D554F),
+            ),
+            icon: const Icon(Icons.delete_outline_rounded, size: 20),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _EmptyFavorites extends StatelessWidget {
+  const _EmptyFavorites();
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(28),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 34),
+        decoration: BoxDecoration(
+          color: const Color(0xCCFFFCF7),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(12),
+            topRight: Radius.circular(25),
+            bottomLeft: Radius.circular(23),
+            bottomRight: Radius.circular(10),
+          ),
+          border: Border.all(color: const Color(0xFFD8CEC4)),
+        ),
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.bookmark_border_rounded,
+              color: Color(0xFFE18379),
+              size: 36,
+            ),
+            SizedBox(height: 14),
+            Text(
+              '保存したお題はありません',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(height: 7),
+            Text(
+              '気に入った偶然を見つけたら、\nしおりを挟んでおきましょう。',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF746D68), height: 1.55),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
