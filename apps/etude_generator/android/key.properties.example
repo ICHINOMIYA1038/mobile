@@ -1,0 +1,18 @@
+# Google Play 提出用のリリース署名鍵の設定。
+#
+# このファイルをコピーして android/key.properties を作り、実際の値を入れる。
+# key.properties と .jks は .gitignore 済み。絶対にリポジトリに入れないこと。
+#
+# 鍵の作成（パスワードは任意のものを控えておく）:
+#
+#   keytool -genkey -v -keystore ~/etude-upload-key.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# 重要: この .jks とパスワードを失うと、以後アプリを更新できなくなる。
+# （Play の App Signing に登録済みなら Google 側で再発行できる場合もあるが、当てにしないこと）
+# 必ずパスワードマネージャ等に保管し、バックアップを取ること。
+
+storePassword=ここにキーストアのパスワード
+keyPassword=ここに鍵のパスワード
+keyAlias=upload
+storeFile=/Users/あなた/etude-upload-key.jks
