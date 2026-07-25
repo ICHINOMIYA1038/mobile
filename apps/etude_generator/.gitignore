@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ストア用スクリーンショット（tool/screenshots.sh で再生成できる生成物）
+/screenshots/

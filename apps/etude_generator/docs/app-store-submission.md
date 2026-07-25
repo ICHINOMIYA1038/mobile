@@ -27,7 +27,7 @@ flutter test
 | ストア掲載文（説明・キーワード・カテゴリ） | 済 | `docs/store-listing.md` |
 | Androidのリリース署名鍵 | 済 | `~/etude-upload-key.jks` を生成し `android/key.properties`（gitignore済み）に設定（2026-07-25）。`flutter build apk --release` → `apksigner verify --print-certs` で新しい鍵の証明書指紋（SHA-256: `92a0db2f...`）が使われていることを確認済み。**鍵とパスワードは開発者自身で必ずバックアップを取ること**（紛失すると以後アプリを更新できなくなる） |
 | **Xcodeで Team を確認** | 済 | `DEVELOPMENT_TEAM = SZFUZ58P49` 設定済み。実機ビルド・アーカイブ前に一度Xcodeで開いて証明書エラーがないか確認すること |
-| **ストア用スクリーンショット** | **未** | 下記「4. スクリーンショット」参照。自動生成の仕組みは未整備 |
+| ストア用スクリーンショット | 済 | `./tool/screenshots.sh` で自動生成（6.9インチ 1320×2868 で確認済み）。下記「4. スクリーンショット」参照 |
 | **App Store Connect / Google Play Console 上の情報入力** | **未** | アプリの新規作成、年齢区分、App Privacy 申告（「データを収集しない」を選択）、審査メモの貼り付けなど、コンソール側の操作は本ドキュメントの範囲外（開発者が行うこと） |
 | **有料アプリ契約・納税・銀行口座（Apple）** | 該当なし | 無料アプリ・IAPなしのため不要 |
 
@@ -106,15 +106,32 @@ App Store Connect の「App のプライバシー」、Google Play の「デー�
 
 ## 4. スクリーンショット
 
-未整備。用意する場合の想定構成（4枚程度）:
+**自動生成できる。手で撮らないこと。**
 
-1. ホーム画面（タイトル・キャッチコピー）
-2. 生成画面（人数・ジャンル・時間の選択UI）
-3. お題の結果画面（場所・状況・秘密・制約）
-4. 役を引く画面 or お気に入り一覧
+```sh
+./tool/screenshots.sh                      # iPhone 16 Pro Max = 6.9インチ（1320×2868）
+./tool/screenshots.sh "iPhone 11 Pro Max"  # 6.5インチ（1242×2688）が要る場合
+```
 
-takken_simple の `tool/screenshots.sh` / `integration_test/screenshots_test.dart` が
-自動生成の実装例として参考になる（本アプリ用には未移植）。
+`screenshots/` に6枚書き出される。撮る内容は `integration_test/screenshots_test.dart`。
+
+1. `01_home` — タイトル画面（キャッチコピー）
+2. `02_settings` — 生成画面（人数・ジャンル・時間の選択UI、3人・ミステリー・10分を選択済み）
+3. `03_result` — お題の結果画面（場所・状況・秘密・制約が出そろった状態）
+4. `04_role_draw` — 役を引く画面（自分だけに見せる役の内容）
+5. `05_performance` — 実演画面（タイマーと全員に見せてよい条件）
+6. `06_reflection` — 振り返り画面（演じた後の問い）
+
+生成物なので `.gitignore` 済み。UI を変えたら撮り直すこと。
+
+takken_simple と同じ「シミュレータのtmpディレクトリにマーカーファイルを置き、
+`tool/screenshots.sh` の常駐プロセスが `xcrun simctl io screenshot` で撮る」方式。
+`IntegrationTestWidgetsFlutterBinding.takeScreenshot()` は iOS + Impeller で単色背景しか
+返さない不具合があるため使っていない。
+
+撮影前にシミュレータのステータスバーに他アプリの再生中表示（例: Chromeで再生中の
+動画/音楽のNow Playing表示）が映り込むことがある。気になる場合はホスト側の再生を
+止めるか、`xcrun simctl erase <UDID>` でシミュレータを初期化してから撮り直すこと。
 
 ## 5. バージョン管理
 
