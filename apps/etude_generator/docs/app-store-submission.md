@@ -25,7 +25,7 @@ flutter test
 | プライバシーポリシーの公開URL | 済 | https://nullstead.com/apps/etude/privacy （2026-07-25公開）。実体は `~/nullstead/web` の別リポジトリ |
 | 問い合わせ先 | 済 | support@gikyokutosyokan.com（privacy-policy.md に記載） |
 | ストア掲載文（説明・キーワード・カテゴリ） | 済 | `docs/store-listing.md` |
-| **Androidのリリース署名鍵** | **未（重大）** | `android/app/build.gradle.kts` の `signingConfig` が `debug` のまま。Google Play への提出には本番鍵が必須。鍵の作成・保管は開発者自身の判断で行うこと（このドキュメントでは自動生成しない） |
+| Androidのリリース署名鍵 | 済 | `~/etude-upload-key.jks` を生成し `android/key.properties`（gitignore済み）に設定（2026-07-25）。`flutter build apk --release` → `apksigner verify --print-certs` で新しい鍵の証明書指紋（SHA-256: `92a0db2f...`）が使われていることを確認済み。**鍵とパスワードは開発者自身で必ずバックアップを取ること**（紛失すると以後アプリを更新できなくなる） |
 | **Xcodeで Team を確認** | 済 | `DEVELOPMENT_TEAM = SZFUZ58P49` 設定済み。実機ビルド・アーカイブ前に一度Xcodeで開いて証明書エラーがないか確認すること |
 | **ストア用スクリーンショット** | **未** | 下記「4. スクリーンショット」参照。自動生成の仕組みは未整備 |
 | **App Store Connect / Google Play Console 上の情報入力** | **未** | アプリの新規作成、年齢区分、App Privacy 申告（「データを収集しない」を選択）、審査メモの貼り付けなど、コンソール側の操作は本ドキュメントの範囲外（開発者が行うこと） |
