@@ -63,13 +63,13 @@ support@gikyokutosyokan.com
 <!--
 公開手順のメモ（このコメントは公開ページには表示されません）:
 
-- takken_simple（同モノレポの別アプリ）は https://nullstead.com/apps/takken/privacy で
-  ~/nullstead/web (apps/homepage/src/pages/apps/takken/privacy.astro) にAstroページとして公開している。
-  本アプリも同様に ~/nullstead/web 側へ同内容のページを追加し、
-  https://nullstead.com/apps/etude/privacy のようなURLで公開する想定。
-- 公開後は、App Store Connect と Google Play Console の両方にこのURLを入力すること。
+- 本ページは https://nullstead.com/apps/etude/privacy で公開済み（2026-07-25）。
+  実体は別リポジトリ ~/nullstead/web の
+  apps/homepage/src/pages/apps/etude/privacy.astro（takken_simple と同じ構成）。
+  この .md を変更したら、そちらの内容も合わせて更新すること（同じ内容を手動で二重管理している）。
+- App Store Connect と Google Play Console の両方にこのURLを入力すること。
 - 広告・課金・通信の方針を変えた場合（SDKを追加する等）は、この文書と実装がずれないよう
   真っ先にここを更新すること。
-- AdMobの広告ユニットIDは `lib/data/ad_service.dart` の `_prodBanner*` 定数に設定する
-  （2026-07-25時点ではAdMobでのアプリ登録が未了のため、Googleのテスト用IDのままになっている）。
+- AdMobの広告ユニットIDは `lib/data/ad_service.dart` の `_prodBanner*` 定数に設定済み
+  （2026-07-25、AdMobで実アプリ・広告ユニットを発行済み）。
 -->

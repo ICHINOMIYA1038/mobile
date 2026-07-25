@@ -59,9 +59,8 @@
 - サポートURL: https://nullstead.com/apps/etude/privacy （専用サポートページがなければポリシーで可）
 - プライバシーポリシーURL: https://nullstead.com/apps/etude/privacy
 
-<!-- takken_simple にならい ~/nullstead/web 側へ公開する想定。URL確定後に本ファイルと
-     lib/ 側の定数（もしあれば）を揃えること。現状 lib/ にはプライバシーポリシーURLへの
-     リンクを持つ画面がないため、ストア掲載情報としてのみ使用する。 -->
+<!-- 2026-07-25 公開済み（~/nullstead/web、takken_simple と同じ構成）。現状 lib/ には
+     プライバシーポリシーURLへのリンクを持つ画面がないため、ストア掲載情報としてのみ使用する。 -->
 
 ---
 

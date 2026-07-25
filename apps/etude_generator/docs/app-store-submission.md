@@ -22,7 +22,7 @@ flutter test
 | 広告SDK（Google AdMob） | 済 | `google_mobile_ads` を組み込み済み。AdMobで「エチュードメーカー」(iOS/Android)を登録し、実アプリID・実広告ユニットIDに差し替え済み（2026-07-25）。新規広告ユニットは配信開始まで1時間程度かかる場合がある |
 | 課金/アナリティクスSDK | 該当なし | アプリ内課金・分析SDKは組み込んでいない |
 | プライバシーマニフェスト（iOS） | 済 | `ios/Runner/PrivacyInfo.xcprivacy`（Xcode登録済み）。トラッキングなし、収集データなし、UserDefaults使用理由(CA92.1)のみ申告 |
-| プライバシーポリシーの公開URL | **未** | 本文は `docs/privacy-policy.md` に作成済み。takken_simple と同様 `~/nullstead/web` 側へ公開し、実URLを本ファイルと `store-listing.md` に反映すること |
+| プライバシーポリシーの公開URL | 済 | https://nullstead.com/apps/etude/privacy （2026-07-25公開）。実体は `~/nullstead/web` の別リポジトリ |
 | 問い合わせ先 | 済 | support@gikyokutosyokan.com（privacy-policy.md に記載） |
 | ストア掲載文（説明・キーワード・カテゴリ） | 済 | `docs/store-listing.md` |
 | **Androidのリリース署名鍵** | **未（重大）** | `android/app/build.gradle.kts` の `signingConfig` が `debug` のまま。Google Play への提出には本番鍵が必須。鍵の作成・保管は開発者自身の判断で行うこと（このドキュメントでは自動生成しない） |
