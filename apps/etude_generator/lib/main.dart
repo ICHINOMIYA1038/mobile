@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -266,35 +265,38 @@ class _TitleStartButton extends StatelessWidget {
     child: InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(20),
-      child: const SizedBox(
-        height: 64,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'はじめる',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            SizedBox(width: 12),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: Color(0xFFE99A90),
-                shape: BoxShape.circle,
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(7),
-                child: Icon(
-                  Icons.arrow_forward_rounded,
-                  color: Color(0xFF282528),
-                  size: 18,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 64),
+        child: const Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'はじめる',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ),
-          ],
+              SizedBox(width: 12),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Color(0xFFE99A90),
+                  shape: BoxShape.circle,
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(7),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Color(0xFF282528),
+                    size: 18,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     ),
@@ -1003,8 +1005,7 @@ class RoleDrawScreen extends StatefulWidget {
 }
 
 class _RoleDrawScreenState extends State<RoleDrawScreen> {
-  late final List<String> _roles = List<String>.from(widget.prompt.characters)
-    ..shuffle(Random());
+  List<String> get _roles => widget.prompt.characters;
   int _playerIndex = 0;
   bool _revealed = false;
   bool _ready = false;
