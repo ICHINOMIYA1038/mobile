@@ -21,7 +21,7 @@ class AdService {
   static const _prodBannerIos = 'ca-app-pub-8691137965825158/2006323561';
   static const _prodBannerAndroid = 'ca-app-pub-8691137965825158/2956709081';
 
-  static bool _initialized = false;
+  static Future<void>? _initialization;
 
   /// 実IDが未設定ならテストIDを返す。差し替え忘れても事故らないようにするため。
   static String get bannerUnitId {
@@ -37,11 +37,9 @@ class AdService {
   static bool get isUsingTestAds =>
       Platform.isIOS ? _prodBannerIos.isEmpty : _prodBannerAndroid.isEmpty;
 
-  /// SDK の初期化。
-  static Future<void> ensureInitialized() async {
-    if (_initialized) return;
-    _initialized = true;
-    await MobileAds.instance.initialize();
+  /// SDK の初期化。同時に複数回呼ばれても、実際の初期化は1回だけ実行される。
+  static Future<void> ensureInitialized() {
+    return _initialization ??= MobileAds.instance.initialize();
   }
 
   /// バナー広告を読み込む。失敗しても null を返すだけで、画面は通常どおり出る。
