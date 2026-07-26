@@ -27,8 +27,9 @@ flutter test
 | ストア掲載文（説明・キーワード・カテゴリ） | 済 | `docs/store-listing.md` |
 | Androidのリリース署名鍵 | 済 | `~/etude-upload-key.jks` を生成し `android/key.properties`（gitignore済み）に設定（2026-07-25）。`flutter build apk --release` → `apksigner verify --print-certs` で新しい鍵の証明書指紋（SHA-256: `92a0db2f...`）が使われていることを確認済み。**鍵とパスワードは開発者自身で必ずバックアップを取ること**（紛失すると以後アプリを更新できなくなる） |
 | **Xcodeで Team を確認** | 済 | `DEVELOPMENT_TEAM = SZFUZ58P49` 設定済み。実機ビルド・アーカイブ前に一度Xcodeで開いて証明書エラーがないか確認すること |
-| ストア用スクリーンショット | 済 | `./tool/screenshots.sh` で自動生成（6.9インチ 1320×2868 で確認済み）。下記「4. スクリーンショット」参照 |
-| **App Store Connect / Google Play Console 上の情報入力** | **未** | アプリの新規作成、年齢区分、App Privacy 申告（「データを収集しない」を選択）、審査メモの貼り付けなど、コンソール側の操作は本ドキュメントの範囲外（開発者が行うこと） |
+| ストア用スクリーンショット | 済 | `./tool/screenshots.sh` で自動生成（iPhone 6.9インチ 1320×2868、iPad 13インチ 2064×2752 で確認済み）。Google PlayのスマホスクリーンショットもiPhone版をそのまま流用（16:9/9:16以外でも受理された）。下記「4. スクリーンショット」参照 |
+| 起動画面（Launch Image / launch_background） | 済 | Flutterテンプレートの1x1透明画像プレースホルダーのままだった箇所を、`icon/icon.png` から書き出した画像に差し替え済み（2026-07-25）。iOS: `ios/Runner/Assets.xcassets/LaunchImage.imageset/`、Android: `android/app/src/main/res/mipmap-*/launch_image.png` + 両`launch_background.xml`。アイコンを変更したら再生成すること |
+| **App Store Connect / Google Play Console 上の情報入力** | **済（審査提出済み）** | 詳細は下記「6. 提出状況」を参照 |
 | **有料アプリ契約・納税・銀行口座（Apple）** | 該当なし | 無料アプリ・IAPなしのため不要 |
 
 ## 2. AdMobの本番設定（完了済み）
@@ -138,3 +139,23 @@ takken_simple と同じ「シミュレータのtmpディレクトリにマーカ
 `pubspec.yaml` の `version: 1.0.0+1` が iOS の `CFBundleShortVersionString` /
 `CFBundleVersion`、Android の `versionName` / `versionCode` に反映される。
 再提出のたびにビルド番号（`+1` の部分）を上げること。
+
+## 6. 提出状況（2026-07-25時点）
+
+### iOS（App Store Connect）
+
+`v1.0.0 (1)` を審査に提出済み。年齢制限4+、Appのプライバシー申告、価格（無料・フランス除く174地域）、
+コンテンツ配信権（サードパーティコンテンツなし）、輸出コンプライアンス（標準暗号化のみ・フランス配信なしで
+追加書類不要）まで設定済み。結果通知（承認/リジェクト）待ち。
+
+### Android（Google Play Console）
+
+初回アプリ登録、コンテンツ申告（年齢・データセーフティ・広告・行政アプリ・金融取引機能・健康・広告ID）、
+ストア掲載情報、クローズドテストのトラック設定まで完了し、審査に提出済み。
+
+**重要**: Google Playの新規アプリは審査が通ってもすぐ本番公開できない。クローズドテストで
+**12人以上のテスターに14日間以上参加してもらう**ことが「本番環境へのアクセス」申請の条件。
+テスターは開発者側で集める。参加用リンク（オプトインURL）は
+Play Console → テストとリリース → クローズドテスト → リリース公開後に「テストへの参加方法」欄に表示される。
+
+14日間・12人以上の条件を満たしたら、ダッシュボードの「製品版へのアクセスの申請」から本番申請を行うこと。
