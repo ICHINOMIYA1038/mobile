@@ -6,14 +6,14 @@ import 'package:etude_generator/models/etude_prompt.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('テーマを700本収録している', () {
-    expect(PromptGenerator.themeCount, 700);
+  test('テーマを1000本収録している', () {
+    expect(PromptGenerator.themeCount, 1000);
     const expectedGenreCounts = {
-      '日常': 184,
-      'コメディ': 140,
-      'シリアス': 140,
-      'ミステリー': 127,
-      'ファンタジー': 109,
+      '日常': 200,
+      'コメディ': 200,
+      'シリアス': 200,
+      'ミステリー': 200,
+      'ファンタジー': 200,
     };
     for (final genre in PromptGenerator.genres) {
       expect(
@@ -32,7 +32,7 @@ void main() {
       expect(theme.reflectionQuestions, hasLength(3));
     }
     final audited = etudeThemes.where((theme) => theme.audited).toList();
-    expect(audited, hasLength(700));
+    expect(audited, hasLength(1000));
     for (final theme in audited) {
       expect(theme.roles, hasLength(4));
       expect(theme.roles.toSet(), hasLength(4));
@@ -51,6 +51,11 @@ void main() {
         expect(role, contains('秘密：'));
       }
     }
+  });
+
+  test('全テーマのplaceが重複していない', () {
+    final places = etudeThemes.map((theme) => theme.place).toList();
+    expect(places.toSet(), hasLength(places.length));
   });
 
   test('監査済みテーマは2人の中心役と専用振り返りを持つ', () {
@@ -305,9 +310,9 @@ void main() {
     expect(theme.constraint, allOf(contains('外見だけで決めつけず'), contains('各自')));
   });
 
-  test('日常ジャンル184件の個別監査が完了している', () {
+  test('日常ジャンル200件の個別監査が完了している', () {
     final dailyThemes = etudeThemes.where((theme) => theme.genre == '日常');
-    expect(dailyThemes, hasLength(184));
+    expect(dailyThemes, hasLength(200));
     expect(dailyThemes.every((theme) => theme.audited), isTrue);
   });
 
@@ -604,10 +609,10 @@ void main() {
     expect(theme.constraint, allOf(contains('根拠'), contains('間違いかもしれない理由')));
   });
 
-  test('コメディジャンル140件の個別監査が完了している', () {
+  test('コメディジャンル200件の個別監査が完了している', () {
     final comedyThemes = etudeThemes.where((theme) => theme.genre == 'コメディ');
 
-    expect(comedyThemes, hasLength(140));
+    expect(comedyThemes, hasLength(200));
     expect(comedyThemes.every((theme) => theme.audited), isTrue);
   });
 
