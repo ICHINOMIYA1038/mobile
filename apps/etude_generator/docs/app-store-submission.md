@@ -19,7 +19,7 @@ flutter test
 | Bundle ID / applicationId | 済 | `com.gikyokutosyokan.etude`（iOS/Androidで統一済み） |
 | アプリアイコン | 済 | `icon/icon.svg`・`icon/icon_foreground.svg` が元データ。変更後は `dart run flutter_launcher_icons` で再生成 |
 | pubspec の説明文・バージョン | 済 | `description` を実際の内容に更新済み（`version: 1.0.0+1` のまま初回提出） |
-| 広告SDK（Google AdMob） | 済 | `google_mobile_ads` を組み込み済み。AdMobで「エチュードメーカー」(iOS/Android)を登録し、実アプリID・実広告ユニットIDに差し替え済み（2026-07-25）。新規広告ユニットは配信開始まで1時間程度かかる場合がある |
+| 広告SDK（Google AdMob） | 済 | `google_mobile_ads` を組み込み済み。AdMobで「エチュードメーカー」(iOS/Android)を登録し、実アプリID・実広告ユニットIDに差し替え済み（2026-07-25）。新規広告ユニットは配信開始まで1時間程度かかる場合がある。`google_mobile_ads` は5.3.1→9.0.0へ更新済み（2026-07-27、`getAnchoredAdaptiveBannerAdSize`→`getLargeAnchoredAdaptiveBannerAdSizeWithOrientation`に追従）。iOS/Androidとも再ビルド・実演画面/振り返り画面でのバナー広告読み込み成功を確認済み |
 | 課金/アナリティクスSDK | 該当なし | アプリ内課金・分析SDKは組み込んでいない |
 | プライバシーマニフェスト（iOS） | 済 | `ios/Runner/PrivacyInfo.xcprivacy`（Xcode登録済み）。トラッキングなし、収集データなし、UserDefaults使用理由(CA92.1)のみ申告 |
 | プライバシーポリシーの公開URL | 済 | https://nullstead.com/apps/etude/privacy （2026-07-25公開）。実体は `~/nullstead/web` の別リポジトリ |
