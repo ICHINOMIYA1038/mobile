@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/favorites_repository.dart';
@@ -937,6 +938,15 @@ class PromptCard extends StatelessWidget {
                       ),
                     ),
                     IconButton(
+                      tooltip: '共有',
+                      onPressed: () => _share(context),
+                      style: IconButton.styleFrom(
+                        backgroundColor: colors.surfaceAlt,
+                      ),
+                      icon: Icon(Icons.ios_share_rounded, color: colors.accent),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
                       tooltip: isFavorite ? 'お気に入りから削除' : 'お気に入りに追加',
                       onPressed: onFavorite,
                       style: IconButton.styleFrom(
@@ -1026,6 +1036,25 @@ class PromptCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // 「秘密」は役を引いた本人だけに見せる内容なので、共有文には含めない。
+  Future<void> _share(BuildContext context) async {
+    final box = context.findRenderObject() as RenderBox?;
+    await SharePlus.instance.share(
+      ShareParams(
+        text:
+            '【エチュードのお題】\n'
+            '場所：${prompt.place}\n'
+            '状況：${prompt.situation}\n'
+            '関係性：${prompt.relationship}\n'
+            '制約：${prompt.constraint}\n\n'
+            'エチュードメーカーで生成',
+        sharePositionOrigin: box == null
+            ? null
+            : box.localToGlobal(Offset.zero) & box.size,
       ),
     );
   }
