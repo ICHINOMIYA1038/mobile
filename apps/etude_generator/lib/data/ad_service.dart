@@ -28,9 +28,7 @@ class AdService {
     if (Platform.isIOS) {
       return _prodBannerIos.isEmpty ? _testBannerIos : _prodBannerIos;
     }
-    return _prodBannerAndroid.isEmpty
-        ? _testBannerAndroid
-        : _prodBannerAndroid;
+    return _prodBannerAndroid.isEmpty ? _testBannerAndroid : _prodBannerAndroid;
   }
 
   /// 実IDが入っているか。false ならテスト広告が表示される。
@@ -49,10 +47,11 @@ class AdService {
 
     await ensureInitialized();
 
-    final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSizeWithOrientation(
-      Orientation.portrait,
-      width,
-    );
+    final size =
+        await AdSize.getLargeAnchoredAdaptiveBannerAdSizeWithOrientation(
+          Orientation.portrait,
+          width,
+        );
     if (size == null) return null;
 
     final completer = Completer<BannerAd?>();

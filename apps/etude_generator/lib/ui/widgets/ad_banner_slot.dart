@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../../data/ad_service.dart';
+import '../../theme/app_colors.dart';
 
 /// 実演画面・振り返り画面の中に置く控えめなバナー。
 ///
@@ -57,9 +58,9 @@ class _AdBannerSlotState extends State<AdBannerSlot> {
         // 広告とコンテンツの境目を明示する。誤タップ狙いの配置はしない。
         Text(
           '広告',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: const Color(0xFF9A8E87),
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: context.colors.textMuted),
         ),
         const SizedBox(height: 4),
         SizedBox(
