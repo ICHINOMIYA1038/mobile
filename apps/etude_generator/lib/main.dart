@@ -1856,67 +1856,107 @@ class FavoritesScreen extends StatefulWidget {
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
   late final List<EtudePrompt> _prompts = List.from(widget.prompts);
+  String? _selectedGenre;
+
+  List<String> get _availableGenres => [
+    for (final genre in PromptGenerator.genres)
+      if (_prompts.any((prompt) => prompt.genre == genre)) genre,
+  ];
+
+  List<EtudePrompt> get _filteredPrompts {
+    final genre = _selectedGenre;
+    // お気に入りの削除で選択中のジャンルが1件もなくなった場合は、
+    // 空リストに見えてしまわないよう「すべて」表示に戻す。
+    if (genre == null || !_availableGenres.contains(genre)) return _prompts;
+    return _prompts.where((prompt) => prompt.genre == genre).toList();
+  }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      backgroundColor: context.colors.background,
-      title: const Text(
-        'お気に入り',
-        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+  Widget build(BuildContext context) {
+    final showFilter = _availableGenres.length > 1;
+    final filtered = _filteredPrompts;
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: context.colors.background,
+        title: const Text(
+          'お気に入り',
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+        ),
       ),
-    ),
-    body: CustomPaint(
-      painter: _NotebookBackgroundPainter(context.colors),
-      child: SizedBox.expand(
-        child: _prompts.isEmpty
-            ? const _EmptyFavorites()
-            : ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-                itemCount: _prompts.length + 1,
-                separatorBuilder: (_, index) =>
-                    SizedBox(height: index == 0 ? 22 : 14),
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    final colors = context.colors;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'とっておきの、お題。',
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontSize: 28,
-                            height: 1.25,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -.8,
+      body: CustomPaint(
+        painter: _NotebookBackgroundPainter(context.colors),
+        child: SizedBox.expand(
+          child: _prompts.isEmpty
+              ? const _EmptyFavorites()
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                  itemCount: filtered.length + 1,
+                  separatorBuilder: (_, index) =>
+                      SizedBox(height: index == 0 ? 22 : 14),
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      final colors = context.colors;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'とっておきの、お題。',
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontSize: 28,
+                              height: 1.25,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -.8,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'また演じたい偶然を、ここに集めておけます。',
-                          style: TextStyle(
-                            color: colors.textSecondary,
-                            height: 1.5,
+                          const SizedBox(height: 6),
+                          Text(
+                            'また演じたい偶然を、ここに集めておけます。',
+                            style: TextStyle(
+                              color: colors.textSecondary,
+                              height: 1.5,
+                            ),
                           ),
-                        ),
-                      ],
+                          if (showFilter) ...[
+                            const SizedBox(height: 16),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _PaperChoice(
+                                  label: 'すべて',
+                                  selected: _selectedGenre == null,
+                                  onTap: () =>
+                                      setState(() => _selectedGenre = null),
+                                ),
+                                for (final genre in _availableGenres)
+                                  _PaperChoice(
+                                    label: genre,
+                                    selected: _selectedGenre == genre,
+                                    onTap: () =>
+                                        setState(() => _selectedGenre = genre),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      );
+                    }
+                    final prompt = filtered[index - 1];
+                    return _FavoriteCard(
+                      prompt: prompt,
+                      index: index,
+                      onDelete: () async {
+                        setState(() => _prompts.remove(prompt));
+                        await widget.onRemove(prompt);
+                      },
                     );
-                  }
-                  final prompt = _prompts[index - 1];
-                  return _FavoriteCard(
-                    prompt: prompt,
-                    index: index,
-                    onDelete: () async {
-                      setState(() => _prompts.remove(prompt));
-                      await widget.onRemove(prompt);
-                    },
-                  );
-                },
-              ),
+                  },
+                ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _FavoriteCard extends StatelessWidget {

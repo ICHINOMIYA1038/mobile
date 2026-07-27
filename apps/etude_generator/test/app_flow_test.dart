@@ -118,4 +118,59 @@ void main() {
     expect(find.text('同じお題でもう一度'), findsOneWidget);
     expect(find.text('新しいお題を作る'), findsOneWidget);
   });
+
+  testWidgets('お気に入りをジャンルで絞り込める', (tester) async {
+    await openGenerator(tester);
+
+    // 日常のお題を1件お気に入りにする。
+    await tester.tap(find.text('日常'));
+    await tester.tap(find.text('お題をつくる'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byTooltip('お気に入りに追加'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('お気に入りに追加'));
+    await tester.pumpAndSettle();
+
+    // ミステリーのお題をもう1件お気に入りにする。
+    // 直前の ensureVisible でジャンル選択チップが画面外に押し出されている
+    // ため、いったん一番上までスクロールし直してから選び直す。
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 600));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ミステリー'));
+    await tester.tap(find.text('もう一度'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byTooltip('お気に入りに追加'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('お気に入りに追加'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('お気に入り'));
+    await tester.pumpAndSettle();
+
+    // 以降の finder は、下に隠れている生成画面のジャンル選択チップと
+    // 名前が衝突しないよう、お気に入り画面の中だけを探す。
+    Finder inFavorites(String text) => find.descendant(
+      of: find.byType(FavoritesScreen),
+      matching: find.text(text),
+    );
+
+    // 絞り込みチップが両方のジャンル分表示される。
+    expect(inFavorites('すべて'), findsOneWidget);
+    expect(inFavorites('日常'), findsOneWidget);
+    expect(inFavorites('ミステリー'), findsOneWidget);
+    expect(inFavorites('2人・日常・5分'), findsOneWidget);
+    expect(inFavorites('2人・ミステリー・5分'), findsOneWidget);
+
+    // 「ミステリー」を選ぶと日常の方は消える。
+    await tester.tap(inFavorites('ミステリー'));
+    await tester.pumpAndSettle();
+    expect(inFavorites('2人・ミステリー・5分'), findsOneWidget);
+    expect(inFavorites('2人・日常・5分'), findsNothing);
+
+    // 「すべて」に戻すと両方また見える。
+    await tester.tap(inFavorites('すべて'));
+    await tester.pumpAndSettle();
+    expect(inFavorites('2人・日常・5分'), findsOneWidget);
+    expect(inFavorites('2人・ミステリー・5分'), findsOneWidget);
+  });
 }
