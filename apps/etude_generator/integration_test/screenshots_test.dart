@@ -77,6 +77,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('このエチュードを実行する'));
     await tester.pumpAndSettle();
+    final introButton = find.text('わかりました');
+    if (introButton.evaluate().isNotEmpty) {
+      await tester.tap(introButton);
+      await tester.pumpAndSettle();
+    }
     await tester.tap(find.text('一人目の役を引く'));
     await tester.pumpAndSettle();
     await shoot(tester, '04_role_draw');

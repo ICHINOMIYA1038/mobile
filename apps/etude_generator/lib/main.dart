@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'data/favorites_repository.dart';
 import 'data/prompt_generator.dart';
@@ -1039,10 +1040,42 @@ class RoleDrawScreen extends StatefulWidget {
 }
 
 class _RoleDrawScreenState extends State<RoleDrawScreen> {
+  static const _introSeenKey = 'role_draw_intro_seen_v1';
+
   List<String> get _roles => widget.prompt.characters;
   int _playerIndex = 0;
   bool _revealed = false;
   bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowIntro());
+  }
+
+  Future<void> _maybeShowIntro() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_introSeenKey) ?? false) return;
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('役を引く前に'),
+        content: const Text(
+          '次の画面から、この端末を順番に回して一人ずつ「役を引く」を押してください。'
+          '表示される目的と秘密は、押した本人だけに見せる内容です。'
+          '他の人に画面が見えないように気をつけてください。',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('わかりました'),
+          ),
+        ],
+      ),
+    );
+    await prefs.setBool(_introSeenKey, true);
+  }
 
   String get _playerName => '${_japaneseNumber(_playerIndex + 1)}人目';
 

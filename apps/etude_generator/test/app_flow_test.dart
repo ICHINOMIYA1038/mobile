@@ -13,6 +13,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> dismissRoleDrawIntro(WidgetTester tester) async {
+    final button = find.text('わかりました');
+    if (button.evaluate().isEmpty) return;
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('タイトル画面から生成画面へ進める', (tester) async {
     await tester.pumpWidget(const EtudeApp());
     await tester.pumpAndSettle();
@@ -74,6 +81,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('このエチュードを実行する'));
     await tester.pumpAndSettle();
+    await dismissRoleDrawIntro(tester);
 
     expect(find.text('一人目の方へ'), findsOneWidget);
     await tester.tap(find.text('一人目の役を引く'));
