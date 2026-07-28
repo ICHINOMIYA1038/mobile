@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'data/ad_service.dart';
 import 'data/favorites_repository.dart';
 import 'data/prompt_generator.dart';
 import 'models/etude_prompt.dart';
@@ -434,16 +435,26 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
   int _duration = 5;
   EtudePrompt? _prompt;
   List<EtudePrompt> _favorites = [];
+  bool _privacyOptionsRequired = false;
 
   @override
   void initState() {
     super.initState();
     _loadFavorites();
+    _prepareAds();
   }
 
   Future<void> _loadFavorites() async {
     final favorites = await _favoritesRepository.load();
     if (mounted) setState(() => _favorites = favorites);
+  }
+
+  // 実演・振り返り画面に着くより前に同意取得（UMP）とSDK初期化を済ませておく。
+  // これにより、演技の最中に同意フォームが割り込むことがなくなる。
+  Future<void> _prepareAds() async {
+    await AdService.ensureInitialized();
+    final required = await AdService.isPrivacyOptionsRequired();
+    if (mounted) setState(() => _privacyOptionsRequired = required);
   }
 
   void _generate() {
@@ -480,6 +491,12 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
           ),
         ),
         actions: [
+          if (_privacyOptionsRequired)
+            IconButton(
+              tooltip: '広告の同意設定',
+              icon: const Icon(Icons.privacy_tip_outlined),
+              onPressed: () => AdService.showPrivacyOptionsForm(),
+            ),
           IconButton(
             tooltip: 'お気に入り',
             icon: Badge(
