@@ -17,3 +17,27 @@ const inAppHosts = {
 const stripeCheckoutHost = 'checkout.stripe.com';
 
 bool isInAppHost(String host) => inAppHosts.contains(host);
+
+// Googleは埋め込みWebView内でのOAuthをセキュリティ上ブロックすることがあり、
+// (accounts.google.comをisInAppHostに含めていても)端末の外部Safariに逃げてしまう
+// ことがある(App Store審査 Guideline 4 で指摘)。サインイン導線だけはWebViewで
+// 直接開かず、ASWebAuthenticationSession(flutter_web_auth_2)経由でアプリ内シート
+// として開く。
+const _authSignInHost = 'gikyokutosyokan.com';
+const _authSignInPathPrefix = '/auth/signin';
+
+bool isAuthSignInRequest(Uri uri) =>
+    uri.host == _authSignInHost && uri.path.startsWith(_authSignInPathPrefix);
+
+// ログアウトも同じ理由でASWebAuthenticationSessionの共有Cookieストア側を
+// 明示的にクリアしないと、次回ログイン時に「既にログイン済み」判定のまま
+// 別アカウントを選べず元のアカウントに自動ログインされてしまう。
+const _logoutPathPrefix = '/api/tomoshibi/logout';
+
+bool isLogoutRequest(Uri uri) =>
+    uri.host == _authSignInHost && uri.path.startsWith(_logoutPathPrefix);
+
+// ASWebAuthenticationSessionの終着点として使うカスタムURLスキーム。
+// gikyoku_tosyokan側のNextAuth redirectアローリストにも同じ値を許可登録している。
+const authCallbackUrlScheme = 'tomoshibi';
+const authCallbackUrl = 'tomoshibi://auth-callback';

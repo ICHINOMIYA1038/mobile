@@ -1,51 +1,15 @@
 PODS:
-  - app_links (7.0.0):
-    - Flutter
   - Flutter (1.0.0)
-  - purchases_flutter (10.4.3):
-    - Flutter
-    - PurchasesHybridCommon (= 18.22.2)
-  - PurchasesHybridCommon (18.22.2):
-    - RevenueCat (= 5.81.1)
-  - RevenueCat (5.81.1)
-  - url_launcher_ios (0.0.1):
-    - Flutter
-  - webview_flutter_wkwebview (0.0.1):
-    - Flutter
-    - FlutterMacOS
 
 DEPENDENCIES:
-  - app_links (from `.symlinks/plugins/app_links/ios`)
   - Flutter (from `Flutter`)
-  - purchases_flutter (from `.symlinks/plugins/purchases_flutter/ios`)
-  - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
-  - webview_flutter_wkwebview (from `.symlinks/plugins/webview_flutter_wkwebview/darwin`)
-
-SPEC REPOS:
-  trunk:
-    - PurchasesHybridCommon
-    - RevenueCat
 
 EXTERNAL SOURCES:
-  app_links:
-    :path: ".symlinks/plugins/app_links/ios"
   Flutter:
     :path: Flutter
-  purchases_flutter:
-    :path: ".symlinks/plugins/purchases_flutter/ios"
-  url_launcher_ios:
-    :path: ".symlinks/plugins/url_launcher_ios/ios"
-  webview_flutter_wkwebview:
-    :path: ".symlinks/plugins/webview_flutter_wkwebview/darwin"
 
 SPEC CHECKSUMS:
-  app_links: 6d01271b3907b0ee7325c5297c75d697c4226c4d
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  purchases_flutter: c7d532a42009ffb645cc6c218010123925eea0d6
-  PurchasesHybridCommon: e47bc4f611e86fcf8295bf1c984f187982270f02
-  RevenueCat: 693b033863262f9776130cc6c1f9255a74ab23ff
-  url_launcher_ios: bb13df5870e8c4234ca12609d04010a21be43dfa
-  webview_flutter_wkwebview: 29eb20d43355b48fe7d07113835b9128f84e3af4
 
 PODFILE CHECKSUM: 3c63482e143d1b91d2d2560aee9fb04ecc74ac7e
 
