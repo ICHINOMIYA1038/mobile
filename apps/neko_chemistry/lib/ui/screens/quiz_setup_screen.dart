@@ -36,9 +36,7 @@ class _QuizSetupScreenState extends State<QuizSetupScreen> {
     final colors = AppColors.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.byUnit ? '分野を選んで挑戦' : 'ランダムに挑戦'),
-      ),
+      appBar: AppBar(title: Text(widget.byUnit ? '分野を選んで挑戦' : 'ランダムに挑戦')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -47,10 +45,7 @@ class _QuizSetupScreenState extends State<QuizSetupScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '出題する単元',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
+                  Text('出題する単元', style: Theme.of(context).textTheme.titleLarge),
                   Row(
                     children: [
                       TextButton(
@@ -72,38 +67,41 @@ class _QuizSetupScreenState extends State<QuizSetupScreen> {
                   color: colors.cardBackground,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Column(
-                  children: kAllUnits.asMap().entries.map((entry) {
-                    final unit = entry.value;
-                    final isLast = entry.key == kAllUnits.length - 1;
-                    final selected = _selectedUnits.contains(unit);
-                    return Column(
-                      children: [
-                        CheckboxListTile(
-                          value: selected,
-                          onChanged: (value) {
-                            setState(() {
-                              if (value ?? false) {
-                                _selectedUnits.add(unit);
-                              } else {
-                                _selectedUnits.remove(unit);
-                              }
-                            });
-                          },
-                          title: Text(unit),
-                          activeColor: labMint,
-                          controlAffinity: ListTileControlAffinity.leading,
-                        ),
-                        if (!isLast)
-                          Divider(
-                            height: 1,
-                            indent: 16,
-                            endIndent: 16,
-                            color: colors.textPrimary.withValues(alpha: 0.08),
+                child: Material(
+                  color: Colors.transparent,
+                  child: Column(
+                    children: kAllUnits.asMap().entries.map((entry) {
+                      final unit = entry.value;
+                      final isLast = entry.key == kAllUnits.length - 1;
+                      final selected = _selectedUnits.contains(unit);
+                      return Column(
+                        children: [
+                          CheckboxListTile(
+                            value: selected,
+                            onChanged: (value) {
+                              setState(() {
+                                if (value ?? false) {
+                                  _selectedUnits.add(unit);
+                                } else {
+                                  _selectedUnits.remove(unit);
+                                }
+                              });
+                            },
+                            title: Text(unit),
+                            activeColor: labMint,
+                            controlAffinity: ListTileControlAffinity.leading,
                           ),
-                      ],
-                    );
-                  }).toList(),
+                          if (!isLast)
+                            Divider(
+                              height: 1,
+                              indent: 16,
+                              endIndent: 16,
+                              color: colors.textPrimary.withValues(alpha: 0.08),
+                            ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
               if (_selectedUnits.isEmpty) ...[
