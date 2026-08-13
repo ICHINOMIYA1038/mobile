@@ -1,0 +1,35 @@
+name: takken_simple CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/takken_simple/**"
+      - ".github/workflows/takken_simple-ci.yml"
+  pull_request:
+    paths:
+      - "apps/takken_simple/**"
+      - ".github/workflows/takken_simple-ci.yml"
+
+defaults:
+  run:
+    working-directory: apps/takken_simple
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
