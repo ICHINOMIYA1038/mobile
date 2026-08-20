@@ -1,0 +1,57 @@
+name: korokoro_slope CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/korokoro_slope/**"
+      - ".github/workflows/korokoro_slope-ci.yml"
+  pull_request:
+    paths:
+      - "apps/korokoro_slope/**"
+      - ".github/workflows/korokoro_slope-ci.yml"
+
+defaults:
+  run:
+    working-directory: apps/korokoro_slope
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: apps/korokoro_slope/web_game/package-lock.json
+
+      - name: Install web_game dependencies
+        working-directory: apps/korokoro_slope/web_game
+        run: npm ci
+
+      - name: Build web_game bundle
+        working-directory: apps/korokoro_slope/web_game
+        run: npm run build
+
+      - name: Ensure assets/web matches web_game source (rebuild produced no diff)
+        run: |
+          if ! git diff --quiet -- assets/web; then
+            echo "assets/web is stale: run 'npm run build' in web_game/ and commit the result." >&2
+            git diff --stat -- assets/web
+            exit 1
+          fi

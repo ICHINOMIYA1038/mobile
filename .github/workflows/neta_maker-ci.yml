@@ -1,0 +1,35 @@
+name: neta_maker CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/neta_maker/**"
+      - ".github/workflows/neta_maker-ci.yml"
+  pull_request:
+    paths:
+      - "apps/neta_maker/**"
+      - ".github/workflows/neta_maker-ci.yml"
+
+defaults:
+  run:
+    working-directory: apps/neta_maker
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
