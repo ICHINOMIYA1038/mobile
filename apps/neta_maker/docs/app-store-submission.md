@@ -29,7 +29,7 @@ flutter test
 | **Xcodeで Team を確認** | 済 | `DEVELOPMENT_TEAM = SZFUZ58P49`（etude_generatorと同じチーム）、`CODE_SIGN_STYLE = Automatic`設定済み。実機ビルド・アーカイブ前に一度Xcodeで開いて証明書エラーがないか確認すること |
 | ストア用スクリーンショット | 済 | `./tool/screenshots.sh` で撮影済み（6.9インチ 1320×2868、5枚）。UIを変えたら撮り直すこと |
 | 起動画面（Launch Image / launch_background） | 済 | `icon/icon.png`（羊皮紙+封蝋アイコン）から書き出し済み。アイコンを変更したら再生成すること |
-| **App Store Connect / Google Play Console 上の情報入力** | 未着手 | まだ審査提出していない |
+| **App Store Connect / Google Play Console 上の情報入力** | iOS一部完了 | 下記「6. 提出状況」参照。ビルド未アップロードのため審査提出はまだ |
 | **有料アプリ契約・納税・銀行口座（Apple）** | 該当なし | 無料アプリ・IAPなしのため不要 |
 
 ## 2. AdMobの本番設定（完了済み）
@@ -123,6 +123,109 @@ ATT（トラッキング許可）のダイアログは表示していません�
 `CFBundleVersion`、Android の `versionName` / `versionCode` に反映される。
 再提出のたびにビルド番号（`+1` の部分）を上げること。
 
-## 6. 提出状況
+## 6. 提出状況（2026-08-01時点）
 
-未着手。初回リリースに向けて上記1〜5を順に埋めていくこと。
+### iOS（App Store Connect）
+
+Apple Developer で Bundle ID `jp.pairof.netamaker` を登録し、App Store Connect にアプリ「ネタメーカー」
+を作成済み（Apple ID: `6796881273`）。以下を入力・公開済み:
+
+- スクリーンショット（6.9インチ、5枚）アップロード済み
+- プロモーション用テキスト・概要（説明文）・キーワード・サポートURL 入力済み
+- サブタイトル入力済み
+- コンテンツ配信権（サードパーティ製コンテンツなし）設定済み
+- 年齢制限指定アンケート回答済み → 算出結果 **4+**（想定どおり）
+- 「Appのプライバシー」申告・公開済み（プライバシーポリシーURL、データタイプ=デバイスID・広告データ、
+  いずれも「サードパーティ広告」目的・ユーザーに紐付けないで登録）
+
+**ビルドのアップロードはApp Store Connect APIキー経由で完結できる（2026-08-02確認）:**
+
+```sh
+flutter build ipa --release
+xcrun altool --upload-app --type ios -f build/ios/ipa/neta_maker.ipa \
+  --apiKey 3URMU94JK9 --apiIssuer 1039c5ec-53b4-4125-b857-d5059f3f3e74
+```
+
+APIキー（`~/.appstoreconnect/private_keys/AuthKey_3URMU94JK9.p8`、キー名"IPA Upload"、
+App Manager権限）は事前に用意済み。Issuer IDは App Store Connect の
+「ユーザとアクセス」→「統合」→「App Store Connect API」ページで確認できる。
+altoolはアップロード成功後の検証ステップで409エラーを返すことがあるが、
+実際のビルドアップロード自体は成功しているため無視してよい（TestFlightページでビルドの
+「処理中」ステータスを確認すること）。
+
+2026-08-02に Version 1.0 (Build 1) をこの方法でアップロード済み。あわせて以下も完了済み:
+
+- 「サインインが必要です」チェックを解除（本アプリはログイン不要のため）
+- 審査メモ入力・保存済み（本ドキュメント「3. コンソール入力の下書き」の内容）
+- 連絡先情報入力・保存済み（一ノ宮 綾平 / +818083836352 / ichiryo108@gmail.com）
+  — 電話番号は国コード付き・記号なしの形式（`+818012345678`）でないと保存エラーになる
+
+2026-08-03、ビルド処理完了後に以下を完了し、審査へ提出済み（ステータス: **審査待ち**）:
+
+- 配信ページの「ビルド」セクションでビルド1を選択
+- 輸出コンプライアンス（アプリの暗号化書類）: 標準的な暗号化アルゴリズムのみ／フランスでの配信予定なし、を選択
+  （フランス配信を「はい」にすると別途輸出コンプライアンス書類の提出が必要になるため、「いいえ」を選択）
+- 著作権表記欄: `© 2026 Ryohei Ichinomiya`（neko_chemistry等の既存アプリと同じ書式）
+- 「アプリ情報」でカテゴリ（プライマリ）を「エンターテインメント」に設定
+- 「価格および配信状況」で価格を無料（$0.00、全175か国・地域）に設定
+- iPad（13インチディスプレイ）用スクリーンショット5枚を撮影・アップロード
+  （`./tool/screenshots.sh "iPad Pro 13-inch (M5)" screenshots_ipad` で撮影、解像度2064×2752）
+  — 複数ファイルを一括アップロードすると非同期処理の完了順で並び替わり順序が崩れるため、
+  1枚ずつ順番にアップロードすること
+- 「審査用に追加」→ 提出物の下書きから「審査へ提出」で最終提出完了
+
+審査完了までは最大48時間程度（App Store Connectの表示による）。完了するとメールで通知が届く。
+
+### Android（Google Play Console）
+
+Google Play Console でアプリ「ネタメーカー」を作成済み（パッケージ名 `jp.pairof.netamaker`、
+App ID `4975121456073481916`）。以下を入力・保存済み:
+
+- ストアの掲載情報（アプリ名・簡単な説明・詳しい説明・アプリのアイコン・フィーチャーグラフィック・
+  携帯電話版スクリーンショット5枚）
+- コンテンツのレーティング（IARCアンケート回答済み）
+- ターゲットユーザーおよびコンテンツ（対象年齢13歳以上として申告）
+- プライバシーポリシーURL（https://nullstead.com/apps/neta-maker/privacy）
+- 広告の宣言（広告を表示するアプリとして申告）
+- 広告ID宣言（使用する、目的は「広告、マーケティング」）
+- データセーフティ（デバイスID・広告データを「サードパーティ広告」目的・ユーザーに紐付けないで申告）
+- アプリのカテゴリ（エンタテインメント）
+- 連絡先情報
+
+**リリース署名鍵を生成済み（2026-08-03）**: `android/upload-keystore.keystore` +
+`android/key.properties`（どちらもgit管理外）。`android/app/build.gradle.kts` に
+signingConfigsを追加し、key.propertiesがあれば本番鍵、なければdebug鍵で署名する構成にした。
+
+**AABアップロードもAndroid Publisher API経由で完結できる（2026-08-03確認）:**
+
+1. Google Cloud プロジェクト `neta-maker-play-api` を作成し、Google Play Android Developer APIを有効化
+2. サービスアカウント `play-publisher-upload@neta-maker-play-api.iam.gserviceaccount.com` を作成
+   （キーは `gcloud iam service-accounts keys create` でローカルに直接出力すること —
+   Play Consoleの「キーを追加」ボタン経由のダウンロードはブラウザ自動化環境では常にキャンセルされる）
+3. Play Consoleの「ユーザーと権限」→「新しいユーザーを招待」でこのサービスアカウントのメールを招待し、
+   対象アプリに「テスト版トラックとしてのアプリのリリース」権限を付与
+4. `tool/upload_to_play.py`（要 `.play_upload_venv` に `google-api-python-client`/`google-auth`）で
+   `edits.insert` → `edits.bundles.upload` → `edits.tracks.update` → `edits.commit` を実行
+
+```sh
+flutter build appbundle --release
+source .play_upload_venv/bin/activate  # なければ python3 -m venv .play_upload_venv して pip install
+python3 tool/upload_to_play.py jp.pairof.netamaker build/app/outputs/bundle/release/app-release.aab internal
+```
+
+2026-08-03にVersion 1.0.0 (versionCode 1) を内部テストトラックにアップロード・公開済み。
+
+**残作業（開発者本人が行う必要がある）:**
+
+- **Google Playの新規デベロッパーアカウント要件**: 本番環境（全ユーザー向け公開）へのアクセスを
+  申請するには、クローズドテストを12人以上のテスターで14日間以上実施する必要がある
+  （2026-08-03時点でテスターは0人、クローズドテストも未開始）。この条件を満たすまで審査提出はできない。
+  内部テストは12人要件の対象外だが、本番アクセス申請には使えない。
+- クローズドテストトラックを作成し、テスターを12人以上集めて14日間運用する
+- 上記テストが完了したら「公開の概要」ページから「本番環境へのアクセスを申請」→ 審査提出
+
+## 7. 次にやること
+
+- iOS: Xcodeでのビルド作成・アップロードと審査提出（開発者本人の作業）
+- Android: リリースビルドの作成・署名、テストトラックへのアップロード、
+  クローズドテスト（12人以上×14日間）の実施、その後の本番リリース申請（開発者本人の作業）

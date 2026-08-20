@@ -91,13 +91,20 @@ void main() {
   });
 
   group('コンテンツの網羅性', () {
-    test('全カテゴリで最低20種類以上の結果パターンが出せる(単調な使い回しを防ぐ)', () {
-      // 脳内メーカーの answer(理性型/バランス型/本能型)は意図的に3択の粗い分類
-      // なので、answer単体ではなく keywords・detail も含めた結果全体の
-      // バリエーションを見る。
+    // 語彙バンクを大幅拡充した際(2026-08-01)に、実際の組み合わせ数が
+    // 数十万〜数百万通りに増えたことをテストでも固定する。
+    // サンプル数に対してほぼ全て(90%以上)が異なるパターンになることを
+    // 要求することで、将来誰かが語彙バンクを大きく削ってしまっても
+    // このテストが失敗して気づけるようにする。
+    //
+    // 脳内メーカーの answer(理性型/バランス型/本能型)は意図的に3択の粗い分類
+    // なので、answer単体ではなく keywords・detail も含めた結果全体の
+    // バリエーションを見る。
+    test('全カテゴリで、サンプルのほぼ全てが異なる結果パターンになる(単調な使い回しを防ぐ)', () {
+      const sampleCount = 500;
       for (final category in MakerCategory.values) {
         final signatures = <String>{};
-        for (var i = 0; i < 60; i++) {
+        for (var i = 0; i < sampleCount; i++) {
           final r = generateMakerResult(
             category: category,
             input: 'サンプル$i',
@@ -107,8 +114,36 @@ void main() {
         }
         expect(
           signatures.length,
-          greaterThanOrEqualTo(20),
-          reason: '${category.name}の結果パターンが少なすぎる(単調な診断に見える恐れ)',
+          greaterThanOrEqualTo((sampleCount * 0.9).round()),
+          reason:
+              '${category.name}の結果パターンが少なすぎる(単調な診断に見える恐れ)。'
+              '$sampleCount件中${signatures.length}件しか異ならなかった',
+        );
+      }
+    });
+
+    test('もう一度を繰り返しても、同じ名前で数十回は結果が被りにくい', () {
+      // 「もう一度」を連打しても、すぐに同じ結果へ戻ってしまうと
+      // 「バリエーションが少ない」と感じさせてしまう。rerollNonceを
+      // 0から99まで動かして、ほぼ全て異なる結果になることを確認する。
+      const rerollCount = 100;
+      for (final category in MakerCategory.values) {
+        final signatures = <String>{};
+        for (var nonce = 0; nonce < rerollCount; nonce++) {
+          final r = generateMakerResult(
+            category: category,
+            input: 'もう一度太郎',
+            rerollNonce: nonce,
+          );
+          final keywordSignature = r.keywords.map((k) => k.label).join(',');
+          signatures.add('${r.answer}|${r.detail}|$keywordSignature');
+        }
+        expect(
+          signatures.length,
+          greaterThanOrEqualTo((rerollCount * 0.9).round()),
+          reason:
+              '${category.name}は「もう一度」を$rerollCount回押しても'
+              '${signatures.length}パターンしか出なかった',
         );
       }
     });

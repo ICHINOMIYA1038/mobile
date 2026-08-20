@@ -46,3 +46,4 @@ app.*.map.json
 
 # ストア用スクリーンショット（tool/screenshots.sh で再生成できる生成物）
 /screenshots/
+.play_upload_venv/

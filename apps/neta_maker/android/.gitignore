@@ -12,3 +12,6 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Google Play Developer API サービスアカウント秘密鍵（絶対に公開しないこと）
+play-publisher-upload-key.json

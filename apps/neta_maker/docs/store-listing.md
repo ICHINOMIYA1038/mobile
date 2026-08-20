@@ -51,8 +51,8 @@
 
 ### サポートURL / マーケティングURL
 
-- サポートURL: （TODO: プライバシーポリシーの公開URLと合わせて用意する）
-- プライバシーポリシーURL: （TODO: `docs/privacy-policy.md` を公開してURLを記載する）
+- サポートURL: https://nullstead.com/apps/neta-maker/privacy （問い合わせ先メールアドレスを掲載）
+- プライバシーポリシーURL: https://nullstead.com/apps/neta-maker/privacy
 
 ---
 

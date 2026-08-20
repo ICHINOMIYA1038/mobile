@@ -43,3 +43,29 @@ List<T> pickDistinct<T>(Random random, List<T> list, int count) {
   }
   return result;
 }
+
+/// [openers] と [closers] から前半・後半をそれぞれ独立に選んで1文を作る。
+String pickSentence(Random random, List<String> openers, List<String> closers) {
+  final opener = openers[random.nextInt(openers.length)];
+  final closer = closers[random.nextInt(closers.length)];
+  return '$opener$closer';
+}
+
+/// [pickSentence] で2文を独立に選び、連結して返す。
+///
+/// 同じ語彙バンクから2回抽選しているだけなので新しい文章を書き足す必要が
+/// なく、それでいて実質的な組み合わせ数は(前半数×後半数)の2乗に増える。
+/// 偶然2文とも全く同じになった場合(「Aだった。Aだった。」のような不自然な
+/// 繰り返し)は、2文目だけ選び直す(最大5回)。
+String pickTwoSentences(
+  Random random,
+  List<String> openers,
+  List<String> closers,
+) {
+  final first = pickSentence(random, openers, closers);
+  var second = pickSentence(random, openers, closers);
+  for (var i = 0; i < 5 && second == first; i++) {
+    second = pickSentence(random, openers, closers);
+  }
+  return '$first$second';
+}
