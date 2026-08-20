@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>コロコロスロープ</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="scene-root"></div>
+
+<button id="btn-mute" class="btn-icon btn-mute" aria-label="mute toggle">🔊</button>
+
+<div id="overlay-loading" class="overlay">
+  <div class="spinner"></div>
+</div>
+
+<div id="overlay-title" class="overlay hidden">
+  <h1 class="title-logo">コロコロ<br />スロープ</h1>
+  <button id="btn-start" class="btn btn-primary btn-pulse">タップしてスタート</button>
+  <div class="title-card">
+    <div class="best-score">ベストスコア <span id="title-best-score">0</span></div>
+    <div class="picker-label">ステージ</div>
+    <div class="theme-picker" id="theme-picker"></div>
+    <div class="picker-label">ボール</div>
+    <div class="skin-picker" id="skin-picker"></div>
+  </div>
+</div>
+
+<div id="hud" class="hud hidden">
+  <div class="hud-row">
+    <div class="hud-pill">🪙 <span id="hud-coin-count">0</span></div>
+    <div class="hud-pill">距離 <span id="hud-distance">0</span>m</div>
+    <button id="btn-pause" class="btn-icon" aria-label="pause">⏸</button>
+  </div>
+</div>
+
+<div id="combo-popup" class="combo-popup"></div>
+<div id="milestone-popup" class="milestone-popup"></div>
+
+<div id="tutorial-hint" class="tutorial-hint hidden">
+  <div class="tutorial-icon">📱</div>
+  <p>端末を傾ける、またはドラッグで操作</p>
+</div>
+
+<div id="overlay-pause" class="overlay hidden">
+  <h2>ポーズ中</h2>
+  <button id="btn-resume" class="btn btn-primary">再開する</button>
+  <button id="btn-quit" class="btn btn-secondary">タイトルへ</button>
+</div>
+
+<div id="overlay-result" class="overlay hidden">
+  <h2 id="result-title">コースアウト...</h2>
+  <div class="result-stats">
+    <div class="result-row"><span>コイン</span><span id="result-coins">0</span></div>
+    <div class="result-row"><span>距離</span><span id="result-distance">0</span>m</div>
+    <div class="result-row result-score"><span>スコア</span><span id="result-score">0</span></div>
+    <div id="result-best-badge" class="best-badge hidden">ベスト更新！</div>
+  </div>
+  <div id="result-stage-unlock" class="stage-unlock-badge hidden"></div>
+  <button id="btn-continue" class="btn btn-reward hidden">広告を見て続きから</button>
+  <button id="btn-retry" class="btn btn-primary">もう一度</button>
+  <button id="btn-title" class="btn btn-secondary">タイトルへ</button>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>
