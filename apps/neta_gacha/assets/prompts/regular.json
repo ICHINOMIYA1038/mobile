@@ -1,0 +1,848 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-31",
+  "prompts": [
+    {
+      "id": "regular-001",
+      "situationId": "regular",
+      "text": "常連さんだけが知ってる「あるある」ネタを1つ話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-002",
+      "situationId": "regular",
+      "text": "前回の配信で印象に残ったコメントを紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-003",
+      "situationId": "regular",
+      "text": "最近チャットでよく出る単語ランキングを発表してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-004",
+      "situationId": "regular",
+      "text": "常連さんへの感謝を、いつもと違う言い方で伝えてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-005",
+      "situationId": "regular",
+      "text": "リスナーとの「内輪ネタ」を1つ深掘りしてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-006",
+      "situationId": "regular",
+      "text": "前回配信からの近況を3行で報告してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-007",
+      "situationId": "regular",
+      "text": "常連さんにだけこっそり教える豆知識を1つ",
+      "tags": []
+    },
+    {
+      "id": "regular-008",
+      "situationId": "regular",
+      "text": "配信の裏話を1つ話してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-009",
+      "situationId": "regular",
+      "text": "最近感じた「配信者あるある」を話してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-010",
+      "situationId": "regular",
+      "text": "リスナーに聞かれることが多い質問トップ3を発表してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-011",
+      "situationId": "regular",
+      "text": "この枠でずっと続けたい企画があれば教えて",
+      "tags": []
+    },
+    {
+      "id": "regular-012",
+      "situationId": "regular",
+      "text": "最近の失敗談を面白おかしく話してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-013",
+      "situationId": "regular",
+      "text": "最近ハマっている占い・スピリチュアルな話をしてみよう",
+      "tags": [
+        "religion"
+      ]
+    },
+    {
+      "id": "regular-014",
+      "situationId": "regular",
+      "text": "「またこの話か」と言われそうな鉄板ネタを1つ話してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-015",
+      "situationId": "regular",
+      "text": "配信を始めた頃と今で変わったことを話してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-016",
+      "situationId": "regular",
+      "text": "常連さんと作り上げてきた「合言葉」があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-017",
+      "situationId": "regular",
+      "text": "コミュニティ内で定着した謎ルールを紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-018",
+      "situationId": "regular",
+      "text": "一番長く続いている鉄板ネタの起源を話してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-019",
+      "situationId": "regular",
+      "text": "「昔はこうだった」を振り返ってみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-020",
+      "situationId": "regular",
+      "text": "リスナーがつけてくれたあだ名を紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-021",
+      "situationId": "regular",
+      "text": "コミュニティの合言葉やスタンプの由来を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-022",
+      "situationId": "regular",
+      "text": "定期的にやっている企画・コーナーを振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-023",
+      "situationId": "regular",
+      "text": "最近増えてきたコメントの傾向を分析してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-024",
+      "situationId": "regular",
+      "text": "「これは常連さんにしか伝わらない」ネタを1つ",
+      "tags": []
+    },
+    {
+      "id": "regular-025",
+      "situationId": "regular",
+      "text": "配信を続けてきて一番驚いた出来事を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-026",
+      "situationId": "regular",
+      "text": "リスナーからもらった忘れられない一言を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-027",
+      "situationId": "regular",
+      "text": "コミュニティ内の「用語集」をひとつ解説してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-028",
+      "situationId": "regular",
+      "text": "継続日数・配信回数の節目を振り返ってみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-029",
+      "situationId": "regular",
+      "text": "常連さんの間で流行っているネタを深掘りしよう",
+      "tags": []
+    },
+    {
+      "id": "regular-030",
+      "situationId": "regular",
+      "text": "これまでで一番盛り上がった回を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-031",
+      "situationId": "regular",
+      "text": "「実はこういう理由でこの企画が始まった」を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-032",
+      "situationId": "regular",
+      "text": "配信を通して変わった自分の考え方を話してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-033",
+      "situationId": "regular",
+      "text": "リスナーと一緒に育ててきた企画を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-034",
+      "situationId": "regular",
+      "text": "常連さんへ、今日だけの特別な感謝を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "regular-035",
+      "situationId": "regular",
+      "text": "コミュニティ内の伝説的なコメントを振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-036",
+      "situationId": "regular",
+      "text": "「そろそろ卒業したいネタ」があれば正直に話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-037",
+      "situationId": "regular",
+      "text": "逆に「ずっと続けたいネタ」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-038",
+      "situationId": "regular",
+      "text": "配信仲間(常連さん)との思い出を1つ",
+      "tags": []
+    },
+    {
+      "id": "regular-039",
+      "situationId": "regular",
+      "text": "最近入ってきた新常連さんへ一言メッセージ",
+      "tags": []
+    },
+    {
+      "id": "regular-040",
+      "situationId": "regular",
+      "text": "コミュニティの雰囲気を一言で表すと?",
+      "tags": []
+    },
+    {
+      "id": "regular-041",
+      "situationId": "regular",
+      "text": "常連さんと積み上げてきた記録(継続日数など)を発表しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-042",
+      "situationId": "regular",
+      "text": "コミュニティで生まれた新しいネタを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-043",
+      "situationId": "regular",
+      "text": "「これは常連さんの成長を感じる」出来事を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-044",
+      "situationId": "regular",
+      "text": "過去の企画で一番反響が大きかったものを振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-045",
+      "situationId": "regular",
+      "text": "コミュニティ内の「暗黙のルール」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-046",
+      "situationId": "regular",
+      "text": "常連さんに向けて、次にやりたい大型企画を予告しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-047",
+      "situationId": "regular",
+      "text": "「初期の頃の自分」を振り返って今と比べてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-048",
+      "situationId": "regular",
+      "text": "リスナーとの掛け合いで一番好きなパターンを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-049",
+      "situationId": "regular",
+      "text": "コミュニティの雰囲気が変わった瞬間があれば話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-050",
+      "situationId": "regular",
+      "text": "常連さんだけが知っている裏設定を明かそう",
+      "tags": []
+    },
+    {
+      "id": "regular-051",
+      "situationId": "regular",
+      "text": "配信を通じてできた人間関係について話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-052",
+      "situationId": "regular",
+      "text": "コミュニティ内の面白エピソードを紹介しよう(個人特定しない範囲で)",
+      "tags": []
+    },
+    {
+      "id": "regular-053",
+      "situationId": "regular",
+      "text": "これまでで一番苦労した企画を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-054",
+      "situationId": "regular",
+      "text": "常連さんへのお礼企画をその場で考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-055",
+      "situationId": "regular",
+      "text": "配信を続ける原動力を改めて話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-056",
+      "situationId": "regular",
+      "text": "コミュニティの成長を数字以外で感じる瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-057",
+      "situationId": "regular",
+      "text": "「あの時ああしておけばよかった」を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-058",
+      "situationId": "regular",
+      "text": "常連さん発の企画アイデアを募集してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-059",
+      "situationId": "regular",
+      "text": "コミュニティの合言葉を新しく1つ考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-060",
+      "situationId": "regular",
+      "text": "配信を続けてきて変わらないこだわりを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-061",
+      "situationId": "regular",
+      "text": "常連さんと一緒に作った「造語」があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-062",
+      "situationId": "regular",
+      "text": "配信を続けてきて一番感謝している出来事を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-063",
+      "situationId": "regular",
+      "text": "コミュニティの雰囲気の特徴を話してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-064",
+      "situationId": "regular",
+      "text": "常連さんとの掛け合いで一番笑ったやりとりを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-065",
+      "situationId": "regular",
+      "text": "配信の「安定期」に入ったと感じた瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-066",
+      "situationId": "regular",
+      "text": "コミュニティ内で流行った合いの手を再現してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-067",
+      "situationId": "regular",
+      "text": "常連さんへ向けて、次の目標を宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-068",
+      "situationId": "regular",
+      "text": "これまでで一番驚かれた告白・報告を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-069",
+      "situationId": "regular",
+      "text": "コミュニティの「良いところ」を3つ挙げてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-070",
+      "situationId": "regular",
+      "text": "常連さんとの思い出深いコラボ・企画を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-071",
+      "situationId": "regular",
+      "text": "配信を通じて得た新しい視点を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-072",
+      "situationId": "regular",
+      "text": "コミュニティ内の「暗黙の了解」をもう1つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-073",
+      "situationId": "regular",
+      "text": "常連さんが増えたきっかけの企画があれば振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-074",
+      "situationId": "regular",
+      "text": "配信スタイルの変化を振り返ってみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-075",
+      "situationId": "regular",
+      "text": "コミュニティの一体感を感じた瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-076",
+      "situationId": "regular",
+      "text": "常連さんへ、感謝の気持ちを替え歌にして伝えよう",
+      "tags": []
+    },
+    {
+      "id": "regular-077",
+      "situationId": "regular",
+      "text": "「これは常連さん公認」というネタを1つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-078",
+      "situationId": "regular",
+      "text": "配信を続けてきて一番成長したと思う部分を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-079",
+      "situationId": "regular",
+      "text": "コミュニティ内の名場面ランキングを発表しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-080",
+      "situationId": "regular",
+      "text": "常連さんと次に挑戦したい記録・目標を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-081",
+      "situationId": "regular",
+      "text": "常連さんとの間で生まれた「暗号」があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-082",
+      "situationId": "regular",
+      "text": "配信を続ける上で常連さんに助けられていることを話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-083",
+      "situationId": "regular",
+      "text": "コミュニティの「あるある行事」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-084",
+      "situationId": "regular",
+      "text": "常連さんとの思い出の創作エピソードを話そう(あれば)",
+      "tags": []
+    },
+    {
+      "id": "regular-085",
+      "situationId": "regular",
+      "text": "配信の「様式美」になっている流れを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-086",
+      "situationId": "regular",
+      "text": "コミュニティ内の「新人歓迎あるある」を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-087",
+      "situationId": "regular",
+      "text": "常連さんと決めた小さなルールがあれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-088",
+      "situationId": "regular",
+      "text": "配信を続けてきて一番心に残っているコメントを再掲しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-089",
+      "situationId": "regular",
+      "text": "コミュニティの雰囲気を一言で伝えるなら?",
+      "tags": []
+    },
+    {
+      "id": "regular-090",
+      "situationId": "regular",
+      "text": "常連さんに聞いてみたい逆質問を考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-091",
+      "situationId": "regular",
+      "text": "配信の「型」ができた瞬間を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-092",
+      "situationId": "regular",
+      "text": "コミュニティ内のちょっとした伝統行事を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-093",
+      "situationId": "regular",
+      "text": "常連さんと一緒に達成した小さな目標を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-094",
+      "situationId": "regular",
+      "text": "配信のテンションが一番安定する時間帯を教えて",
+      "tags": []
+    },
+    {
+      "id": "regular-095",
+      "situationId": "regular",
+      "text": "コミュニティの合言葉をもう1つ考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-096",
+      "situationId": "regular",
+      "text": "常連さんへ向けたサプライズ企画を今考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-097",
+      "situationId": "regular",
+      "text": "配信を通じて感じた「続けることの意味」を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-098",
+      "situationId": "regular",
+      "text": "コミュニティ内の「暗黙のマナー」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-099",
+      "situationId": "regular",
+      "text": "常連さんとの信頼関係を築いたきっかけを話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-100",
+      "situationId": "regular",
+      "text": "配信を1年後どうなっていたいか話してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-101",
+      "situationId": "regular",
+      "text": "常連さんとのやり取りで一番心温まったエピソードを話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-102",
+      "situationId": "regular",
+      "text": "配信を続けてきて変化した価値観を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-103",
+      "situationId": "regular",
+      "text": "コミュニティ内の「新しい伝統」候補を考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-104",
+      "situationId": "regular",
+      "text": "常連さんへ、いつもと違う感謝の伝え方をしてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-105",
+      "situationId": "regular",
+      "text": "配信の「原点回帰」企画を考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-106",
+      "situationId": "regular",
+      "text": "コミュニティの成長を振り返るタイムラインを作ってみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-107",
+      "situationId": "regular",
+      "text": "常連さんとの「以心伝心」エピソードを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-108",
+      "situationId": "regular",
+      "text": "配信を通して得た一番の財産について話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-109",
+      "situationId": "regular",
+      "text": "コミュニティ内の「密かな人気者」エピソードを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-110",
+      "situationId": "regular",
+      "text": "常連さんに聞いてみたい配信の改善点を募集しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-111",
+      "situationId": "regular",
+      "text": "配信の「新章突入」を勝手に宣言してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-112",
+      "situationId": "regular",
+      "text": "コミュニティの雰囲気作りで意識していることを話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-113",
+      "situationId": "regular",
+      "text": "常連さんとの「阿吽の呼吸」を感じた瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-114",
+      "situationId": "regular",
+      "text": "配信を続けてきて一番のご褒美だったことを話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-115",
+      "situationId": "regular",
+      "text": "コミュニティ内の「隠れ名言」を発掘してみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-116",
+      "situationId": "regular",
+      "text": "常連さんへ向けて、次の記念配信の構想を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-117",
+      "situationId": "regular",
+      "text": "配信のマンネリ対策を一緒に考えよう",
+      "tags": []
+    },
+    {
+      "id": "regular-118",
+      "situationId": "regular",
+      "text": "コミュニティの「変わらない魅力」を語ろう",
+      "tags": []
+    },
+    {
+      "id": "regular-119",
+      "situationId": "regular",
+      "text": "常連さんとの関係性を色で例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "regular-120",
+      "situationId": "regular",
+      "text": "配信を続けてきた自分を労ってみよう",
+      "tags": []
+    },
+    {
+      "id": "regular-121",
+      "situationId": "regular",
+      "text": "常連さんと決めている「合図」があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-122",
+      "situationId": "regular",
+      "text": "配信の「安心して見られる理由」を常連さん目線で話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-123",
+      "situationId": "regular",
+      "text": "コミュニティ内で自然発生した役割分担があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-124",
+      "situationId": "regular",
+      "text": "常連さんへ、感謝を込めたミニ企画をサプライズで発表しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-125",
+      "situationId": "regular",
+      "text": "配信を続けてきて印象的だった「お別れ」エピソードがあれば話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-126",
+      "situationId": "regular",
+      "text": "コミュニティの「安定した空気感」を作っている要因を分析しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-127",
+      "situationId": "regular",
+      "text": "常連さんとの「合わせ鏡」のようなエピソードを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-128",
+      "situationId": "regular",
+      "text": "配信の「新しい挑戦」を常連さんと一緒に考えよう",
+      "tags": []
+    },
+    {
+      "id": "regular-129",
+      "situationId": "regular",
+      "text": "コミュニティ内の「小さな幸せ」を共有し合おう",
+      "tags": []
+    },
+    {
+      "id": "regular-130",
+      "situationId": "regular",
+      "text": "常連さんへ、今日だけの限定裏話を1つ",
+      "tags": []
+    },
+    {
+      "id": "regular-131",
+      "situationId": "regular",
+      "text": "配信を続けてきて変わらない「軸」について話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-132",
+      "situationId": "regular",
+      "text": "コミュニティの「これからも大事にしたいこと」を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-133",
+      "situationId": "regular",
+      "text": "常連さんとの「暗黙の信頼」を感じるエピソードを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-134",
+      "situationId": "regular",
+      "text": "配信の「余白」を大事にしている理由を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-135",
+      "situationId": "regular",
+      "text": "コミュニティ内の「密かな盛り上がりポイント」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "regular-136",
+      "situationId": "regular",
+      "text": "常連さんへ向けて、感謝の気持ちを手紙風に伝えよう",
+      "tags": []
+    },
+    {
+      "id": "regular-137",
+      "situationId": "regular",
+      "text": "配信を続けてきて一番「これでよかった」と思う選択を話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-138",
+      "situationId": "regular",
+      "text": "コミュニティの「変化と不変」について話そう",
+      "tags": []
+    },
+    {
+      "id": "regular-139",
+      "situationId": "regular",
+      "text": "常連さんとの関係を植物に例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "regular-140",
+      "situationId": "regular",
+      "text": "配信の未来予想図を常連さんと一緒に描いてみよう",
+      "tags": []
+    }
+  ]
+}

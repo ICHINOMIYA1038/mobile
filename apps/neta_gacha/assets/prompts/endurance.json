@@ -1,0 +1,846 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-31",
+  "prompts": [
+    {
+      "id": "endurance-001",
+      "situationId": "endurance",
+      "text": "耐久配信の目標時間と、現在の経過時間を実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-002",
+      "situationId": "endurance",
+      "text": "ここまでで一番印象に残った瞬間を振り返ってみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-003",
+      "situationId": "endurance",
+      "text": "休憩の過ごし方を実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-004",
+      "situationId": "endurance",
+      "text": "今の気力レベルを10段階で発表してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-005",
+      "situationId": "endurance",
+      "text": "ここまでのハイライトをリスナーと一緒に選んでみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-006",
+      "situationId": "endurance",
+      "text": "今食べたい・飲みたいものを実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-007",
+      "situationId": "endurance",
+      "text": "ここまでの配信で学んだことを1つ話してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-008",
+      "situationId": "endurance",
+      "text": "眠気覚ましにやってみたいことを1つ挙げてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-009",
+      "situationId": "endurance",
+      "text": "折り返し地点の今の気持ちを一言で表すと?",
+      "tags": []
+    },
+    {
+      "id": "endurance-010",
+      "situationId": "endurance",
+      "text": "ここまで支えてくれたリスナーに、あらためて感謝を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-011",
+      "situationId": "endurance",
+      "text": "残り時間で挑戦したいミニ企画を1つ考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-012",
+      "situationId": "endurance",
+      "text": "今の自分にご褒美をあげるなら何にする?",
+      "tags": []
+    },
+    {
+      "id": "endurance-013",
+      "situationId": "endurance",
+      "text": "耐久配信ならではの「あるある」を1つ話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-014",
+      "situationId": "endurance",
+      "text": "配信が終わったらまずやりたいことを1つ宣言してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-015",
+      "situationId": "endurance",
+      "text": "現在の疲労度を実況してみよう(オノマトペで表現してもOK)",
+      "tags": []
+    },
+    {
+      "id": "endurance-016",
+      "situationId": "endurance",
+      "text": "ここまでで一番眠気に襲われた瞬間を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-017",
+      "situationId": "endurance",
+      "text": "水分補給がてら、今欲しい飲み物を実況しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-018",
+      "situationId": "endurance",
+      "text": "姿勢が崩れていないかチェックしながら一言",
+      "tags": []
+    },
+    {
+      "id": "endurance-019",
+      "situationId": "endurance",
+      "text": "ここまでの配信をハイライト動画にするなら何分にする?",
+      "tags": []
+    },
+    {
+      "id": "endurance-020",
+      "situationId": "endurance",
+      "text": "二回目の元気(セカンドウインド)が来た瞬間を教えて",
+      "tags": []
+    },
+    {
+      "id": "endurance-021",
+      "situationId": "endurance",
+      "text": "ここまで支えてくれたリスナーへ、替え歌で感謝を伝えてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-022",
+      "situationId": "endurance",
+      "text": "残り時間を使ってやりたい小さなチャレンジを1つ",
+      "tags": []
+    },
+    {
+      "id": "endurance-023",
+      "situationId": "endurance",
+      "text": "耐久配信中に食べたくなるものランキングを発表",
+      "tags": []
+    },
+    {
+      "id": "endurance-024",
+      "situationId": "endurance",
+      "text": "ここまでの配信で一番の「事件」を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-025",
+      "situationId": "endurance",
+      "text": "眠気覚ましの独自ルーティンを実演してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-026",
+      "situationId": "endurance",
+      "text": "過去の耐久配信と比べて今回はどう違うか話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-027",
+      "situationId": "endurance",
+      "text": "現在の気力を天気で例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-028",
+      "situationId": "endurance",
+      "text": "折り返しを過ぎた今、一番達成したいことは?",
+      "tags": []
+    },
+    {
+      "id": "endurance-029",
+      "situationId": "endurance",
+      "text": "ここまでの配信用BGMプレイリストを振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-030",
+      "situationId": "endurance",
+      "text": "終わったら真っ先にやりたいことを3つ挙げてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-031",
+      "situationId": "endurance",
+      "text": "耐久配信ならではの「あるある」を新たに1つ発掘しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-032",
+      "situationId": "endurance",
+      "text": "リスナーと一緒に大きく伸びをしてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-033",
+      "situationId": "endurance",
+      "text": "ここまでの配信を一言でまとめるなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-034",
+      "situationId": "endurance",
+      "text": "疲れた時の自分への魔法の言葉を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-035",
+      "situationId": "endurance",
+      "text": "折り返し地点セレモニーを今すぐやってみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-036",
+      "situationId": "endurance",
+      "text": "ここまでで一番笑ったコメントを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-037",
+      "situationId": "endurance",
+      "text": "残り時間のカウントダウンを景気づけに叫んでみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-038",
+      "situationId": "endurance",
+      "text": "耐久配信を完走するためのコツを1つ共有しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-039",
+      "situationId": "endurance",
+      "text": "ここまでの「サプライズ」だった出来事を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-040",
+      "situationId": "endurance",
+      "text": "ゴールした瞬間にやりたいポーズを今から決めておこう",
+      "tags": []
+    },
+    {
+      "id": "endurance-041",
+      "situationId": "endurance",
+      "text": "経過時間ごとの気持ちの変化を振り返ってみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-042",
+      "situationId": "endurance",
+      "text": "ここまでで一番リスナーに助けられた瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-043",
+      "situationId": "endurance",
+      "text": "耐久配信中の「相棒」(飲み物やぬいぐるみなど)を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-044",
+      "situationId": "endurance",
+      "text": "今の集中力を野菜や果物に例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-045",
+      "situationId": "endurance",
+      "text": "ここまでのコメント数を予想してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-046",
+      "situationId": "endurance",
+      "text": "眠気対策グッズがあれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-047",
+      "situationId": "endurance",
+      "text": "折り返し後の新しい目標を設定しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-048",
+      "situationId": "endurance",
+      "text": "ここまでで一番「あっという間だった」区間を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-049",
+      "situationId": "endurance",
+      "text": "耐久配信の醍醐味を改めて語ってみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-050",
+      "situationId": "endurance",
+      "text": "現在の集中力を数値化して発表しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-051",
+      "situationId": "endurance",
+      "text": "ここまでの反省点を1つ挙げてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-052",
+      "situationId": "endurance",
+      "text": "残り時間で聴きたいリクエスト曲を募集しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-053",
+      "situationId": "endurance",
+      "text": "耐久配信中に育った新しい癖があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-054",
+      "situationId": "endurance",
+      "text": "ここまでのベストコメント賞を発表しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-055",
+      "situationId": "endurance",
+      "text": "疲れを吹き飛ばす合言葉をリスナーと一緒に叫ぼう",
+      "tags": []
+    },
+    {
+      "id": "endurance-056",
+      "situationId": "endurance",
+      "text": "終盤の追い込みプランを宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-057",
+      "situationId": "endurance",
+      "text": "ここまで一緒に頑張ってくれたリスナーへ拍手を送ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-058",
+      "situationId": "endurance",
+      "text": "耐久配信終了後の「打ち上げ」予定を話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-059",
+      "situationId": "endurance",
+      "text": "ここまでの体力配分を振り返って反省しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-060",
+      "situationId": "endurance",
+      "text": "ゴールまでの残り時間をカウントダウン形式で盛り上げよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-061",
+      "situationId": "endurance",
+      "text": "ここまでの配信を漢字1文字で表すなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-062",
+      "situationId": "endurance",
+      "text": "耐久配信中に増えた新しい発見を話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-063",
+      "situationId": "endurance",
+      "text": "今の集中力を電池残量で例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-064",
+      "situationId": "endurance",
+      "text": "ここまでの配信を振り返るミニクイズを出してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-065",
+      "situationId": "endurance",
+      "text": "疲れたときに聞きたい応援ソングを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-066",
+      "situationId": "endurance",
+      "text": "残り時間の過ごし方をリスナーと一緒に計画しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-067",
+      "situationId": "endurance",
+      "text": "ここまでの「まさかの展開」を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-068",
+      "situationId": "endurance",
+      "text": "耐久配信ならではの達成感を今の気持ちで語ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-069",
+      "situationId": "endurance",
+      "text": "ここまで見てくれた新規リスナーへ一言メッセージ",
+      "tags": []
+    },
+    {
+      "id": "endurance-070",
+      "situationId": "endurance",
+      "text": "現在の体調を天気予報風に発表しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-071",
+      "situationId": "endurance",
+      "text": "耐久配信の「後半戦」に向けて意気込みを話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-072",
+      "situationId": "endurance",
+      "text": "ここまでのコメント欄の盛り上がりを振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-073",
+      "situationId": "endurance",
+      "text": "疲労回復のために今すぐできることをやってみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-074",
+      "situationId": "endurance",
+      "text": "ここまでの配信で一番助けられたリスナーの言葉を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-075",
+      "situationId": "endurance",
+      "text": "残り時間で挑戦したい「無茶振り」を募集しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-076",
+      "situationId": "endurance",
+      "text": "耐久配信の記録更新に向けて目標を再設定しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-077",
+      "situationId": "endurance",
+      "text": "ここまでの自分を採点するなら何点?",
+      "tags": []
+    },
+    {
+      "id": "endurance-078",
+      "situationId": "endurance",
+      "text": "折り返しを過ぎての率直な感想を話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-079",
+      "situationId": "endurance",
+      "text": "ここまでの配信を1枚の絵で表すなら何を描く?",
+      "tags": []
+    },
+    {
+      "id": "endurance-080",
+      "situationId": "endurance",
+      "text": "ゴール後の自分へのメッセージを今のうちに残しておこう",
+      "tags": []
+    },
+    {
+      "id": "endurance-081",
+      "situationId": "endurance",
+      "text": "ここまでの配信をラジオ番組のコーナー名にするなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-082",
+      "situationId": "endurance",
+      "text": "耐久配信中に発見した新しい趣味の種を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-083",
+      "situationId": "endurance",
+      "text": "今の気力を植物の成長段階で例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-084",
+      "situationId": "endurance",
+      "text": "ここまでのコメントで一番励みになった言葉を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-085",
+      "situationId": "endurance",
+      "text": "耐久配信の「中だるみ対策」を実演してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-086",
+      "situationId": "endurance",
+      "text": "ここまでの配信をニュース速報風にまとめてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-087",
+      "situationId": "endurance",
+      "text": "疲れを感じたときの合図を決めておこう",
+      "tags": []
+    },
+    {
+      "id": "endurance-088",
+      "situationId": "endurance",
+      "text": "ここまでの配信で得たちょっとした知恵を共有しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-089",
+      "situationId": "endurance",
+      "text": "耐久配信終了までのマイルストーンを設定しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-090",
+      "situationId": "endurance",
+      "text": "ここまでの体力を残量ゲージで表現してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-091",
+      "situationId": "endurance",
+      "text": "疲れた体にご褒美をあげるタイミングを決めよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-092",
+      "situationId": "endurance",
+      "text": "ここまでの配信の「名シーン集」を口頭で振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-093",
+      "situationId": "endurance",
+      "text": "耐久配信中の集中力の波を折れ線グラフ風に語ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-094",
+      "situationId": "endurance",
+      "text": "ここまで支えてくれた人へ、感謝のBGMを流そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-095",
+      "situationId": "endurance",
+      "text": "残り時間の目標コメント数を宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-096",
+      "situationId": "endurance",
+      "text": "耐久配信ならではの「絆」を感じた瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-097",
+      "situationId": "endurance",
+      "text": "ここまでの配信で意外だった自分の一面を話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-098",
+      "situationId": "endurance",
+      "text": "ラストスパートに向けての合言葉を考えよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-099",
+      "situationId": "endurance",
+      "text": "ここまでの配信を映画の予告編風にまとめてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-100",
+      "situationId": "endurance",
+      "text": "ゴールの瞬間に流したい曲を決めておこう",
+      "tags": []
+    },
+    {
+      "id": "endurance-101",
+      "situationId": "endurance",
+      "text": "ここまでの配信を音楽アルバムのタイトルにするなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-102",
+      "situationId": "endurance",
+      "text": "耐久配信中に見つけた新しい楽しみ方を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-103",
+      "situationId": "endurance",
+      "text": "今の気力を天気図で表現してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-104",
+      "situationId": "endurance",
+      "text": "ここまでのコメント欄の名場面を再現してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-105",
+      "situationId": "endurance",
+      "text": "耐久配信の「後半の合言葉」を考えよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-106",
+      "situationId": "endurance",
+      "text": "ここまでの配信を絵日記風に振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-107",
+      "situationId": "endurance",
+      "text": "疲れを忘れる魔法の質問をリスナーに投げてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-108",
+      "situationId": "endurance",
+      "text": "ここまでの配信で得た小さな自信を話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-109",
+      "situationId": "endurance",
+      "text": "耐久配信のクライマックスに向けて盛り上げワードを考えよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-110",
+      "situationId": "endurance",
+      "text": "ここまでの体力配分を反省しつつ次の作戦を立てよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-111",
+      "situationId": "endurance",
+      "text": "疲れた時こそ聴きたい鉄板ソングを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-112",
+      "situationId": "endurance",
+      "text": "ここまでの配信の「隠れハイライト」を発掘しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-113",
+      "situationId": "endurance",
+      "text": "耐久配信中の相棒(道具)に感謝を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-114",
+      "situationId": "endurance",
+      "text": "ここまでの自分の頑張りを星の数で評価しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-115",
+      "situationId": "endurance",
+      "text": "残り時間でやりたい「小さなお楽しみ」を1つ",
+      "tags": []
+    },
+    {
+      "id": "endurance-116",
+      "situationId": "endurance",
+      "text": "耐久配信ならではの連帯感をリスナーと確認しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-117",
+      "situationId": "endurance",
+      "text": "ここまでの配信を俳句っぽくまとめてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-118",
+      "situationId": "endurance",
+      "text": "ラストスパートのBGMを今決めよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-119",
+      "situationId": "endurance",
+      "text": "ここまでの配信で流れた名(迷)言を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-120",
+      "situationId": "endurance",
+      "text": "ゴールした後の自分へのご褒美をもう一度宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-121",
+      "situationId": "endurance",
+      "text": "ここまでの配信を1つの物語にたとえるなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-122",
+      "situationId": "endurance",
+      "text": "耐久配信中に感じた「時間の流れ方」について話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-123",
+      "situationId": "endurance",
+      "text": "今の気力を炎の大きさで例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-124",
+      "situationId": "endurance",
+      "text": "ここまでの配信の「隠れテーマ」を勝手に決めてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-125",
+      "situationId": "endurance",
+      "text": "耐久配信の「合言葉」をもう1つリスナーと考えよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-126",
+      "situationId": "endurance",
+      "text": "ここまでの配信を1曲のメドレーにするなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-127",
+      "situationId": "endurance",
+      "text": "疲れた時の「復活の呪文」を今考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-128",
+      "situationId": "endurance",
+      "text": "ここまでの配信で得た「耐久力」について話そう",
+      "tags": []
+    },
+    {
+      "id": "endurance-129",
+      "situationId": "endurance",
+      "text": "耐久配信終盤の「ご褒美タイム」を計画しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-130",
+      "situationId": "endurance",
+      "text": "ここまでの配信の温度感を数字で発表しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-131",
+      "situationId": "endurance",
+      "text": "疲労と戦う自分を実況で応援してみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-132",
+      "situationId": "endurance",
+      "text": "ここまでの配信の「隠れMVP」(道具や工夫)を発表しよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-133",
+      "situationId": "endurance",
+      "text": "耐久配信の「折り返しセレモニー第2弾」をやってみよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-134",
+      "situationId": "endurance",
+      "text": "ここまでの配信を漫画のコマ割りで表すなら?",
+      "tags": []
+    },
+    {
+      "id": "endurance-135",
+      "situationId": "endurance",
+      "text": "疲れた時に思い出したい「初心」を語ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-136",
+      "situationId": "endurance",
+      "text": "ここまでの配信で流れた笑いのツボを振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-137",
+      "situationId": "endurance",
+      "text": "耐久配信の「最終章」に向けてタイトルをつけよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-138",
+      "situationId": "endurance",
+      "text": "ここまでの配信を天気に例えて締めくくろう",
+      "tags": []
+    },
+    {
+      "id": "endurance-139",
+      "situationId": "endurance",
+      "text": "残り時間でリスナーと一緒に深呼吸をしよう",
+      "tags": []
+    },
+    {
+      "id": "endurance-140",
+      "situationId": "endurance",
+      "text": "ゴール直前の自分へ、今のうちにエールを送ろう",
+      "tags": []
+    }
+  ]
+}

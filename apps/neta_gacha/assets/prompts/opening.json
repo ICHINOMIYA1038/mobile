@@ -1,0 +1,850 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-31",
+  "prompts": [
+    {
+      "id": "opening-001",
+      "situationId": "opening",
+      "text": "今日の配信タイトルの由来を1分で説明してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-002",
+      "situationId": "opening",
+      "text": "今日の体調とテンションを、天気予報みたいに実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-003",
+      "situationId": "opening",
+      "text": "配信前に一番テンションが上がった出来事は?",
+      "tags": []
+    },
+    {
+      "id": "opening-004",
+      "situationId": "opening",
+      "text": "今日挑戦したいことを1つ宣言してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-005",
+      "situationId": "opening",
+      "text": "起きてから配信までにあった小さな出来事を話してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-006",
+      "situationId": "opening",
+      "text": "今、頭の中で流れているBGMを教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-007",
+      "situationId": "opening",
+      "text": "最近ハマっていることを30秒で紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-008",
+      "situationId": "opening",
+      "text": "今日の配信で絶対言いたい一言を最初に言ってしまおう",
+      "tags": []
+    },
+    {
+      "id": "opening-009",
+      "situationId": "opening",
+      "text": "直近で一番笑った出来事は?",
+      "tags": []
+    },
+    {
+      "id": "opening-010",
+      "situationId": "opening",
+      "text": "今日の自分を一言で表すと?",
+      "tags": []
+    },
+    {
+      "id": "opening-011",
+      "situationId": "opening",
+      "text": "配信前に何を食べた・飲んだか教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-012",
+      "situationId": "opening",
+      "text": "最近買ってよかったものを紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-013",
+      "situationId": "opening",
+      "text": "今週の「ちょっと得した」出来事を話してみよう",
+      "tags": [
+        "money"
+      ]
+    },
+    {
+      "id": "opening-014",
+      "situationId": "opening",
+      "text": "今日のコーデ、こだわりポイントは?",
+      "tags": [
+        "appearance"
+      ]
+    },
+    {
+      "id": "opening-015",
+      "situationId": "opening",
+      "text": "今日を色に例えるなら何色?理由も添えて話してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-016",
+      "situationId": "opening",
+      "text": "昨日見た夢を覚えている範囲で話してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-017",
+      "situationId": "opening",
+      "text": "配信前にやってきた「ルーティン」があれば教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-018",
+      "situationId": "opening",
+      "text": "今週末の予定を1つだけネタバレしてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-019",
+      "situationId": "opening",
+      "text": "最近、地味に嬉しかった出来事を話してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-020",
+      "situationId": "opening",
+      "text": "今日の気分を10段階で採点してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-021",
+      "situationId": "opening",
+      "text": "配信タイトルを別の言い方で言い換えてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-022",
+      "situationId": "opening",
+      "text": "今日初めて見た人向けに、30秒で自己紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-023",
+      "situationId": "opening",
+      "text": "最近覚えた新しい言葉や知識を紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-024",
+      "situationId": "opening",
+      "text": "今日の天気と自分のテンションがリンクしているか話してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-025",
+      "situationId": "opening",
+      "text": "配信までの移動中(または家事中)に考えていたことを話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-026",
+      "situationId": "opening",
+      "text": "今日のBGM選びのこだわりを話してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-027",
+      "situationId": "opening",
+      "text": "直近で「これはやってよかった」と思うことを1つ",
+      "tags": []
+    },
+    {
+      "id": "opening-028",
+      "situationId": "opening",
+      "text": "起きてから最初に触ったスマホアプリを教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-029",
+      "situationId": "opening",
+      "text": "今日の予定を実況風に読み上げてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-030",
+      "situationId": "opening",
+      "text": "最近ハマっている飲み物・お菓子を紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-031",
+      "situationId": "opening",
+      "text": "配信の前に軽くストレッチしながら近況を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-032",
+      "situationId": "opening",
+      "text": "今の季節で好きなことを1つ挙げてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-033",
+      "situationId": "opening",
+      "text": "最近見て面白かった動画や配信を紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-034",
+      "situationId": "opening",
+      "text": "今日の自分にひとこと激励の言葉をかけてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-035",
+      "situationId": "opening",
+      "text": "直近1週間を天気予報風にまとめてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-036",
+      "situationId": "opening",
+      "text": "配信室(部屋)のこだわりポイントを1つ紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-037",
+      "situationId": "opening",
+      "text": "今日挑戦する新しいことを宣言してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-038",
+      "situationId": "opening",
+      "text": "最近「ちょっと成長したな」と思う瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-039",
+      "situationId": "opening",
+      "text": "今日のラッキーアイテムを決めてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-040",
+      "situationId": "opening",
+      "text": "配信のオープニングに使いたい効果音を声で表現してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-041",
+      "situationId": "opening",
+      "text": "起きた瞬間の第一声を再現してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-042",
+      "situationId": "opening",
+      "text": "今日の配信で使う予定のフレーズを先に披露してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-043",
+      "situationId": "opening",
+      "text": "直近で一番「懐かしい」と感じた出来事を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-044",
+      "situationId": "opening",
+      "text": "配信前に見たニュースやSNSの話題を一つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-045",
+      "situationId": "opening",
+      "text": "今日の自分のコンディションを乗り物に例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "opening-046",
+      "situationId": "opening",
+      "text": "最近の睡眠時間について正直に話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-047",
+      "situationId": "opening",
+      "text": "配信開始直前に考えていたことを教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-048",
+      "situationId": "opening",
+      "text": "今日試したい新しい挨拶フレーズを考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-049",
+      "situationId": "opening",
+      "text": "最近増えた・減った生活習慣を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-050",
+      "situationId": "opening",
+      "text": "今日のタイムスケジュールをざっくり共有しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-051",
+      "situationId": "opening",
+      "text": "直近で一番「ラッキーだった」出来事を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-052",
+      "situationId": "opening",
+      "text": "配信前の準備で一番時間がかかった作業は?",
+      "tags": []
+    },
+    {
+      "id": "opening-053",
+      "situationId": "opening",
+      "text": "今日のBGMを一言でジャンル紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-054",
+      "situationId": "opening",
+      "text": "最近試したお店やサービスの感想を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-055",
+      "situationId": "opening",
+      "text": "今の気温・季節感を実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-056",
+      "situationId": "opening",
+      "text": "配信を始める前の「儀式」があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-057",
+      "situationId": "opening",
+      "text": "配信中に達成したい小さな目標を1つ発表しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-058",
+      "situationId": "opening",
+      "text": "直近1日で一番集中できた時間帯を教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-059",
+      "situationId": "opening",
+      "text": "今日の配信で新しく試したいことを1つ",
+      "tags": []
+    },
+    {
+      "id": "opening-060",
+      "situationId": "opening",
+      "text": "起きてから配信までの「ながら作業」を教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-061",
+      "situationId": "opening",
+      "text": "今日の配信で「絶対使わない」と決めているNGワードがあれば教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-062",
+      "situationId": "opening",
+      "text": "最近始めた新しい習慣を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-063",
+      "situationId": "opening",
+      "text": "配信前にチェックするお気に入りのサイト・アプリを教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-064",
+      "situationId": "opening",
+      "text": "「もし今日休みだったら何してた?」を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-065",
+      "situationId": "opening",
+      "text": "直近で一番「なるほど」と思った情報を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-066",
+      "situationId": "opening",
+      "text": "配信前の緊張度合いを実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-067",
+      "situationId": "opening",
+      "text": "今日のテンションを楽器に例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "opening-068",
+      "situationId": "opening",
+      "text": "最近気になっている流行りものを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-069",
+      "situationId": "opening",
+      "text": "配信前に読んだ本や記事があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-070",
+      "situationId": "opening",
+      "text": "今日の目標達成率を配信後に振り返る約束をしてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-071",
+      "situationId": "opening",
+      "text": "直近1ヶ月で一番印象に残った日を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-072",
+      "situationId": "opening",
+      "text": "配信前に整えた身だしなみポイントを1つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-073",
+      "situationId": "opening",
+      "text": "今使っている配信機材のこだわりを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-074",
+      "situationId": "opening",
+      "text": "最近始めたこと・やめたことを1つ話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-075",
+      "situationId": "opening",
+      "text": "配信前の腹ごしらえメニューを教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-076",
+      "situationId": "opening",
+      "text": "今日の空模様を実況しながら話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-077",
+      "situationId": "opening",
+      "text": "直近であったちょっとした冒険エピソードを話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-078",
+      "situationId": "opening",
+      "text": "配信前に確認しているチェックリストがあれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-079",
+      "situationId": "opening",
+      "text": "今日は通算何回目の配信か、節目があれば教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-080",
+      "situationId": "opening",
+      "text": "配信を彩っている小物・アイテムを1つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-081",
+      "situationId": "opening",
+      "text": "今日の配信で流したい「効果音」をもう1つ考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-082",
+      "situationId": "opening",
+      "text": "直近で一番「予想外」だった出来事を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-083",
+      "situationId": "opening",
+      "text": "配信前のSNSチェックで気になった投稿を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-084",
+      "situationId": "opening",
+      "text": "今日の気分に近い絵文字を3つ選んでみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-085",
+      "situationId": "opening",
+      "text": "配信前にやった小さな決意表明があれば教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-086",
+      "situationId": "opening",
+      "text": "今日のコーディネートのポイントをもう1つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-087",
+      "situationId": "opening",
+      "text": "直近で一番「助かった」出来事を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-088",
+      "situationId": "opening",
+      "text": "配信前の移動時間で聴いていた音楽を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-089",
+      "situationId": "opening",
+      "text": "今日の自分のモチベーションを数字で発表しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-090",
+      "situationId": "opening",
+      "text": "配信前に済ませた家事・用事を教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-091",
+      "situationId": "opening",
+      "text": "今日挑戦する話題を予告編風に紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-092",
+      "situationId": "opening",
+      "text": "直近で一番「癒された」瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-093",
+      "situationId": "opening",
+      "text": "配信前に見た広告で気になったものを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-094",
+      "situationId": "opening",
+      "text": "今日の体調管理で意識していることを話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-095",
+      "situationId": "opening",
+      "text": "配信を始める前の深呼吸のタイミングを実演しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-096",
+      "situationId": "opening",
+      "text": "直近1週間の「頑張ったで賞」を自分にあげよう",
+      "tags": []
+    },
+    {
+      "id": "opening-097",
+      "situationId": "opening",
+      "text": "今日の配信のBGMプレイリストを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-098",
+      "situationId": "opening",
+      "text": "配信前に確認したメッセージ・通知について話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-099",
+      "situationId": "opening",
+      "text": "今日の気分を絵文字ではなく漢字で表してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-100",
+      "situationId": "opening",
+      "text": "配信を始める合図(かけ声)を新しく考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-101",
+      "situationId": "opening",
+      "text": "今日の配信で流したいオープニングナレーションを考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-102",
+      "situationId": "opening",
+      "text": "直近で一番「タメになった」出来事を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-103",
+      "situationId": "opening",
+      "text": "配信前に飲んだ水分量を実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-104",
+      "situationId": "opening",
+      "text": "今日の気合いの入れ方をポーズで表現してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-105",
+      "situationId": "opening",
+      "text": "配信前に見返した過去の自分の投稿があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-106",
+      "situationId": "opening",
+      "text": "今日のコンディションをスポーツ選手風に自己分析しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-107",
+      "situationId": "opening",
+      "text": "直近で一番「頑張った」瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-108",
+      "situationId": "opening",
+      "text": "配信前に決めた今日のマイルールを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-109",
+      "situationId": "opening",
+      "text": "今日の配信テーマにちなんだ小道具があれば見せよう",
+      "tags": []
+    },
+    {
+      "id": "opening-110",
+      "situationId": "opening",
+      "text": "配信前の身支度で一番こだわった部分を教えて",
+      "tags": []
+    },
+    {
+      "id": "opening-111",
+      "situationId": "opening",
+      "text": "直近で一番「感動した」出来事を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-112",
+      "situationId": "opening",
+      "text": "今日の気分にぴったりな一言を選んでみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-113",
+      "situationId": "opening",
+      "text": "配信前に決めた小さなチャレンジを宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-114",
+      "situationId": "opening",
+      "text": "今日の配信で狙っている雰囲気を一言で",
+      "tags": []
+    },
+    {
+      "id": "opening-115",
+      "situationId": "opening",
+      "text": "直近で一番「びっくりした」ニュースを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-116",
+      "situationId": "opening",
+      "text": "配信前に確認した天気予報について話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-117",
+      "situationId": "opening",
+      "text": "今日の自己紹介をあえて他の言語でやってみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-118",
+      "situationId": "opening",
+      "text": "配信前の準備運動代わりに簡単なストレッチを見せよう",
+      "tags": []
+    },
+    {
+      "id": "opening-119",
+      "situationId": "opening",
+      "text": "直近1ヶ月の自分を振り返って一言で表すと?",
+      "tags": []
+    },
+    {
+      "id": "opening-120",
+      "situationId": "opening",
+      "text": "今日の配信の「合言葉」を最初に発表しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-121",
+      "situationId": "opening",
+      "text": "今日のデスク周りで一番のお気に入りアイテムを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-122",
+      "situationId": "opening",
+      "text": "直近で家族やペットとあった面白い出来事を話そう(あれば)",
+      "tags": []
+    },
+    {
+      "id": "opening-123",
+      "situationId": "opening",
+      "text": "今日の身だしなみで新しく取り入れたものを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-124",
+      "situationId": "opening",
+      "text": "直近で買ったけどまだ使っていないものを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-125",
+      "situationId": "opening",
+      "text": "今日はカレンダー的に何の日か調べて紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-126",
+      "situationId": "opening",
+      "text": "配信前に聴いていたポッドキャストやラジオがあれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-127",
+      "situationId": "opening",
+      "text": "今日の運動量(歩数など)を発表してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-128",
+      "situationId": "opening",
+      "text": "直近でハマっている時短術を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-129",
+      "situationId": "opening",
+      "text": "今日の配信までのカウントダウンで感じたことを話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-130",
+      "situationId": "opening",
+      "text": "配信前に見つけた小さなラッキーを話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-131",
+      "situationId": "opening",
+      "text": "今日は誰かに感謝を伝えたい出来事があれば話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-132",
+      "situationId": "opening",
+      "text": "直近のマイブームを3秒で紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-133",
+      "situationId": "opening",
+      "text": "今日の配信前にやった軽い運動・体操を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-134",
+      "situationId": "opening",
+      "text": "配信の設定・機材で最近変えたところを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "opening-135",
+      "situationId": "opening",
+      "text": "今日食べたい・我慢しているものを話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-136",
+      "situationId": "opening",
+      "text": "直近で「これはSNSに投稿したい」と思った瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "opening-137",
+      "situationId": "opening",
+      "text": "今日は何かのアニバーサリー(記念日)か確認してみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-138",
+      "situationId": "opening",
+      "text": "配信前に見た夢占い・運勢を紹介しよう(あれば)",
+      "tags": []
+    },
+    {
+      "id": "opening-139",
+      "situationId": "opening",
+      "text": "今日の一言モットーを決めてみよう",
+      "tags": []
+    },
+    {
+      "id": "opening-140",
+      "situationId": "opening",
+      "text": "直近で挑戦してみたいけどまだやれていないことを話そう",
+      "tags": []
+    }
+  ]
+}

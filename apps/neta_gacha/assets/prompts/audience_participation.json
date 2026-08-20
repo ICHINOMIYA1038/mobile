@@ -1,0 +1,849 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-31",
+  "prompts": [
+    {
+      "id": "audience_participation-001",
+      "situationId": "audience_participation",
+      "text": "コメント欄で「AとBどっちが好き?」の二択投票を出してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-002",
+      "situationId": "audience_participation",
+      "text": "「次に挑戦してほしいこと」をコメントで募集してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-003",
+      "situationId": "audience_participation",
+      "text": "リスナーに今日の「ひとことMVP」コメントを投票してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-004",
+      "situationId": "audience_participation",
+      "text": "「この後どうする?」をコメントの多数決で決めてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-005",
+      "situationId": "audience_participation",
+      "text": "リスナーにおすすめの○○を教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-006",
+      "situationId": "audience_participation",
+      "text": "「今日の気分」を一言でコメントしてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-007",
+      "situationId": "audience_participation",
+      "text": "コメントで質問を募集して、その場で答えてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-008",
+      "situationId": "audience_participation",
+      "text": "リスナーの「好きな○○ランキング」を作ってみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-009",
+      "situationId": "audience_participation",
+      "text": "「はい・いいえ」で答えられる質問をコメントで出してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-010",
+      "situationId": "audience_participation",
+      "text": "コメントで挙がった案の中から1つを選んで実行してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-011",
+      "situationId": "audience_participation",
+      "text": "リスナーに今日のBGMをリクエストしてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-012",
+      "situationId": "audience_participation",
+      "text": "「もし配信テーマを変えるなら?」をコメントで募集してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-013",
+      "situationId": "audience_participation",
+      "text": "コメント欄で簡単なクイズを出してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-014",
+      "situationId": "audience_participation",
+      "text": "最近気になるニュースについて、コメントで意見を聞いてみよう",
+      "tags": [
+        "politics",
+        "controversial"
+      ]
+    },
+    {
+      "id": "audience_participation-015",
+      "situationId": "audience_participation",
+      "text": "コメントで「せーの」で好きな数字を言ってもらって集計しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-016",
+      "situationId": "audience_participation",
+      "text": "しりとりをリスナーと一緒に始めてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-017",
+      "situationId": "audience_participation",
+      "text": "お題に対して一言だけコメントしてもらうミニ企画をやろう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-018",
+      "situationId": "audience_participation",
+      "text": "「今から何をするか」をコメントの多数決で決めよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-019",
+      "situationId": "audience_participation",
+      "text": "コメントで即興の物語を1行ずつ繋いでもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-020",
+      "situationId": "audience_participation",
+      "text": "「せーの」で絵文字だけの感想を送ってもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-021",
+      "situationId": "audience_participation",
+      "text": "リスナーに勝手にキャッチコピーをつけてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-022",
+      "situationId": "audience_participation",
+      "text": "3択クイズをその場で作って出題してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-023",
+      "situationId": "audience_participation",
+      "text": "コメント欄で早押しクイズを開催してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-024",
+      "situationId": "audience_participation",
+      "text": "「もし〇〇だったら」をコメントで自由に妄想してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-025",
+      "situationId": "audience_participation",
+      "text": "リスナーに今日のMVPコメントを選んでもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-026",
+      "situationId": "audience_participation",
+      "text": "好きな方に投票してもらう二択を連続で3本出してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-027",
+      "situationId": "audience_participation",
+      "text": "コメントで簡単な採点(10点満点)をしてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-028",
+      "situationId": "audience_participation",
+      "text": "「今の気分を絵文字1つで」を募集してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-029",
+      "situationId": "audience_participation",
+      "text": "リスナーにこの後のBGMを2曲から選んでもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-030",
+      "situationId": "audience_participation",
+      "text": "コメントで集めた案から次の話題を選んでみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-031",
+      "situationId": "audience_participation",
+      "text": "「今日学んだこと」をコメントで教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-032",
+      "situationId": "audience_participation",
+      "text": "リスナー同士でおすすめを紹介し合ってもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-033",
+      "situationId": "audience_participation",
+      "text": "コメントで簡単なしりとり対決をしてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-034",
+      "situationId": "audience_participation",
+      "text": "「今すぐやってほしいこと」をコメントで募集しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-035",
+      "situationId": "audience_participation",
+      "text": "コメントで集めたワードだけで一言喋ってみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-036",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信の点数をつけてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-037",
+      "situationId": "audience_participation",
+      "text": "「もし1曲だけ流せるなら」をコメントで聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-038",
+      "situationId": "audience_participation",
+      "text": "チャットで多数決を取って、次の行動を決めよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-039",
+      "situationId": "audience_participation",
+      "text": "コメントで「今日の一言大喜利」を募集しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-040",
+      "situationId": "audience_participation",
+      "text": "リスナーからの一言メッセージをいくつか読み上げよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-041",
+      "situationId": "audience_participation",
+      "text": "コメントで「今日のテーマソング」を選んでもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-042",
+      "situationId": "audience_participation",
+      "text": "リスナーに今の気分を星の数(★)で教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-043",
+      "situationId": "audience_participation",
+      "text": "コメント欄で簡単な連想ゲームをやってみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-044",
+      "situationId": "audience_participation",
+      "text": "「もし1日だけ配信者じゃなかったら」をコメントで妄想してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-045",
+      "situationId": "audience_participation",
+      "text": "リスナーにおすすめの息抜き方法を教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-046",
+      "situationId": "audience_participation",
+      "text": "コメントで集めたワードでしりとりを完成させよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-047",
+      "situationId": "audience_participation",
+      "text": "「今日のMVPコメント」を選ぶ投票を開催しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-048",
+      "situationId": "audience_participation",
+      "text": "リスナーに次の企画名を考えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-049",
+      "situationId": "audience_participation",
+      "text": "コメント欄で簡単な当てっこクイズをやろう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-050",
+      "situationId": "audience_participation",
+      "text": "「もし1つだけ願いが叶うなら」をコメントで聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-051",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信のBGM候補を3つから選んでもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-052",
+      "situationId": "audience_participation",
+      "text": "コメントで「今日の格言」を募集してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-053",
+      "situationId": "audience_participation",
+      "text": "「せーの」でコメントの色(絵文字)を合わせてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-054",
+      "situationId": "audience_participation",
+      "text": "リスナーに今日の一言実況をお願いしよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-055",
+      "situationId": "audience_participation",
+      "text": "コメント欄で簡単なあみだくじを再現してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-056",
+      "situationId": "audience_participation",
+      "text": "「もし今すぐ旅行に行けるなら」をコメントで聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-057",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信内の「殿堂入りコメント」を選んでもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-058",
+      "situationId": "audience_participation",
+      "text": "コメントで多数決を取って次のコーナーを決めよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-059",
+      "situationId": "audience_participation",
+      "text": "「今日一番共感したコメント」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-060",
+      "situationId": "audience_participation",
+      "text": "リスナーに次回予告のタイトルを考えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-061",
+      "situationId": "audience_participation",
+      "text": "コメントで「今日のラッキーカラー」を教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-062",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信中のBGM音量を評価してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-063",
+      "situationId": "audience_participation",
+      "text": "コメント欄で簡単な仲間はずれ探しクイズを出そう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-064",
+      "situationId": "audience_participation",
+      "text": "「もしこの配信にCMを入れるなら」をコメントで考えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-065",
+      "situationId": "audience_participation",
+      "text": "リスナーに今日の配信を一言タイトルにしてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-066",
+      "situationId": "audience_participation",
+      "text": "コメントで「今すぐできる小さな幸せ」を教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-067",
+      "situationId": "audience_participation",
+      "text": "「もしリスナーと入れ替わったら」を妄想してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-068",
+      "situationId": "audience_participation",
+      "text": "コメント欄で早口言葉に挑戦してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-069",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信の「隠れテーマ」を当ててもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-070",
+      "situationId": "audience_participation",
+      "text": "コメントで「今日の一番好きな瞬間」を教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-071",
+      "situationId": "audience_participation",
+      "text": "「もし今すぐ何か食べられるなら」をコメントで聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-072",
+      "situationId": "audience_participation",
+      "text": "リスナーに次のリアクションのお手本を見せてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-073",
+      "situationId": "audience_participation",
+      "text": "コメントで簡単なマルバツクイズを出してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-074",
+      "situationId": "audience_participation",
+      "text": "「今日のあなたを一言で」とリスナーに聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-075",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信内のベストアングルを教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-076",
+      "situationId": "audience_participation",
+      "text": "コメントで「もし1週間だけ違う人生なら」を聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-077",
+      "situationId": "audience_participation",
+      "text": "「今日のコメントMVP」をリスナー同士で決めてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-078",
+      "situationId": "audience_participation",
+      "text": "コメント欄で好きな数字とその理由を教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-079",
+      "situationId": "audience_participation",
+      "text": "リスナーにこの後の展開を予想してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-080",
+      "situationId": "audience_participation",
+      "text": "「今日一番びっくりしたコメント」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-081",
+      "situationId": "audience_participation",
+      "text": "コメントで「今日の一言診断」をしてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-082",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信の「隠れファン」ポイントを教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-083",
+      "situationId": "audience_participation",
+      "text": "コメント欄で簡単ななぞなぞを出してみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-084",
+      "situationId": "audience_participation",
+      "text": "「もし配信にBGMをつけるなら」をコメントで相談しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-085",
+      "situationId": "audience_participation",
+      "text": "リスナーに今日の自分へのアドバイスをもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-086",
+      "situationId": "audience_participation",
+      "text": "コメントで「好きな四字熟語」を教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-087",
+      "situationId": "audience_participation",
+      "text": "「もし今すぐ旅に出るなら行き先は?」をコメントで聞こう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-088",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信のBGM音量を細かく調整してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-089",
+      "situationId": "audience_participation",
+      "text": "コメント欄で簡単な連想しりとりをやってみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-090",
+      "situationId": "audience_participation",
+      "text": "「今日の格言」をリスナーと一緒に作ろう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-091",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信内の好きな瞬間ベスト3を選んでもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-092",
+      "situationId": "audience_participation",
+      "text": "コメントで「もし魔法が使えるなら」を聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-093",
+      "situationId": "audience_participation",
+      "text": "「今日のテンションを絵文字だけで」表現してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-094",
+      "situationId": "audience_participation",
+      "text": "リスナーに次に挑戦してほしいミニゲームを考えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-095",
+      "situationId": "audience_participation",
+      "text": "コメントで簡単な仲間集めゲームをやってみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-096",
+      "situationId": "audience_participation",
+      "text": "「もし1つだけ配信に足すなら」をコメントで聞こう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-097",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信のタイトル案を複数出してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-098",
+      "situationId": "audience_participation",
+      "text": "コメントで「今日のありがとう」を伝えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-099",
+      "situationId": "audience_participation",
+      "text": "「今日の一番の発見」をコメントで教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-100",
+      "situationId": "audience_participation",
+      "text": "リスナーに次回配信への期待をひとことで教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-101",
+      "situationId": "audience_participation",
+      "text": "コメントで「今日のベストアンサー」を選んでもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-102",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信の「もっとこうしてほしい」を聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-103",
+      "situationId": "audience_participation",
+      "text": "コメント欄で簡単な仲間探しゲームをやろう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-104",
+      "situationId": "audience_participation",
+      "text": "「もし配信にゲストを呼べるなら」をコメントで妄想しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-105",
+      "situationId": "audience_participation",
+      "text": "リスナーに今日の配信の温度感を教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-106",
+      "situationId": "audience_participation",
+      "text": "コメントで「好きな季節」とその理由を教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-107",
+      "situationId": "audience_participation",
+      "text": "「もし今すぐ何か学べるなら」をコメントで聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-108",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信のテンポについて感想をもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-109",
+      "situationId": "audience_participation",
+      "text": "コメント欄で簡単な連想ワードバトルをやろう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-110",
+      "situationId": "audience_participation",
+      "text": "「今日の学び」をリスナーと一緒にまとめよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-111",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信内のお気に入りシーンを再投票してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-112",
+      "situationId": "audience_participation",
+      "text": "コメントで「もしタイムマシンがあったら」を聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-113",
+      "situationId": "audience_participation",
+      "text": "「今日の気分を色で」表現してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-114",
+      "situationId": "audience_participation",
+      "text": "リスナーに次回企画のヒントを出してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-115",
+      "situationId": "audience_participation",
+      "text": "コメントで簡単な仲間はずれ探しをもう一度やろう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-116",
+      "situationId": "audience_participation",
+      "text": "「もし1つだけ配信を変えられるなら」をコメントで聞こう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-117",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信の感想を一言でもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-118",
+      "situationId": "audience_participation",
+      "text": "コメントで「今日のベストリアクション」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-119",
+      "situationId": "audience_participation",
+      "text": "「今日一番タメになったコメント」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-120",
+      "situationId": "audience_participation",
+      "text": "リスナーに次回配信で見たいコーナーを教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-121",
+      "situationId": "audience_participation",
+      "text": "コメントで「今日の一言川柳」を募集しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-122",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信の「好きな間(ま)」を教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-123",
+      "situationId": "audience_participation",
+      "text": "コメント欄で簡単な形容詞当てゲームをやろう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-124",
+      "situationId": "audience_participation",
+      "text": "「もし配信にテーマ曲をつけるなら」候補をコメントで募ろう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-125",
+      "situationId": "audience_participation",
+      "text": "リスナーに今日の自分の頑張りを採点してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-126",
+      "situationId": "audience_participation",
+      "text": "コメントで「好きな組み合わせ」(食べ物など)を教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-127",
+      "situationId": "audience_participation",
+      "text": "「もし今すぐ誰かに会えるなら」をコメントで聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-128",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信のテンションを絵文字で表現してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-129",
+      "situationId": "audience_participation",
+      "text": "コメント欄で簡単な連想リレーをやってみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-130",
+      "situationId": "audience_participation",
+      "text": "「今日の一番」をジャンル別にコメントで集めよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-131",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信内の好きな言い回しを教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-132",
+      "situationId": "audience_participation",
+      "text": "コメントで「もし1日タイムスリップできるなら」を聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-133",
+      "situationId": "audience_participation",
+      "text": "「今日のテンションを温度で」表現してもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-134",
+      "situationId": "audience_participation",
+      "text": "リスナーに次に見たい配信ジャンルを教えてもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-135",
+      "situationId": "audience_participation",
+      "text": "コメントで簡単な仲間探しゲームをもう一度やろう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-136",
+      "situationId": "audience_participation",
+      "text": "「もし配信に効果音をつけるなら」をコメントで相談しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-137",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信の感想を三行でもらおう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-138",
+      "situationId": "audience_participation",
+      "text": "コメントで「今日のMVP行動」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-139",
+      "situationId": "audience_participation",
+      "text": "「今日一番刺さったコメント」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "audience_participation-140",
+      "situationId": "audience_participation",
+      "text": "リスナーに配信の続きへの期待をひとことで教えてもらおう",
+      "tags": []
+    }
+  ]
+}

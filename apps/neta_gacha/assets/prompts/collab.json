@@ -1,0 +1,848 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-31",
+  "prompts": [
+    {
+      "id": "collab-001",
+      "situationId": "collab",
+      "text": "相手の配信の好きなところを1つ挙げてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-002",
+      "situationId": "collab",
+      "text": "2人の出会いのきっかけを話してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-003",
+      "situationId": "collab",
+      "text": "お互いのニックネームの由来を紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-004",
+      "situationId": "collab",
+      "text": "今日のコラボで挑戦したい企画を1つ宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-005",
+      "situationId": "collab",
+      "text": "相手の意外な一面を紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-006",
+      "situationId": "collab",
+      "text": "2人の共通点を1つ見つけて話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-007",
+      "situationId": "collab",
+      "text": "お互いの配信スタイルの違いを話してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-008",
+      "situationId": "collab",
+      "text": "今日のMVP(良いプレイをした方)を決めてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-009",
+      "situationId": "collab",
+      "text": "相手に一言、感謝や褒め言葉を伝えてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-010",
+      "situationId": "collab",
+      "text": "2人だけの合言葉を今この場で決めてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-011",
+      "situationId": "collab",
+      "text": "お互いのファンにひとことメッセージを送ろう",
+      "tags": []
+    },
+    {
+      "id": "collab-012",
+      "situationId": "collab",
+      "text": "相手のプレイスタイルをものまねしてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-013",
+      "situationId": "collab",
+      "text": "今日のコラボを一言でタイトルにするなら?",
+      "tags": []
+    },
+    {
+      "id": "collab-014",
+      "situationId": "collab",
+      "text": "次回コラボしたい企画を1つ提案してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-015",
+      "situationId": "collab",
+      "text": "相手の配信スタイルを一言で表現してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-016",
+      "situationId": "collab",
+      "text": "2人でチーム名を今すぐ考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-017",
+      "situationId": "collab",
+      "text": "相手のことをどれくらい知っているかクイズを出し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-018",
+      "situationId": "collab",
+      "text": "お互いの得意なこと・苦手なことを紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-019",
+      "situationId": "collab",
+      "text": "「もし配信を交換したら」を妄想してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-020",
+      "situationId": "collab",
+      "text": "2人の相性を10点満点で採点してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-021",
+      "situationId": "collab",
+      "text": "オリジナルの挨拶ポーズ・掛け声を今作ってみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-022",
+      "situationId": "collab",
+      "text": "相手の配信で一番好きな瞬間を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-023",
+      "situationId": "collab",
+      "text": "これまでで一番印象に残っているコラボを振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "collab-024",
+      "situationId": "collab",
+      "text": "お互いのリスナーに向けて感謝を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-025",
+      "situationId": "collab",
+      "text": "次回コラボしたい企画をその場で3つ挙げてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-026",
+      "situationId": "collab",
+      "text": "相手の一日を予想して当ててみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-027",
+      "situationId": "collab",
+      "text": "2人の共通の知り合いや繋がりを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-028",
+      "situationId": "collab",
+      "text": "お互いの配信を一言でCMしてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-029",
+      "situationId": "collab",
+      "text": "今日のコラボで新しく知った相手の一面を話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-030",
+      "situationId": "collab",
+      "text": "2人で息を合わせて何かポーズを決めてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-031",
+      "situationId": "collab",
+      "text": "相手のモノマネに挑戦してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-032",
+      "situationId": "collab",
+      "text": "お互いのファンネームを紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-033",
+      "situationId": "collab",
+      "text": "「もし2人でユニットを組むなら」ジャンルを考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-034",
+      "situationId": "collab",
+      "text": "今日のコラボの見どころを1つずつ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-035",
+      "situationId": "collab",
+      "text": "相手との出会いからの成長を振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "collab-036",
+      "situationId": "collab",
+      "text": "お互いの配信の「お約束」を紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-037",
+      "situationId": "collab",
+      "text": "コラボならではの掛け合いを1本即興でやってみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-038",
+      "situationId": "collab",
+      "text": "相手のいいところを3秒以内で伝えてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-039",
+      "situationId": "collab",
+      "text": "今日の目標をふたりで声を揃えて宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-040",
+      "situationId": "collab",
+      "text": "次に一緒にやりたいことをリスナーに聞いてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-041",
+      "situationId": "collab",
+      "text": "相手のここがすごいと思うポイントを1つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-042",
+      "situationId": "collab",
+      "text": "2人の掛け合いで生まれた名言があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-043",
+      "situationId": "collab",
+      "text": "お互いの「配信あるある」を紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-044",
+      "situationId": "collab",
+      "text": "今日のコラボの裏テーマを今考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-045",
+      "situationId": "collab",
+      "text": "相手のリスナーに向けて自己紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-046",
+      "situationId": "collab",
+      "text": "2人で今日の目標タイムを設定してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-047",
+      "situationId": "collab",
+      "text": "お互いの得意な企画ジャンルを紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-048",
+      "situationId": "collab",
+      "text": "相手のリアクションの好きなところを話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-049",
+      "situationId": "collab",
+      "text": "お互いの配信歴を話してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-050",
+      "situationId": "collab",
+      "text": "コラボならではの緊張ポイントを正直に話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-051",
+      "situationId": "collab",
+      "text": "お互いにひとことアドバイスを送り合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-052",
+      "situationId": "collab",
+      "text": "今日のコラボで学んだ相手の意外な特技を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-053",
+      "situationId": "collab",
+      "text": "2人の呼び方(あだ名)を新しく提案してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-054",
+      "situationId": "collab",
+      "text": "コラボ後にやりたい打ち上げ企画を話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-055",
+      "situationId": "collab",
+      "text": "お互いの配信の強みを組み合わせた新企画を考えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-056",
+      "situationId": "collab",
+      "text": "相手との相性を占い風に診断してみよう",
+      "tags": [
+        "religion"
+      ]
+    },
+    {
+      "id": "collab-057",
+      "situationId": "collab",
+      "text": "今日のコラボの満足度を2人でせーので発表しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-058",
+      "situationId": "collab",
+      "text": "お互いの初対面の印象を今だから話してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-059",
+      "situationId": "collab",
+      "text": "2人で次回予告を即興で作ってみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-060",
+      "situationId": "collab",
+      "text": "コラボ相手へ、最後に一言メッセージを贈ろう",
+      "tags": []
+    },
+    {
+      "id": "collab-061",
+      "situationId": "collab",
+      "text": "お互いの配信で使われがちな鉄板フレーズを紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-062",
+      "situationId": "collab",
+      "text": "2人の今日のテンションを数値化して報告しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-063",
+      "situationId": "collab",
+      "text": "相手のファンから見た自分のイメージを予想してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-064",
+      "situationId": "collab",
+      "text": "コラボならではの新しい遊び方を提案してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-065",
+      "situationId": "collab",
+      "text": "お互いの「配信での失敗あるある」を紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-066",
+      "situationId": "collab",
+      "text": "2人で今日のハイライトシーンを予想してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-067",
+      "situationId": "collab",
+      "text": "相手のリアクション予想ゲームをしてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-068",
+      "situationId": "collab",
+      "text": "コラボの記念に残したい一言を2人で考えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-069",
+      "situationId": "collab",
+      "text": "お互いのコミュニティの雰囲気を紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-070",
+      "situationId": "collab",
+      "text": "2人で「もし逆の役割だったら」を演じてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-071",
+      "situationId": "collab",
+      "text": "相手の配信タイトルの付け方の特徴を分析してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-072",
+      "situationId": "collab",
+      "text": "コラボ後にお互いの配信でやりたい振り返り企画を話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-073",
+      "situationId": "collab",
+      "text": "2人の今日のMVPシーンを発表し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-074",
+      "situationId": "collab",
+      "text": "お互いの「実は苦手なこと」を告白し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-075",
+      "situationId": "collab",
+      "text": "コラボを一言で振り返るハッシュタグを作ろう",
+      "tags": []
+    },
+    {
+      "id": "collab-076",
+      "situationId": "collab",
+      "text": "2人で即興の掛け合いコントに挑戦しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-077",
+      "situationId": "collab",
+      "text": "相手におすすめの配信企画を提案してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-078",
+      "situationId": "collab",
+      "text": "コラボの余韻を一言で表現してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-079",
+      "situationId": "collab",
+      "text": "お互いのリスナーが仲良くなれる工夫を考えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-080",
+      "situationId": "collab",
+      "text": "次回コラボの日程を今ここで仮決めしてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-081",
+      "situationId": "collab",
+      "text": "お互いの配信の「見てほしいポイント」を紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-082",
+      "situationId": "collab",
+      "text": "2人の共同作業での役割分担を話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-083",
+      "situationId": "collab",
+      "text": "相手の配信の「安心して見られる理由」を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-084",
+      "situationId": "collab",
+      "text": "コラボ中に生まれた新しい言い回しを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-085",
+      "situationId": "collab",
+      "text": "お互いの今日のコンディションを報告し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-086",
+      "situationId": "collab",
+      "text": "2人で「もし同じ配信をするなら」ジャンルを考えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-087",
+      "situationId": "collab",
+      "text": "相手のここ最近の成長を具体的に褒めてみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-088",
+      "situationId": "collab",
+      "text": "コラボの雰囲気を色で例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "collab-089",
+      "situationId": "collab",
+      "text": "お互いの配信を見て学んだことを話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-090",
+      "situationId": "collab",
+      "text": "2人でコラボ限定の合言葉を作ろう",
+      "tags": []
+    },
+    {
+      "id": "collab-091",
+      "situationId": "collab",
+      "text": "相手のリスナーにも楽しんでもらう工夫を話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-092",
+      "situationId": "collab",
+      "text": "コラボ後にやりたい感想戦の内容を予告しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-093",
+      "situationId": "collab",
+      "text": "お互いの「ここは真似したい」ポイントを伝えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-094",
+      "situationId": "collab",
+      "text": "2人の今日のベストプレイを発表し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-095",
+      "situationId": "collab",
+      "text": "コラボならではの「化学反応」を感じた瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-096",
+      "situationId": "collab",
+      "text": "相手との今後の関係性について話してみよう",
+      "tags": []
+    },
+    {
+      "id": "collab-097",
+      "situationId": "collab",
+      "text": "コラボの舞台裏エピソードを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-098",
+      "situationId": "collab",
+      "text": "お互いの配信の「これから挑戦したいこと」を話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-099",
+      "situationId": "collab",
+      "text": "2人でコラボの評価を星の数で発表しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-100",
+      "situationId": "collab",
+      "text": "コラボ相手との出会いに感謝を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-101",
+      "situationId": "collab",
+      "text": "お互いの今日の意気込みを一言で交換しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-102",
+      "situationId": "collab",
+      "text": "2人でコラボの反省点を先取りで話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-103",
+      "situationId": "collab",
+      "text": "相手の配信の「隠れた良さ」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-104",
+      "situationId": "collab",
+      "text": "コラボ中に感じたお互いの成長を話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-105",
+      "situationId": "collab",
+      "text": "お互いの「今日絶対言いたいこと」を先に共有しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-106",
+      "situationId": "collab",
+      "text": "2人でコラボの続編企画を考えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-107",
+      "situationId": "collab",
+      "text": "相手の配信スタイルから学んだことを話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-108",
+      "situationId": "collab",
+      "text": "コラボの「相性診断結果」を勝手に発表しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-109",
+      "situationId": "collab",
+      "text": "お互いのファンへ向けたクロスオーバー企画を考えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-110",
+      "situationId": "collab",
+      "text": "2人で今日の配信を振り返るミニインタビューをしよう",
+      "tags": []
+    },
+    {
+      "id": "collab-111",
+      "situationId": "collab",
+      "text": "相手の今日のベストコメントを紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-112",
+      "situationId": "collab",
+      "text": "コラボの「舞台裏の努力」をお互いに紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-113",
+      "situationId": "collab",
+      "text": "お互いの配信の「ここが好き」をもう一度伝え合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-114",
+      "situationId": "collab",
+      "text": "2人で次に挑戦したいジャンルを話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-115",
+      "situationId": "collab",
+      "text": "コラボの成功の秘訣を2人で分析しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-116",
+      "situationId": "collab",
+      "text": "お互いの今日の目標達成度を報告し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-117",
+      "situationId": "collab",
+      "text": "コラボ後のフォローアップ企画を約束しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-118",
+      "situationId": "collab",
+      "text": "2人の掛け合いの「呼吸」について話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-119",
+      "situationId": "collab",
+      "text": "お互いのリスナーへ向けた合同メッセージを考えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-120",
+      "situationId": "collab",
+      "text": "コラボを振り返って一番の収穫を発表しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-121",
+      "situationId": "collab",
+      "text": "お互いの配信の「今日の裏テーマ」を交換しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-122",
+      "situationId": "collab",
+      "text": "2人でコラボの「合格点」を決めてから始めよう",
+      "tags": []
+    },
+    {
+      "id": "collab-123",
+      "situationId": "collab",
+      "text": "相手の配信の「見ていて安心する理由」を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-124",
+      "situationId": "collab",
+      "text": "コラボ中に生まれた新しいルールを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-125",
+      "situationId": "collab",
+      "text": "お互いの今日の「初挑戦」を報告し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-126",
+      "situationId": "collab",
+      "text": "2人でコラボの「隠れテーマソング」を決めよう",
+      "tags": []
+    },
+    {
+      "id": "collab-127",
+      "situationId": "collab",
+      "text": "相手の配信の「これは真似したい神対応」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-128",
+      "situationId": "collab",
+      "text": "コラボの「絆エピソード」をもう1つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "collab-129",
+      "situationId": "collab",
+      "text": "お互いの配信の「今後のコラボ希望」を伝え合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-130",
+      "situationId": "collab",
+      "text": "2人で今日の「反省と称賛」をバランスよく伝え合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-131",
+      "situationId": "collab",
+      "text": "相手のリスナーへ向けて、初見向けメッセージを贈ろう",
+      "tags": []
+    },
+    {
+      "id": "collab-132",
+      "situationId": "collab",
+      "text": "コラボの「今だから言えること」を打ち明けよう",
+      "tags": []
+    },
+    {
+      "id": "collab-133",
+      "situationId": "collab",
+      "text": "お互いの配信の「共通の伸びしろ」を話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-134",
+      "situationId": "collab",
+      "text": "2人で今日のコラボにタイトルをつけるなら?",
+      "tags": []
+    },
+    {
+      "id": "collab-135",
+      "situationId": "collab",
+      "text": "相手の「配信外での顔」を紹介してもらおう",
+      "tags": []
+    },
+    {
+      "id": "collab-136",
+      "situationId": "collab",
+      "text": "コラボの「まさかの一体感」を感じた瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "collab-137",
+      "situationId": "collab",
+      "text": "お互いの配信の「次に見てほしい回」を紹介し合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-138",
+      "situationId": "collab",
+      "text": "2人で今日の「学び」をシェアし合おう",
+      "tags": []
+    },
+    {
+      "id": "collab-139",
+      "situationId": "collab",
+      "text": "コラボの「隠れ功労者」に感謝を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "collab-140",
+      "situationId": "collab",
+      "text": "お互いの配信を続けてきた年数・回数を比べてみよう",
+      "tags": []
+    }
+  ]
+}

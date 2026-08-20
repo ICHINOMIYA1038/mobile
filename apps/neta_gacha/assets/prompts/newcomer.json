@@ -1,0 +1,848 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-31",
+  "prompts": [
+    {
+      "id": "newcomer-001",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて、自分のチャンネルを一言で紹介するなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-002",
+      "situationId": "newcomer",
+      "text": "「初見です」が来たら、まず何を聞く?実際にやってみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-003",
+      "situationId": "newcomer",
+      "text": "自分の配信の「お約束」を1つ紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-004",
+      "situationId": "newcomer",
+      "text": "どんな人に見てほしい配信か話してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-005",
+      "situationId": "newcomer",
+      "text": "初見さんにおすすめの過去配信を1本紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-006",
+      "situationId": "newcomer",
+      "text": "自分の名前・ニックネームの由来を教えて",
+      "tags": []
+    },
+    {
+      "id": "newcomer-007",
+      "situationId": "newcomer",
+      "text": "この配信でよく使う口癖を教えて",
+      "tags": []
+    },
+    {
+      "id": "newcomer-008",
+      "situationId": "newcomer",
+      "text": "初見さんへの挨拶を、いつもと違うバージョンで言ってみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-009",
+      "situationId": "newcomer",
+      "text": "自己紹介を「好きな○○」だけで構成してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-010",
+      "situationId": "newcomer",
+      "text": "この配信を一言でジャンル分けするなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-011",
+      "situationId": "newcomer",
+      "text": "初見さんが気になるであろう質問に、自分から先回りして答えてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-012",
+      "situationId": "newcomer",
+      "text": "好きな人のタイプを一言で言うと?",
+      "tags": [
+        "romance"
+      ]
+    },
+    {
+      "id": "newcomer-013",
+      "situationId": "newcomer",
+      "text": "出身地や住んでいる地域の自慢を1つ話してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-014",
+      "situationId": "newcomer",
+      "text": "リスナーに呼んでほしい名前を発表してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-015",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて「この配信はこんな人におすすめ」を伝えてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-016",
+      "situationId": "newcomer",
+      "text": "自分の配信でよくある「あるある」を1つだけ先に種明かししよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-017",
+      "situationId": "newcomer",
+      "text": "初めて配信を始めたときのことを少しだけ話してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-018",
+      "situationId": "newcomer",
+      "text": "なぜ配信を始めたのか、理由を一言で",
+      "tags": []
+    },
+    {
+      "id": "newcomer-019",
+      "situationId": "newcomer",
+      "text": "週にどれくらい配信しているか教えて",
+      "tags": []
+    },
+    {
+      "id": "newcomer-020",
+      "situationId": "newcomer",
+      "text": "初見さんが気軽にコメントできるよう、簡単な質問を投げかけてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-021",
+      "situationId": "newcomer",
+      "text": "自分を色や動物に例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-022",
+      "situationId": "newcomer",
+      "text": "二択で自己紹介してみよう(例:犬派か猫派か)",
+      "tags": []
+    },
+    {
+      "id": "newcomer-023",
+      "situationId": "newcomer",
+      "text": "「初見さんあるある」を先回りしてボケてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-024",
+      "situationId": "newcomer",
+      "text": "配信外で普段何をしている人か教えて",
+      "tags": []
+    },
+    {
+      "id": "newcomer-025",
+      "situationId": "newcomer",
+      "text": "好きなジャンル・カテゴリランキングを発表してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-026",
+      "situationId": "newcomer",
+      "text": "自分の配信を一言でキャッチコピーにするなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-027",
+      "situationId": "newcomer",
+      "text": "初見さんへ「まずはここだけ覚えて」を1つ伝えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-028",
+      "situationId": "newcomer",
+      "text": "ちょっと自慢できる特技を紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-029",
+      "situationId": "newcomer",
+      "text": "二つの嘘と一つの本当を話して、リスナーに当ててもらおう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-030",
+      "situationId": "newcomer",
+      "text": "今のプロフィールアイコンに込めた意味を話してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-031",
+      "situationId": "newcomer",
+      "text": "配信でよく使うスタンプ・絵文字を紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-032",
+      "situationId": "newcomer",
+      "text": "初見さんにこの配信の「ゆるさ」を伝えてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-033",
+      "situationId": "newcomer",
+      "text": "自分をアニメや漫画のキャラに例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-034",
+      "situationId": "newcomer",
+      "text": "初見さんへのウェルカムメッセージを即興で作ってみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-035",
+      "situationId": "newcomer",
+      "text": "リスナーに呼ばれたい愛称の候補を3つ挙げてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-036",
+      "situationId": "newcomer",
+      "text": "この配信で「やらないこと」を1つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-037",
+      "situationId": "newcomer",
+      "text": "自分の趣味を配信外のものも含めて紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-038",
+      "situationId": "newcomer",
+      "text": "初見さんとの距離を縮める鉄板の質問を考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-039",
+      "situationId": "newcomer",
+      "text": "好きな言葉・座右の銘を紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-040",
+      "situationId": "newcomer",
+      "text": "「実は…」から始まる小さな自己開示をしてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-041",
+      "situationId": "newcomer",
+      "text": "配信で一番大事にしていることを一言で",
+      "tags": []
+    },
+    {
+      "id": "newcomer-042",
+      "situationId": "newcomer",
+      "text": "初見さんに聞かれたら困る質問トップ3を先に発表しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-043",
+      "situationId": "newcomer",
+      "text": "この配信の「対象タイプ」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-044",
+      "situationId": "newcomer",
+      "text": "自分の配信を一言で例えるなら乗り物で言うと?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-045",
+      "situationId": "newcomer",
+      "text": "初見さんへ配信のテンポ感を伝えてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-046",
+      "situationId": "newcomer",
+      "text": "尊敬する配信者・クリエイターを紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-047",
+      "situationId": "newcomer",
+      "text": "この配信でよく起きる「事故」を先に紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-048",
+      "situationId": "newcomer",
+      "text": "初見さんに知っておいてほしい用語を1つ解説しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-049",
+      "situationId": "newcomer",
+      "text": "自分の配信頻度・時間帯のこだわりを話そう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-050",
+      "situationId": "newcomer",
+      "text": "どんなコメントが一番嬉しいか教えて",
+      "tags": []
+    },
+    {
+      "id": "newcomer-051",
+      "situationId": "newcomer",
+      "text": "「初めて見た人が3秒で分かる自己紹介」に挑戦しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-052",
+      "situationId": "newcomer",
+      "text": "この配信のBGMやオープニング曲の由来を話そう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-053",
+      "situationId": "newcomer",
+      "text": "自分をお菓子に例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-054",
+      "situationId": "newcomer",
+      "text": "配信でよく聞かれる「勘違いされがちなこと」を訂正しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-055",
+      "situationId": "newcomer",
+      "text": "初見さんへ、コメントの気軽さを伝えるひとことを",
+      "tags": []
+    },
+    {
+      "id": "newcomer-056",
+      "situationId": "newcomer",
+      "text": "自分の得意ジャンルを実演を交えて紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-057",
+      "situationId": "newcomer",
+      "text": "この配信の「推しポイント」を3つ挙げてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-058",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて、リアクションの仕方の例を見せよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-059",
+      "situationId": "newcomer",
+      "text": "配信で大事にしている「距離感」を話そう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-060",
+      "situationId": "newcomer",
+      "text": "自分の趣味嗜好をひとことで表すハッシュタグを作ろう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-061",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて、配信の「ルール」を3つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-062",
+      "situationId": "newcomer",
+      "text": "自分のプレイスタイル・話し方の特徴を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-063",
+      "situationId": "newcomer",
+      "text": "この配信の「珍しいところ」を1つ挙げてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-064",
+      "situationId": "newcomer",
+      "text": "初見さんへ、コメントの読み方・拾い方のクセを説明しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-065",
+      "situationId": "newcomer",
+      "text": "自分を四字熟語で表すなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-066",
+      "situationId": "newcomer",
+      "text": "配信でやってしまいがちな「口癖」ランキングを発表しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-067",
+      "situationId": "newcomer",
+      "text": "初見さんにこの配信の「温度感」を伝えてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-068",
+      "situationId": "newcomer",
+      "text": "自分の配信の「ここだけは負けない」ポイントを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-069",
+      "situationId": "newcomer",
+      "text": "どんな1日を過ごしている人か、簡単に紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-070",
+      "situationId": "newcomer",
+      "text": "初見さんへ「気に入ったらまた来てね」を独自の言い方で伝えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-071",
+      "situationId": "newcomer",
+      "text": "自分の配信スタイルを料理に例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-072",
+      "situationId": "newcomer",
+      "text": "この配信でよく流れる展開パターンを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-073",
+      "situationId": "newcomer",
+      "text": "初見さんに聞かれたことがある珍質問を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-074",
+      "situationId": "newcomer",
+      "text": "自分のことを漢字1文字で表すなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-075",
+      "situationId": "newcomer",
+      "text": "配信を通して伝えたいメッセージを一言で",
+      "tags": []
+    },
+    {
+      "id": "newcomer-076",
+      "situationId": "newcomer",
+      "text": "初見さんへ、リアクションの目安(笑うところ等)を教えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-077",
+      "situationId": "newcomer",
+      "text": "自分の配信の「裏テーマ」があれば明かそう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-078",
+      "situationId": "newcomer",
+      "text": "この配信のBGMや雰囲気を天気で例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-079",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて簡単な自己紹介クイズを出してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-080",
+      "situationId": "newcomer",
+      "text": "配信でよく使う相槌・リアクションワードを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-081",
+      "situationId": "newcomer",
+      "text": "この配信の「見どころタイム」があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-082",
+      "situationId": "newcomer",
+      "text": "初見さんに、コメントの返信速度の目安を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-083",
+      "situationId": "newcomer",
+      "text": "自分の配信の音量・テンションの好みを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-084",
+      "situationId": "newcomer",
+      "text": "この配信でよく使われるスタンプの意味を解説しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-085",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて配信の「オチ」がある日とない日を説明しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-086",
+      "situationId": "newcomer",
+      "text": "自分をラーメンの具に例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-087",
+      "situationId": "newcomer",
+      "text": "配信でやりがちな「前置きが長い」あるあるを話そう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-088",
+      "situationId": "newcomer",
+      "text": "初見さんへ、自分の配信の「安心ポイント」を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-089",
+      "situationId": "newcomer",
+      "text": "この配信のジャンルを掛け合わせ言葉で表現してみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-090",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて簡単な自己紹介ソングを口ずさもう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-091",
+      "situationId": "newcomer",
+      "text": "自分の配信スタイルを天気記号で表すなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-092",
+      "situationId": "newcomer",
+      "text": "配信でよく使う専門用語を1つ、噛み砕いて説明しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-093",
+      "situationId": "newcomer",
+      "text": "初見さんへ、コメントの絵文字ルールがあれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-094",
+      "situationId": "newcomer",
+      "text": "自分の配信の「珍しい特技コーナー」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-095",
+      "situationId": "newcomer",
+      "text": "この配信で大切にしている「間(ま)」について話そう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-096",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて配信のオープニング曲を解説しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-097",
+      "situationId": "newcomer",
+      "text": "自分をひとことで例えるなら乗り物のパーツで言うと?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-098",
+      "situationId": "newcomer",
+      "text": "配信でよく使うイントネーション・語尾を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-099",
+      "situationId": "newcomer",
+      "text": "初見さんへ、リピートしたくなるポイントを伝えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-100",
+      "situationId": "newcomer",
+      "text": "自分の配信の「1回だけ見て分かること」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-101",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて配信の「暗黙の空気感」を説明しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-102",
+      "situationId": "newcomer",
+      "text": "自分の配信の「唯一無二ポイント」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-103",
+      "situationId": "newcomer",
+      "text": "この配信でよくある「オチがない」時の対処法を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-104",
+      "situationId": "newcomer",
+      "text": "初見さんへ配信の平均滞在時間の目安を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-105",
+      "situationId": "newcomer",
+      "text": "自分をスポーツに例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-106",
+      "situationId": "newcomer",
+      "text": "配信でよく使うジェスチャーを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-107",
+      "situationId": "newcomer",
+      "text": "初見さんに配信の「見返しポイント」を教えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-108",
+      "situationId": "newcomer",
+      "text": "自分の配信の「意外な人気コーナー」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-109",
+      "situationId": "newcomer",
+      "text": "この配信のコメント欄の空気感を一言で",
+      "tags": []
+    },
+    {
+      "id": "newcomer-110",
+      "situationId": "newcomer",
+      "text": "初見さんへ向けて、質問しやすい雰囲気作りの工夫を話そう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-111",
+      "situationId": "newcomer",
+      "text": "自分を映画のジャンルに例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-112",
+      "situationId": "newcomer",
+      "text": "配信でよくある「噛む」あるあるを実演しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-113",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて配信のテンポの緩急を説明しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-114",
+      "situationId": "newcomer",
+      "text": "自分の配信の「初見殺し」な部分があれば紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-115",
+      "situationId": "newcomer",
+      "text": "この配信を続けている理由を改めて一言で",
+      "tags": []
+    },
+    {
+      "id": "newcomer-116",
+      "situationId": "newcomer",
+      "text": "初見さんへ、コメント欄の楽しみ方のコツを伝えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-117",
+      "situationId": "newcomer",
+      "text": "自分の配信スタイルを絵文字1つで表すなら?",
+      "tags": []
+    },
+    {
+      "id": "newcomer-118",
+      "situationId": "newcomer",
+      "text": "配信でよく聞かれる「これは何ですか」系の質問に答えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-119",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて、次回の配信予告をしてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-120",
+      "situationId": "newcomer",
+      "text": "自分の配信の「初めて感」を大事にしているポイントを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-121",
+      "situationId": "newcomer",
+      "text": "チャンネルのバナーやアイコンデザインに込めた思いを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-122",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて、フォロー・登録のタイミングの目安を伝えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-123",
+      "situationId": "newcomer",
+      "text": "自分の配信で一番再生されている瞬間を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-124",
+      "situationId": "newcomer",
+      "text": "初見さんへ、コメントで盛り上がりやすい話題を教えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-125",
+      "situationId": "newcomer",
+      "text": "自分の配信の「初心」を思い出しながら話そう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-126",
+      "situationId": "newcomer",
+      "text": "この配信で大事にしている価値観を1つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-127",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて、配信の集中タイミングについて伝えよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-128",
+      "situationId": "newcomer",
+      "text": "自分の配信スタイルを一言でジャンル名っぽく命名しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-129",
+      "situationId": "newcomer",
+      "text": "この配信の「隠れ良心的なところ」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-130",
+      "situationId": "newcomer",
+      "text": "初見さんへ、コメントへの反応速度について説明しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-131",
+      "situationId": "newcomer",
+      "text": "自分の配信の「原点」となった出来事を話そう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-132",
+      "situationId": "newcomer",
+      "text": "この配信を見て感じてほしい気持ちを一言で",
+      "tags": []
+    },
+    {
+      "id": "newcomer-133",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて、配信の締めくくり方を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-134",
+      "situationId": "newcomer",
+      "text": "自分のことを一言でキャッチフレーズにしてみよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-135",
+      "situationId": "newcomer",
+      "text": "この配信のBGMのボリューム感について説明しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-136",
+      "situationId": "newcomer",
+      "text": "コメント名(表示名)の由来を聞いてみようという定番質問を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-137",
+      "situationId": "newcomer",
+      "text": "自分の配信の「隠れファンサービス」を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-138",
+      "situationId": "newcomer",
+      "text": "この配信を見て初めて知ってほしいことを1つ",
+      "tags": []
+    },
+    {
+      "id": "newcomer-139",
+      "situationId": "newcomer",
+      "text": "初見さんに向けて、配信のペース配分を説明しよう",
+      "tags": []
+    },
+    {
+      "id": "newcomer-140",
+      "situationId": "newcomer",
+      "text": "自分の配信の「変わらない部分」を紹介しよう",
+      "tags": []
+    }
+  ]
+}

@@ -1,0 +1,846 @@
+{
+  "version": 1,
+  "updatedAt": "2026-07-31",
+  "prompts": [
+    {
+      "id": "game_bridge-001",
+      "situationId": "game_bridge",
+      "text": "今のプレイを実況しながら、独自の必殺技名を叫んでみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-002",
+      "situationId": "game_bridge",
+      "text": "ロード中、今日のごはんメニューを実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-003",
+      "situationId": "game_bridge",
+      "text": "このゲームでの自己ベストを自慢してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-004",
+      "situationId": "game_bridge",
+      "text": "今操作しているキャラの魅力を30秒で語ってみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-005",
+      "situationId": "game_bridge",
+      "text": "今のステージの攻略のコツを喋りながらやってみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-006",
+      "situationId": "game_bridge",
+      "text": "このゲームを一言でリスナーに勧めるなら?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-007",
+      "situationId": "game_bridge",
+      "text": "今日のプレイで一番テンションが上がった瞬間は?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-008",
+      "situationId": "game_bridge",
+      "text": "このゲームのBGM、今どんな気分で聴いてる?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-009",
+      "situationId": "game_bridge",
+      "text": "リトライ中、次の作戦を実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-010",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番苦手な要素を告白してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-011",
+      "situationId": "game_bridge",
+      "text": "今のシーンに、映画風のナレーションをつけてみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-012",
+      "situationId": "game_bridge",
+      "text": "このゲームを何かに例えるなら?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-013",
+      "situationId": "game_bridge",
+      "text": "今のアイテム・装備に名前をつけるなら?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-014",
+      "situationId": "game_bridge",
+      "text": "もし休憩を挟むとしたら何をしたい?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-015",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番好きなBGMを口ずさんでみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-016",
+      "situationId": "game_bridge",
+      "text": "今のボス戦、実況しながら煽ってみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-017",
+      "situationId": "game_bridge",
+      "text": "このゲームの隠し要素を知っていたら紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-018",
+      "situationId": "game_bridge",
+      "text": "もしこのキャラが実況者だったら?を妄想してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-019",
+      "situationId": "game_bridge",
+      "text": "このゲームの続編に期待することを話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-020",
+      "situationId": "game_bridge",
+      "text": "過去にやった中で一番笑えた失敗を話してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-021",
+      "situationId": "game_bridge",
+      "text": "このゲームを一言で例えるなら映画のジャンルで言うと?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-022",
+      "situationId": "game_bridge",
+      "text": "難易度設定、今どれくらいだと思う?実況しながら予想",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-023",
+      "situationId": "game_bridge",
+      "text": "このゲームのおすすめプレイ人数・シチュエーションを紹介",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-024",
+      "situationId": "game_bridge",
+      "text": "今使っている操作方法(コントローラー等)のこだわりを話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-025",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番時間を溶かした要素を告白しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-026",
+      "situationId": "game_bridge",
+      "text": "ロード中に、今の気分を実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-027",
+      "situationId": "game_bridge",
+      "text": "このゲームのグラフィックについて一言レビュー",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-028",
+      "situationId": "game_bridge",
+      "text": "今のシーンにタイトルをつけるなら?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-029",
+      "situationId": "game_bridge",
+      "text": "このゲームのファン理論(考察)を1つ紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-030",
+      "situationId": "game_bridge",
+      "text": "実況しながら、次のプレイ目標を宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-031",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番好きなキャラのセリフを再現してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-032",
+      "situationId": "game_bridge",
+      "text": "似たジャンルの他のゲームと比較してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-033",
+      "situationId": "game_bridge",
+      "text": "今のアイテム/スキルの使い道を実況しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-034",
+      "situationId": "game_bridge",
+      "text": "このゲームを友達に勧めるなら、どんな一言で誘う?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-035",
+      "situationId": "game_bridge",
+      "text": "実況中の「決め台詞」を今ここで作ってみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-036",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番苦戦したシーンを振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-037",
+      "situationId": "game_bridge",
+      "text": "今のBGMのテンポに合わせて実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-038",
+      "situationId": "game_bridge",
+      "text": "このゲームのタイトル画面の思い出を話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-039",
+      "situationId": "game_bridge",
+      "text": "次に挑戦したいゲームジャンルを話してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-040",
+      "situationId": "game_bridge",
+      "text": "このゲームの「隠れた名シーン」を紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-041",
+      "situationId": "game_bridge",
+      "text": "このゲームの世界観を一言で紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-042",
+      "situationId": "game_bridge",
+      "text": "今のプレイをスポーツ実況風に実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-043",
+      "situationId": "game_bridge",
+      "text": "このゲームのやり込み要素を1つ紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-044",
+      "situationId": "game_bridge",
+      "text": "今のミスをポジティブに言い換えてみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-045",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番好きな演出を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-046",
+      "situationId": "game_bridge",
+      "text": "このゲームのプレイ時間、正直に教えて",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-047",
+      "situationId": "game_bridge",
+      "text": "今操作しているキャラの声を勝手にアテレコしてみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-048",
+      "situationId": "game_bridge",
+      "text": "このゲームの隠れた良さをプレゼンしてみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-049",
+      "situationId": "game_bridge",
+      "text": "今のBGMの好きなパートを教えて",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-050",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番驚いた展開を話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-051",
+      "situationId": "game_bridge",
+      "text": "今のプレイスタイルにあだ名をつけるなら?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-052",
+      "situationId": "game_bridge",
+      "text": "このゲームを一度もやったことない人に一言で説明しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-053",
+      "situationId": "game_bridge",
+      "text": "今のシーンの点数を100点満点でつけてみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-054",
+      "situationId": "game_bridge",
+      "text": "このゲームのロード画面の小ネタを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-055",
+      "situationId": "game_bridge",
+      "text": "今日の目標クリア条件を宣言してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-056",
+      "situationId": "game_bridge",
+      "text": "このゲームで培ったスキルを実生活で活かせるか話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-057",
+      "situationId": "game_bridge",
+      "text": "今のプレイの実況テンションを変えてみよう(小声/大声など)",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-058",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きな効果音を声で再現してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-059",
+      "situationId": "game_bridge",
+      "text": "次にやりたいと思っているゲームタイトルを教えて",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-060",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなロード中の演出を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-061",
+      "situationId": "game_bridge",
+      "text": "このゲームで今一番欲しいアイテムを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-062",
+      "situationId": "game_bridge",
+      "text": "今のプレイ内容をラジオ実況風に伝えてみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-063",
+      "situationId": "game_bridge",
+      "text": "このゲームのおすすめの遊び方(縛りプレイなど)を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-064",
+      "situationId": "game_bridge",
+      "text": "今の状況を実況しながら次の一手を予告しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-065",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなキャラクターデザインについて語ろう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-066",
+      "situationId": "game_bridge",
+      "text": "今のプレイの「反省会」を先取りでやってみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-067",
+      "situationId": "game_bridge",
+      "text": "このゲームで意外と知られていない小技を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-068",
+      "situationId": "game_bridge",
+      "text": "今の展開を予言してみよう(当たるか外れるか)",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-069",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなマップ・ステージを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-070",
+      "situationId": "game_bridge",
+      "text": "今操作しているキャラの必殺技を実況しながら叫ぼう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-071",
+      "situationId": "game_bridge",
+      "text": "このゲームのやり込み度を自己申告してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-072",
+      "situationId": "game_bridge",
+      "text": "今のBGMに合わせて即興でラップしてみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-073",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなアップデート内容を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-074",
+      "situationId": "game_bridge",
+      "text": "今のプレイの「見どころ」をあらかじめ予告しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-075",
+      "situationId": "game_bridge",
+      "text": "このゲームを最初にプレイしたきっかけを話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-076",
+      "situationId": "game_bridge",
+      "text": "今の場面をリプレイ動画のタイトルにするなら?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-077",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番好きな協力プレイの思い出を話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-078",
+      "situationId": "game_bridge",
+      "text": "今のミッションのクリア予想タイムを宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-079",
+      "situationId": "game_bridge",
+      "text": "このゲームのキャラボイスで一言喋ってみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-080",
+      "situationId": "game_bridge",
+      "text": "次回の配信で挑戦したいこのゲームの実績を発表しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-081",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きな効果音ランキングを発表しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-082",
+      "situationId": "game_bridge",
+      "text": "今のプレイの「実況テンプレ」を作ってみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-083",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなロード時間の使い方を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-084",
+      "situationId": "game_bridge",
+      "text": "今の場面をアナウンサー風に実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-085",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番「ゾーンに入った」瞬間を話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-086",
+      "situationId": "game_bridge",
+      "text": "今のプレイの反省点を先に自己申告しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-087",
+      "situationId": "game_bridge",
+      "text": "このゲームのアップデート予想をしてみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-088",
+      "situationId": "game_bridge",
+      "text": "今のシーンの裏設定を勝手に考えてみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-089",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番好きな「間」の演出を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-090",
+      "situationId": "game_bridge",
+      "text": "今の状況を実況しながら次の目標を宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-091",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなセーブポイントの演出を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-092",
+      "situationId": "game_bridge",
+      "text": "今のプレイの「隠れた努力」を話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-093",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番好きなミニゲームを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-094",
+      "situationId": "game_bridge",
+      "text": "今のシーンにふさわしいBGMを選ぶなら?",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-095",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きな難易度バランスについて話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-096",
+      "situationId": "game_bridge",
+      "text": "今のプレイの「勝因」を実況しながら分析しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-097",
+      "situationId": "game_bridge",
+      "text": "このゲームのファンアートで見てみたいシーンを話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-098",
+      "situationId": "game_bridge",
+      "text": "今の場面をコメンタリー動画風に振り返ろう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-099",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番記憶に残っているセリフを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-100",
+      "situationId": "game_bridge",
+      "text": "次のプレイセッションの目標を先に宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-101",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きな敵キャラクターを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-102",
+      "situationId": "game_bridge",
+      "text": "今のプレイの「見せ場」を実況で盛り上げよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-103",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなカスタマイズ要素を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-104",
+      "situationId": "game_bridge",
+      "text": "今の場面をドキュメンタリー風に語ってみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-105",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番泣いた・感動したシーンを話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-106",
+      "situationId": "game_bridge",
+      "text": "今のプレイスタイルの弱点を正直に話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-107",
+      "situationId": "game_bridge",
+      "text": "このゲームの隠しキャラ・要素の噂を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-108",
+      "situationId": "game_bridge",
+      "text": "今のシーンをコメディ風に実況してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-109",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなオープニングムービーを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-110",
+      "situationId": "game_bridge",
+      "text": "今のプレイの「今日の目標」を途中経過報告しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-111",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番好きな協力プレイのコツを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-112",
+      "situationId": "game_bridge",
+      "text": "今のシーンを実況しながら次回予告を作ろう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-113",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きな世界観の細部を語ろう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-114",
+      "situationId": "game_bridge",
+      "text": "今のプレイの疲れをジョークで吹き飛ばそう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-115",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番「やってよかった」選択を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-116",
+      "situationId": "game_bridge",
+      "text": "今の場面のBGMボリュームを実況で表現しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-117",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなエンディングパターンを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-118",
+      "situationId": "game_bridge",
+      "text": "今のプレイの集中力を実況で自己申告しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-119",
+      "situationId": "game_bridge",
+      "text": "このゲームを一言で友達にネタバレなしで説明しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-120",
+      "situationId": "game_bridge",
+      "text": "次に挑戦したいこのゲームのやり込み要素を宣言しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-121",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きな武器・道具を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-122",
+      "situationId": "game_bridge",
+      "text": "今のプレイの「隠れた工夫」を実況で明かそう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-123",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなセリフ回しを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-124",
+      "situationId": "game_bridge",
+      "text": "今のシーンをラジオドラマ風に演じてみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-125",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなチュートリアル演出を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-126",
+      "situationId": "game_bridge",
+      "text": "今のプレイの「今だから言える裏話」を話そう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-127",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番好きな協力プレイの掛け声を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-128",
+      "situationId": "game_bridge",
+      "text": "今のシーンの難易度を星の数で採点しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-129",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きな小ネタ・イースターエッグを紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-130",
+      "situationId": "game_bridge",
+      "text": "今のプレイの「今後の展望」を語ろう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-131",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きなカラーリング・見た目を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-132",
+      "situationId": "game_bridge",
+      "text": "今のシーンを実況しながら心拍数を予想してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-133",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番好きな「待ち時間」の使い方を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-134",
+      "situationId": "game_bridge",
+      "text": "今のプレイの目標を実況しながら再確認しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-135",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きな謎解き要素を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-136",
+      "situationId": "game_bridge",
+      "text": "今の場面をラジオCM風に紹介してみよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-137",
+      "situationId": "game_bridge",
+      "text": "このゲームで一番好きな成長要素を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-138",
+      "situationId": "game_bridge",
+      "text": "今のプレイの「今日イチ」の瞬間を予告しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-139",
+      "situationId": "game_bridge",
+      "text": "このゲームの好きな移動手段・乗り物を紹介しよう",
+      "tags": []
+    },
+    {
+      "id": "game_bridge-140",
+      "situationId": "game_bridge",
+      "text": "次に挑戦したいこのゲームの隠し要素を宣言しよう",
+      "tags": []
+    }
+  ]
+}
