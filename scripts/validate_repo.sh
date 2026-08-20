@@ -3,8 +3,12 @@ set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
+# アプリ本体の設定ファイルだけを見る。再帰的に探すと、依存パッケージの
+# example アプリ（Firebase を入れると build/ 配下に展開される）まで拾って
+# しまい、Bundle ID の重複を誤検出する。
 ios_bundle_ids() {
-  for project in $(find "$repo_root/apps" -path '*/ios/Runner.xcodeproj/project.pbxproj' -type f); do
+  for project in "$repo_root"/apps/*/ios/Runner.xcodeproj/project.pbxproj; do
+    [ -f "$project" ] || continue
     sed -n 's/.*PRODUCT_BUNDLE_IDENTIFIER = \([^;]*\);/\1/p' "$project" |
       sed 's/[[:space:]]//g' |
       grep -v -e '\$(PRODUCT_BUNDLE_IDENTIFIER)' -e '\.RunnerTests$' |
@@ -13,7 +17,8 @@ ios_bundle_ids() {
 }
 
 android_application_ids() {
-  for gradle in $(find "$repo_root/apps" -path '*/android/app/build.gradle.kts' -type f); do
+  for gradle in "$repo_root"/apps/*/android/app/build.gradle.kts; do
+    [ -f "$gradle" ] || continue
     sed -n 's/.*applicationId = "\([^"]*\)".*/\1/p' "$gradle" | sort -u
   done
 }
