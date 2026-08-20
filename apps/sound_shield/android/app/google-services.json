@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "415276145388",
+    "project_id": "ichinomiya-apps",
+    "storage_bucket": "ichinomiya-apps.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:415276145388:android:0090d9b6cf211b0c7723c9",
+        "android_client_info": {
+          "package_name": "jp.pairof.sound.shield"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbMWxC2YWi9rjz6IztUhRQgdLrj2vyzGE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:415276145388:android:8305e70592b3b5477723c9",
+        "android_client_info": {
+          "package_name": "jp.pairof.takken"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAbMWxC2YWi9rjz6IztUhRQgdLrj2vyzGE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
