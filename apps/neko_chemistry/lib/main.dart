@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'data/progress_repository.dart';
-import 'ui/screens/home_screen.dart';
 import 'ui/screens/onboarding_screen.dart';
 import 'ui/theme.dart';
+import 'ui/widgets/app_shell.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,7 +41,7 @@ class NekoChemistryApp extends StatelessWidget {
   }
 }
 
-/// 初回起動かどうかでオンボーディングかホーム画面のどちらを見せるか決める。
+/// 初回起動かどうかでオンボーディングかメイン画面のどちらを見せるか決める。
 class _AppRoot extends StatelessWidget {
   const _AppRoot();
 
@@ -55,7 +55,7 @@ class _AppRoot extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        return snapshot.data! ? const HomeScreen() : const OnboardingScreen();
+        return snapshot.data! ? const AppShell() : const OnboardingScreen();
       },
     );
   }

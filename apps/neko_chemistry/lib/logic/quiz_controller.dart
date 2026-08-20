@@ -53,6 +53,10 @@ class QuizController extends ChangeNotifier {
   int get score => _score;
   int? get selectedIndex => _selectedIndex;
   bool get isAnswered => _selectedIndex != null;
+
+  /// 現在の問題に解答済みで、かつ正解だったかどうか。未解答ならnull。
+  bool? get isCurrentCorrect =>
+      isAnswered ? _selectedIndex == currentQuestion.answerIndex : null;
   bool get isFinished => _loaded && _currentIndex >= _questions.length;
 
   Question get currentQuestion => _questions[_currentIndex];
@@ -141,6 +145,17 @@ class QuizController extends ChangeNotifier {
       totalCorrect: totalCorrect,
     );
 
+    final totalAnswered = await _progressRepository.loadTotalAnswered();
+    final unitStats = await _progressRepository.loadUnitStats();
+    await _progressRepository.checkBadges(
+      totalAnswered: totalAnswered,
+      unitStats: unitStats,
+      streak: streak,
+    );
+    if (totalCount > 0 && _score == totalCount) {
+      await _progressRepository.unlockBadge(ProgressRepository.badgePerfectClear);
+    }
+
     // 初めてクイズを終えたタイミングでだけ、通知の許可を求める。
     final alreadyAsked = await _progressRepository
         .hasAskedNotificationPermission();
@@ -149,7 +164,11 @@ class QuizController extends ChangeNotifier {
       final granted = await _notificationService.requestPermission();
       if (granted) {
         await _progressRepository.setNotificationsEnabled(true);
-        await _notificationService.scheduleDailyReminder();
+        final minutes = await _progressRepository.loadReminderMinutes();
+        await _notificationService.scheduleDailyReminder(
+          hour: minutes ~/ 60,
+          minute: minutes % 60,
+        );
       }
     }
   }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../data/progress_repository.dart';
 import '../theme.dart';
+import '../widgets/app_shell.dart';
 import '../widgets/cat_mascot.dart';
-import 'home_screen.dart';
 
 /// 初回起動時にだけ表示する、簡単な使い方説明。
 /// 「はじめる」を押すとホーム画面に遷移し、二度と表示しないようフラグを保存する。
@@ -71,7 +71,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (!mounted) return;
     Navigator.of(
       context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
   }
 
   void _next() {
@@ -121,27 +121,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           height: 140,
                           child: Stack(
                             clipBehavior: Clip.none,
-                            alignment: Alignment.center,
                             children: [
-                              Container(
-                                width: 120,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  color: page.color.withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  page.icon,
-                                  color: page.color,
-                                  size: 44,
+                              Positioned(
+                                left: 20,
+                                top: 0,
+                                child: Container(
+                                  width: 120,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    color: page.color.withValues(alpha: 0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    page.icon,
+                                    color: page.color,
+                                    size: 44,
+                                  ),
                                 ),
                               ),
-                              const Positioned(
-                                bottom: -10,
-                                child: CatMascot(
-                                  trackSize: Size(120, 90),
-                                  catSize: 40,
-                                ),
+                              const CatMascot(
+                                trackSize: Size(120, 90),
+                                catSize: 40,
                               ),
                             ],
                           ),

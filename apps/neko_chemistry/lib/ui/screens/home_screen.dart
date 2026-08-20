@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../data/progress_repository.dart';
 import '../../logic/quiz_controller.dart';
 import '../theme.dart';
-import '../widgets/app_drawer.dart';
 import '../widgets/cat_mascot.dart';
 import 'quiz_screen.dart';
 import 'quiz_setup_screen.dart';
@@ -58,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(),
-      drawer: const AppDrawer(currentScreen: AppScreen.home),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

@@ -22,6 +22,7 @@ class CatMascot extends StatefulWidget {
     this.catSize = 46,
     this.waiting = false,
     this.accessory = CatAccessory.none,
+    this.correct,
   });
 
   /// 猫が歩く矩形トラックのサイズ。この矩形の辺に沿って周回する。
@@ -34,6 +35,10 @@ class CatMascot extends StatefulWidget {
   /// 猫が身につけている小物(進捗画面で選んだもの)。
   final CatAccessory accessory;
 
+  /// 直近の解答が正解だったか。nullは未解答(通常の歩行中)を表し、
+  /// 抱きついた際の表情(喜び/しょんぼり)を出し分けるのに使う。
+  final bool? correct;
+
   @override
   State<CatMascot> createState() => _CatMascotState();
 }
@@ -43,6 +48,9 @@ class _CatMascotState extends State<CatMascot> with TickerProviderStateMixin {
   static const _dockTransition = Duration(milliseconds: 450);
   // トラック下辺から「つぎへ」ボタンまでの見た目上の距離。
   static const _dockDistance = 58.0;
+  // 常に歩き回っている小さな猫を狙ってタップするのは難しいため、見た目より
+  // 一回り広い透明な範囲でもタップを拾えるようにする、当たり判定用の余白。
+  static const _hitPadding = 16.0;
 
   late final Ticker _ticker;
   late final AnimationController _dock;
@@ -173,47 +181,54 @@ class _CatMascotState extends State<CatMascot> with TickerProviderStateMixin {
         final bounce = Curves.elasticOut.transform(_react.value);
 
         return Positioned(
-          left: x - size / 2,
-          top: y - size / 2 - bob * 3,
+          left: x - size / 2 - _hitPadding,
+          top: y - size / 2 - bob * 3 - _hitPadding,
           // 抱きついている間は「つぎへ」ボタンの上に重なるため、タップを透過させて
           // ボタン自体は押せる状態を保つ。
           child: IgnorePointer(
             ignoring: hugAmount > 0.5,
             child: GestureDetector(
               onTap: _onTap,
-              child: SizedBox(
-                width: size,
-                height: size + 24,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    if (_showBubble)
-                      Positioned(top: -20, child: _SpeechBubble()),
-                    Transform.scale(
-                      scaleY: 1 - bounce * 0.18,
-                      scaleX: 1 + bounce * 0.14,
-                      alignment: Alignment.bottomCenter,
-                      child: Transform(
-                        alignment: Alignment.center,
-                        transform: Matrix4.identity()
-                          ..scaleByDouble(
-                            facingRight ? 1.0 : -1.0,
-                            1.0,
-                            1.0,
-                            1.0,
-                          ),
-                        child: CustomPaint(
-                          size: Size(size, size),
-                          painter: CatPainter(
-                            tailWag: tailWag,
-                            hugAmount: hugAmount,
-                            accessory: widget.accessory,
+              // opaqueにすることで、見た目上は何も描かれていない余白部分でも
+              // タップを拾えるようにする(そうしないと絵が塗られている範囲だけしか反応しない)。
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(_hitPadding),
+                child: SizedBox(
+                  width: size,
+                  height: size + 24,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      if (_showBubble)
+                        Positioned(top: -20, child: _SpeechBubble()),
+                      Transform.scale(
+                        scaleY: 1 - bounce * 0.18,
+                        scaleX: 1 + bounce * 0.14,
+                        alignment: Alignment.bottomCenter,
+                        child: Transform(
+                          alignment: Alignment.center,
+                          transform: Matrix4.identity()
+                            ..scaleByDouble(
+                              facingRight ? 1.0 : -1.0,
+                              1.0,
+                              1.0,
+                              1.0,
+                            ),
+                          child: CustomPaint(
+                            size: Size(size, size),
+                            painter: CatPainter(
+                              tailWag: tailWag,
+                              hugAmount: hugAmount,
+                              accessory: widget.accessory,
+                              correct: widget.correct,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -276,6 +291,7 @@ class CatPainter extends CustomPainter {
     required this.tailWag,
     this.hugAmount = 0,
     this.accessory = CatAccessory.none,
+    this.correct,
   });
 
   final double tailWag;
@@ -285,11 +301,20 @@ class CatPainter extends CustomPainter {
 
   final CatAccessory accessory;
 
+  /// 直近の解答が正解だったか。nullは未解答、trueなら喜び顔、falseならしょんぼり顔。
+  final bool? correct;
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final body = Paint()..color = nekoOrange;
+    // ベタ塗りではなく左上方向からの淡いハイライトを足して丸みのある立体感を出す。
+    final body = Paint()
+      ..shader = const RadialGradient(
+        center: Alignment(-0.35, -0.6),
+        radius: 1.3,
+        colors: [Color(0xFFF4AD70), nekoOrange],
+      ).createShader(Rect.fromLTWH(0, 0, w, h));
     final white = Paint()..color = Colors.white;
     final dark = Paint()..color = inkBrown;
     final pink = Paint()..color = const Color(0xFFF3AFAF);
@@ -317,20 +342,20 @@ class CatPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    // 胴体
+    // 胴体(頭を大きく見せるため、体はやや小さめの比率にしている)
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(w * 0.55, h * 0.68),
-        width: w * 0.62,
-        height: h * 0.4,
+        center: Offset(w * 0.55, h * 0.7),
+        width: w * 0.56,
+        height: h * 0.36,
       ),
       body,
     );
     canvas.drawOval(
       Rect.fromCenter(
-        center: Offset(w * 0.55, h * 0.74),
-        width: w * 0.32,
-        height: h * 0.22,
+        center: Offset(w * 0.55, h * 0.75),
+        width: w * 0.3,
+        height: h * 0.2,
       ),
       white,
     );
@@ -352,9 +377,9 @@ class CatPainter extends CustomPainter {
       _drawHugArms(canvas, w, h, hugAmount);
     }
 
-    // 頭
+    // 頭(体より大きめの比率にして幼形(頭でっかち)の可愛らしさを出す)
     final headCenter = Offset(w * 0.55, h * 0.36);
-    final headRadius = w * 0.32;
+    final headRadius = w * 0.35;
     canvas.drawCircle(headCenter, headRadius, body);
 
     // 耳
@@ -372,35 +397,72 @@ class CatPainter extends CustomPainter {
       _drawCrown(canvas, headCenter, headRadius, w, h);
     }
 
-    // 目: サングラス装着時は目を隠して描画、抱きついている時は嬉しそうに閉じる
+    // 目: サングラス装着時は目を隠して描画、抱きついている時は正解/不正解に応じて
+    // 嬉しそうに閉じるかしょんぼり顔になるかを出し分ける。
     if (accessory == CatAccessory.sunglasses) {
       _drawSunglasses(canvas, headCenter, headRadius, w, h);
+    } else if (hugAmount > 0.5 && correct == false) {
+      _drawSadEyes(canvas, headCenter, headRadius, w, h, dark.color);
     } else if (hugAmount > 0.5) {
       _drawHappyEyes(canvas, headCenter, headRadius, w, h, dark.color);
     } else {
+      // 黒目を大きくし、左上に白いキャッチライトを入れることで生き生きした目に見せる。
+      for (final side in [-1.0, 1.0]) {
+        final eyeCenter = Offset(
+          headCenter.dx + side * headRadius * 0.34,
+          headCenter.dy + headRadius * 0.03,
+        );
+        canvas.drawOval(
+          Rect.fromCenter(center: eyeCenter, width: w * 0.11, height: h * 0.14),
+          dark,
+        );
+        canvas.drawCircle(
+          Offset(eyeCenter.dx - w * 0.025, eyeCenter.dy - h * 0.035),
+          w * 0.02,
+          white,
+        );
+      }
+    }
+
+    // ほっぺの赤み
+    final blush = Paint()..color = pink.color.withValues(alpha: 0.6);
+    for (final side in [-1.0, 1.0]) {
       canvas.drawOval(
         Rect.fromCenter(
-          center: Offset(headCenter.dx - headRadius * 0.32, headCenter.dy),
-          width: w * 0.07,
-          height: h * 0.07,
+          center: Offset(
+            headCenter.dx + side * headRadius * 0.68,
+            headCenter.dy + headRadius * 0.42,
+          ),
+          width: w * 0.1,
+          height: h * 0.06,
         ),
-        dark,
-      );
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(headCenter.dx + headRadius * 0.32, headCenter.dy),
-          width: w * 0.07,
-          height: h * 0.07,
-        ),
-        dark,
+        blush,
       );
     }
 
-    // 鼻
+    // 鼻(角を丸めた小さなハート型にして優しい印象にする)
+    final noseTop = headCenter.dy + headRadius * 0.29;
+    final noseBottom = headCenter.dy + headRadius * 0.41;
     final nose = Path()
-      ..moveTo(headCenter.dx - w * 0.03, headCenter.dy + headRadius * 0.28)
-      ..lineTo(headCenter.dx + w * 0.03, headCenter.dy + headRadius * 0.28)
-      ..lineTo(headCenter.dx, headCenter.dy + headRadius * 0.4)
+      ..moveTo(headCenter.dx, noseBottom)
+      ..quadraticBezierTo(
+        headCenter.dx - w * 0.035,
+        noseBottom - h * 0.015,
+        headCenter.dx - w * 0.028,
+        noseTop,
+      )
+      ..quadraticBezierTo(
+        headCenter.dx,
+        noseTop + h * 0.015,
+        headCenter.dx + w * 0.028,
+        noseTop,
+      )
+      ..quadraticBezierTo(
+        headCenter.dx + w * 0.035,
+        noseBottom - h * 0.015,
+        headCenter.dx,
+        noseBottom,
+      )
       ..close();
     canvas.drawPath(nose, pink);
 
@@ -438,8 +500,8 @@ class CatPainter extends CustomPainter {
       _drawScarf(canvas, w, h);
     }
 
-    // 抱きついている時だけ現れるハート
-    if (hugAmount > 0.4) {
+    // 抱きついている時だけ現れるハート(不正解の時は出さない)
+    if (hugAmount > 0.4 && correct != false) {
       _drawHeart(canvas, w, h, ((hugAmount - 0.4) / 0.6).clamp(0, 1));
     }
   }
@@ -493,6 +555,39 @@ class CatPainter extends CustomPainter {
         ..quadraticBezierTo(cx, cy - h * 0.03, cx + w * 0.035, cy + h * 0.02);
       canvas.drawPath(path, eyePaint);
     }
+  }
+
+  /// 不正解時、抱きついた際に見せるしょんぼり顔。目尻を下げた円弧+涙を描く。
+  void _drawSadEyes(
+    Canvas canvas,
+    Offset headCenter,
+    double headRadius,
+    double w,
+    double h,
+    Color color,
+  ) {
+    final eyePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * 0.022
+      ..strokeCap = StrokeCap.round;
+    for (final side in [-1.0, 1.0]) {
+      final cx = headCenter.dx + side * headRadius * 0.34;
+      final cy = headCenter.dy + headRadius * 0.03;
+      final path = Path()
+        ..moveTo(cx - w * 0.035, cy - h * 0.015)
+        ..quadraticBezierTo(cx, cy + h * 0.035, cx + w * 0.035, cy - h * 0.015);
+      canvas.drawPath(path, eyePaint);
+    }
+
+    final tear = Paint()..color = const Color(0xFF6FA9E0);
+    final tx = headCenter.dx + headRadius * 0.34;
+    final ty = headCenter.dy + headRadius * 0.16;
+    final tearPath = Path()
+      ..moveTo(tx, ty)
+      ..quadraticBezierTo(tx - w * 0.022, ty + h * 0.045, tx, ty + h * 0.06)
+      ..quadraticBezierTo(tx + w * 0.022, ty + h * 0.045, tx, ty);
+    canvas.drawPath(tearPath, tear);
   }
 
   void _drawHeart(Canvas canvas, double w, double h, double opacity) {
@@ -644,21 +739,34 @@ class CatPainter extends CustomPainter {
     );
   }
 
+  /// 直線だけの鋭い三角形だとキツネ耳のように見えるため、外側・内側の辺を
+  /// それぞれ二次ベジェで少し膨らませて丸みのある耳の輪郭にしている。
   Path _earPath(Offset headCenter, double headRadius, {required bool left}) {
     final sign = left ? -1.0 : 1.0;
+    final base = Offset(
+      headCenter.dx + sign * headRadius * 0.72,
+      headCenter.dy - headRadius * 0.32,
+    );
+    final tip = Offset(
+      headCenter.dx + sign * headRadius * 0.92,
+      headCenter.dy - headRadius * 1.25,
+    );
+    final inner = Offset(
+      headCenter.dx + sign * headRadius * 0.08,
+      headCenter.dy - headRadius * 0.82,
+    );
+    final outerControl = Offset(
+      headCenter.dx + sign * headRadius * 1.05,
+      headCenter.dy - headRadius * 0.82,
+    );
+    final innerControl = Offset(
+      headCenter.dx + sign * headRadius * 0.42,
+      headCenter.dy - headRadius * 1.12,
+    );
     return Path()
-      ..moveTo(
-        headCenter.dx + sign * headRadius * 0.7,
-        headCenter.dy - headRadius * 0.5,
-      )
-      ..lineTo(
-        headCenter.dx + sign * headRadius * 1.05,
-        headCenter.dy - headRadius * 1.5,
-      )
-      ..lineTo(
-        headCenter.dx + sign * headRadius * 0.05,
-        headCenter.dy - headRadius * 0.95,
-      )
+      ..moveTo(base.dx, base.dy)
+      ..quadraticBezierTo(outerControl.dx, outerControl.dy, tip.dx, tip.dy)
+      ..quadraticBezierTo(innerControl.dx, innerControl.dy, inner.dx, inner.dy)
       ..close();
   }
 
@@ -674,5 +782,6 @@ class CatPainter extends CustomPainter {
   bool shouldRepaint(covariant CatPainter oldDelegate) =>
       oldDelegate.tailWag != tailWag ||
       oldDelegate.hugAmount != hugAmount ||
-      oldDelegate.accessory != accessory;
+      oldDelegate.accessory != accessory ||
+      oldDelegate.correct != correct;
 }

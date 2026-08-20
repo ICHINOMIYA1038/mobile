@@ -139,6 +139,7 @@ class _QuizScreenState extends State<QuizScreen> {
                               trackSize: trackSize,
                               waiting: c.isAnswered,
                               accessory: _accessory,
+                              correct: c.isCurrentCorrect,
                             ),
                           ],
                         ),

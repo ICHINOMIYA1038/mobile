@@ -2,7 +2,7 @@ name: neko_chemistry
 description: "猫と学ぶ高校化学 - デザイン重視の一問一答クイズアプリ"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.11.5
@@ -16,6 +16,7 @@ dependencies:
   flutter_local_notifications: ^18.0.1
   timezone: ^0.10.0
   share_plus: ^10.1.2
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:

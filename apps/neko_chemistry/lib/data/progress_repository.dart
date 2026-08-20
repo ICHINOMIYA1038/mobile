@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'units.dart';
+
 /// 単元ごとの回答数・正解数。
 class UnitStats {
   const UnitStats({this.answered = 0, this.correct = 0});
@@ -63,6 +65,7 @@ class ProgressRepository {
   static const _streakKey = 'streak_v1';
   static const _unlocksKey = 'unlocks_v1';
   static const _notificationsKey = 'notifications_enabled_v1';
+  static const _reminderMinutesKey = 'reminder_minutes_v1';
   static const _notificationAskedKey = 'notification_asked_v1';
   static const _onboardingSeenKey = 'onboarding_seen_v1';
 
@@ -71,6 +74,13 @@ class ProgressRepository {
   static const accessoryCrown = 'crown';
   static const accessorySunglasses = 'sunglasses';
   static const accessoryScarf = 'scarf';
+
+  /// 実績バッジのID。アクセサリー(猫の見た目)とは別に、達成の記録として集める。
+  static const badgeFirstStep = 'first_step';
+  static const badgeCentury = 'century';
+  static const badgeAllUnits = 'all_units';
+  static const badgePerfectClear = 'perfect_clear';
+  static const badgeWeekStreak = 'week_streak';
 
   Future<Set<String>> loadWeakQuestionIds() async {
     final data = await _loadProgress();
@@ -94,6 +104,22 @@ class ProgressRepository {
     await _saveProgress(data);
   }
 
+  /// 暗記カードモードで「覚えた」と回答した用語(GlossaryTerm.term)の集合。
+  Future<Set<String>> loadKnownTerms() async {
+    final data = await _loadProgress();
+    return (data['knownTerms'] as List).cast<String>().toSet();
+  }
+
+  Future<void> toggleKnownTerm(String term) async {
+    final data = await _loadProgress();
+    final known = (data['knownTerms'] as List).cast<String>().toSet();
+    if (!known.remove(term)) {
+      known.add(term);
+    }
+    data['knownTerms'] = known.toList();
+    await _saveProgress(data);
+  }
+
   Future<Map<String, UnitStats>> loadUnitStats() async {
     final data = await _loadProgress();
     final raw = (data['unitStats'] as Map).cast<String, dynamic>();
@@ -113,11 +139,20 @@ class ProgressRepository {
     return (data['totalCorrect'] as num?)?.toInt() ?? 0;
   }
 
-  /// 1問の回答結果を記録する。苦手問題集合・単元別統計・累計数をまとめて更新する。
+  /// 学習カレンダー(ヒートマップ)用に、日付ごとの回答数を記録したもの。
+  Future<Map<String, int>> loadStudyLog() async {
+    final data = await _loadProgress();
+    final raw = (data['studyLog'] as Map).cast<String, dynamic>();
+    return raw.map((date, count) => MapEntry(date, (count as num).toInt()));
+  }
+
+  /// 1問の回答結果を記録する。苦手問題集合・単元別統計・累計数・学習カレンダーを
+  /// まとめて更新する。
   Future<void> recordAnswer({
     required String questionId,
     required String unit,
     required bool correct,
+    DateTime? now,
   }) async {
     final data = await _loadProgress();
 
@@ -145,6 +180,11 @@ class ProgressRepository {
       data['totalCorrect'] =
           ((data['totalCorrect'] as num?)?.toInt() ?? 0) + 1;
     }
+
+    final studyLog = (data['studyLog'] as Map).cast<String, dynamic>();
+    final today = _dateKey(now ?? DateTime.now());
+    studyLog[today] = ((studyLog[today] as num?)?.toInt() ?? 0) + 1;
+    data['studyLog'] = studyLog;
 
     await _saveProgress(data);
   }
@@ -176,6 +216,8 @@ class ProgressRepository {
     'unitStats': <String, dynamic>{},
     'totalAnswered': 0,
     'totalCorrect': 0,
+    'studyLog': <String, dynamic>{},
+    'knownTerms': <String>[],
   };
 
   Future<StreakData> loadStreak() async {
@@ -272,15 +314,61 @@ class ProgressRepository {
     return newlyUnlocked;
   }
 
+  Future<Set<String>> loadUnlockedBadges() async {
+    final data = await _loadUnlocks();
+    return (data['badges'] as List).cast<String>().toSet();
+  }
+
+  Future<bool> unlockBadge(String badgeId) async {
+    final data = await _loadUnlocks();
+    final badges = (data['badges'] as List).cast<String>().toSet();
+    final isNew = badges.add(badgeId);
+    if (isNew) {
+      data['badges'] = badges.toList();
+      await _saveUnlocks(data);
+    }
+    return isNew;
+  }
+
+  /// 累計回答数・単元別統計・ストリークから、新たに解放条件を満たしたバッジを
+  /// 解放して返す。満点クリアバッジ(badgePerfectClear)はセッション完了時に
+  /// スコアを知っているQuizController側から直接unlockBadgeで解放する。
+  Future<List<String>> checkBadges({
+    required int totalAnswered,
+    required Map<String, UnitStats> unitStats,
+    required StreakData streak,
+  }) async {
+    final conditions = {
+      badgeFirstStep: totalAnswered >= 1,
+      badgeCentury: totalAnswered >= 100,
+      badgeAllUnits: kAllUnits.every((unit) => (unitStats[unit]?.correct ?? 0) >= 1),
+      badgeWeekStreak: streak.best >= 7,
+    };
+    final newlyUnlocked = <String>[];
+    for (final entry in conditions.entries) {
+      if (entry.value && await unlockBadge(entry.key)) {
+        newlyUnlocked.add(entry.key);
+      }
+    }
+    return newlyUnlocked;
+  }
+
   Future<Map<String, dynamic>> _loadUnlocks() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_unlocksKey);
-      if (raw == null) return {'unlocked': <String>[], 'selected': null};
+      if (raw == null) {
+        return {'unlocked': <String>[], 'selected': null, 'badges': <String>[]};
+      }
       final decoded = jsonDecode(raw) as Map<String, dynamic>;
-      return {'unlocked': <String>[], 'selected': null, ...decoded};
+      return {
+        'unlocked': <String>[],
+        'selected': null,
+        'badges': <String>[],
+        ...decoded,
+      };
     } catch (_) {
-      return {'unlocked': <String>[], 'selected': null};
+      return {'unlocked': <String>[], 'selected': null, 'badges': <String>[]};
     }
   }
 
@@ -306,6 +394,25 @@ class ProgressRepository {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_notificationsKey, enabled);
+    } catch (_) {
+      // 保存できなくても致命的ではないため無視する。
+    }
+  }
+
+  /// 復習リマインダーを鳴らす時刻(0時0分からの分数)。デフォルトは19:00。
+  Future<int> loadReminderMinutes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt(_reminderMinutesKey) ?? (19 * 60);
+    } catch (_) {
+      return 19 * 60;
+    }
+  }
+
+  Future<void> setReminderMinutes(int minutesSinceMidnight) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_reminderMinutesKey, minutesSinceMidnight);
     } catch (_) {
       // 保存できなくても致命的ではないため無視する。
     }
@@ -350,9 +457,10 @@ class ProgressRepository {
     }
   }
 
-  /// 苦手問題・ブックマーク・単元別統計・ストリーク・解放済みアクセサリーを
-  /// すべて消す。通知の許可を求めたかどうか・オンボーディング既読フラグは、
-  /// OS側の許可状態や初見扱いと無関係に再度出すと煩わしいため、あえて残す。
+  /// 苦手問題・ブックマーク・単元別統計・学習カレンダー・ストリーク・
+  /// 解放済みアクセサリー/バッジをすべて消す。通知の許可を求めたかどうか・
+  /// オンボーディング既読フラグは、OS側の許可状態や初見扱いと無関係に
+  /// 再度出すと煩わしいため、あえて残す。
   Future<void> resetAll() async {
     try {
       final prefs = await SharedPreferences.getInstance();

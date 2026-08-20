@@ -16,9 +16,6 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _plugin;
 
-  /// 通知する時刻。
-  static const _hour = 19;
-
   /// 何日先まで予約するか(端末側で定期実行できないため、まとめて予約する)。
   static const _daysAhead = 7;
 
@@ -72,8 +69,12 @@ class NotificationService {
     }
   }
 
-  /// 毎日決まった時刻に復習リマインダーを予約し直す。
-  Future<void> scheduleDailyReminder({DateTime? now}) async {
+  /// 毎日決まった時刻に復習リマインダーを予約し直す。時刻を省略すると19:00。
+  Future<void> scheduleDailyReminder({
+    DateTime? now,
+    int hour = 19,
+    int minute = 0,
+  }) async {
     if (!_isSupported) return;
     await _ensureInitialized();
 
@@ -82,7 +83,13 @@ class NotificationService {
 
       final base = now ?? DateTime.now();
       for (var offset = 0; offset < _daysAhead; offset++) {
-        final day = DateTime(base.year, base.month, base.day + offset, _hour);
+        final day = DateTime(
+          base.year,
+          base.month,
+          base.day + offset,
+          hour,
+          minute,
+        );
         if (!day.isAfter(base)) continue;
         await _scheduleAt(id: offset, when: day);
       }

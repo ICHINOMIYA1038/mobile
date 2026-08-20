@@ -87,7 +87,7 @@ void main() {
 
     await _tapAfterScroll(tester, find.text('はじめる'));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
+    await _pumpUntil(tester, find.textContaining('問 / '));
 
     expect(find.text('猫と学ぶ高校化学'), findsOneWidget);
     expect(find.textContaining('問 / '), findsOneWidget);
@@ -100,9 +100,9 @@ void main() {
       MaterialApp(home: QuizScreen(controller: QuizController())),
     );
     await tester.pump();
-    await _pumpUntil(tester, find.text('第1問 / 100'));
+    await _pumpUntil(tester, find.text('第1問 / 510'));
 
-    expect(find.text('第1問 / 100'), findsOneWidget);
+    expect(find.text('第1問 / 510'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('choice_0')));
     await tester.pump();
@@ -112,17 +112,53 @@ void main() {
 
     // ボタンを押さない限りしばらく待っても進まないこと。
     await tester.pump(const Duration(milliseconds: 2000));
-    expect(find.text('第1問 / 100'), findsOneWidget);
+    expect(find.text('第1問 / 510'), findsOneWidget);
 
     await tester.tap(find.text('つぎへ'));
     await tester.pump();
 
-    expect(find.text('第2問 / 100'), findsOneWidget);
-    expect(find.text('第1問 / 100'), findsNothing);
+    expect(find.text('第2問 / 510'), findsOneWidget);
+    expect(find.text('第1問 / 510'), findsNothing);
+  });
+
+  testWidgets('★でブックマークした問題は、ブックマーク復習モードでだけ出題される', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: QuizScreen(controller: QuizController(questionCount: 1)),
+      ),
+    );
+    await tester.pump();
+    await _pumpUntil(tester, find.text('第1問 / 1'));
+
+    final bookmarkButton = find.byKey(const ValueKey('bookmark_button'));
+    expect(bookmarkButton, findsOneWidget);
+    await tester.tap(bookmarkButton);
+    await tester.pump();
+
+    final bookmarkIds = await ProgressRepository().loadBookmarkedQuestionIds();
+    expect(bookmarkIds.length, 1);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        // 1つ前のQuizScreenと同じ位置に別のQuizScreenを積むと、Flutterが同じ
+        // Stateを使い回してinitStateを呼び直さないため、別Keyで確実に張り替える。
+        home: QuizScreen(
+          key: UniqueKey(),
+          controller: QuizController(bookmarkOnly: true),
+        ),
+      ),
+    );
+    await tester.pump();
+    await _pumpUntil(tester, find.textContaining('問 / '));
+
+    expect(find.text('第1問 / 1'), findsOneWidget);
   });
 
   testWidgets('出題数を選ぶとその件数だけ出題される', (WidgetTester tester) async {
     await tester.pumpWidget(const NekoChemistryApp());
+    await tester.pump();
     await tester.pump();
 
     await _tapAfterScroll(tester, find.text('ランダムに挑戦'));
@@ -143,6 +179,7 @@ void main() {
   testWidgets('分野を選んで挑戦すると、選んだ単元だけ出題される', (WidgetTester tester) async {
     await tester.pumpWidget(const NekoChemistryApp());
     await tester.pump();
+    await tester.pump();
 
     await _tapAfterScroll(tester, find.text('分野を選んで挑戦'));
     await tester.pump();
@@ -160,26 +197,159 @@ void main() {
     await tester.pump();
     await _pumpUntil(tester, find.textContaining('問 / '));
 
-    // 有機化学は6問しかないため、20問指定でも6問に収まる。
-    expect(find.text('第1問 / 6'), findsOneWidget);
+    expect(find.text('第1問 / 20'), findsOneWidget);
   });
 
-  testWidgets('モバイルメニュー(ドロワー)から設定画面に遷移できる', (
+  testWidgets('フッターの常時ナビゲーションから設定画面に遷移できる', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(const NekoChemistryApp());
     await tester.pump();
-
-    await tester.tap(find.byIcon(Icons.menu));
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.widgetWithText(ListTile, '設定'));
+    await tester.tap(find.widgetWithText(NavigationDestination, '設定'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await _pumpUntil(tester, find.text('復習リマインダー'));
 
     expect(find.text('復習リマインダー'), findsOneWidget);
     expect(find.text('学習データをリセット'), findsOneWidget);
+  });
+
+  testWidgets('進捗画面に学習カレンダーと実績バッジのセクションが表示される', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const NekoChemistryApp());
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(NavigationDestination, '進捗'));
+    await tester.pump();
+    await _pumpUntil(tester, find.text('累計回答'));
+
+    // ListViewは画面外のウィジェットを遅延構築するため、スクロールしながら探す。
+    await tester.dragUntilVisible(
+      find.text('学習カレンダー'),
+      find.byType(ListView),
+      const Offset(0, -300),
+    );
+    expect(find.text('学習カレンダー'), findsOneWidget);
+
+    await tester.dragUntilVisible(
+      find.text('実績バッジ'),
+      find.byType(ListView),
+      const Offset(0, -300),
+    );
+    expect(find.text('実績バッジ'), findsOneWidget);
+
+    await tester.dragUntilVisible(
+      find.text('猫のきせかえ'),
+      find.byType(ListView),
+      const Offset(0, -300),
+    );
+    expect(find.text('猫のきせかえ'), findsOneWidget);
+  });
+
+  testWidgets('進捗画面にまだ十分なデータがないときは猫タイプ診断が「診断できません」表示になる', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const NekoChemistryApp());
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(NavigationDestination, '進捗'));
+    await tester.pump();
+    await _pumpUntil(tester, find.text('累計回答'));
+
+    await tester.dragUntilVisible(
+      find.textContaining('猫タイプ診断'),
+      find.byType(ListView),
+      const Offset(0, -200),
+    );
+    expect(find.textContaining('5問以上解くと診断できます'), findsOneWidget);
+
+    // 学習記録シェアカードのボタンも表示されていること。
+    await tester.dragUntilVisible(
+      find.text('学習記録をシェア'),
+      find.byType(ListView),
+      const Offset(0, -200),
+    );
+    expect(find.text('学習記録をシェア'), findsOneWidget);
+  });
+
+  testWidgets('設定画面で通知時刻を選ぶ項目が表示される', (WidgetTester tester) async {
+    await tester.pumpWidget(const NekoChemistryApp());
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(NavigationDestination, '設定'));
+    await tester.pump();
+    await _pumpUntil(tester, find.text('通知時刻'));
+
+    expect(find.text('通知時刻'), findsOneWidget);
+  });
+
+  testWidgets('暗記カードで「覚えた」を押すと次のカードに進み、記録が保存される', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const NekoChemistryApp());
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(NavigationDestination, '用語集'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('暗記カード'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 / 21'), findsOneWidget);
+
+    await tester.tap(find.text('覚えた'));
+    await tester.pump();
+
+    expect(find.text('2 / 21'), findsOneWidget);
+    expect(find.text('覚えた: 1'), findsOneWidget);
+
+    final known = await ProgressRepository().loadKnownTerms();
+    expect(known.length, 1);
+  });
+
+  testWidgets('用語集の元素周期表タブから元素の詳細が見られる', (WidgetTester tester) async {
+    await tester.pumpWidget(const NekoChemistryApp());
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(NavigationDestination, '用語集'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('元素周期表'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('C'), findsOneWidget);
+
+    await tester.tap(find.text('C'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('炭素'), findsOneWidget);
+  });
+
+  testWidgets('クイズを1問正解すると「はじめの一歩」と「満点クリア」バッジが解放される', (
+    WidgetTester tester,
+  ) async {
+    // ResultScreenへの実際の画面遷移は結果演出用のTimerが残り続けテストの
+    // 後始末と衝突するため、UIを介さずコントローラーを直接操作して検証する。
+    final controller = QuizController(questionCount: 1);
+    await tester.runAsync(() => controller.init());
+
+    final correctIndex = controller.currentQuestion.answerIndex;
+    controller.selectAnswer(correctIndex);
+    controller.nextQuestion();
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+
+    final badges = await ProgressRepository().loadUnlockedBadges();
+    expect(badges, contains(ProgressRepository.badgeFirstStep));
+    expect(badges, contains(ProgressRepository.badgePerfectClear));
   });
 }
