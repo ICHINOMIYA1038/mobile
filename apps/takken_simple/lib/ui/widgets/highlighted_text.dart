@@ -89,7 +89,10 @@ class _HighlightedTextState extends State<HighlightedText> {
       final recognizer = TapGestureRecognizer()
         ..onTap = () {
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => TermDetailScreen(term: term)),
+            MaterialPageRoute(
+              settings: const RouteSettings(name: 'term_detail'),
+              builder: (_) => TermDetailScreen(term: term),
+            ),
           );
         };
       _recognizers.add(recognizer);

@@ -69,7 +69,10 @@ class WeakQuestionsScreen extends StatelessWidget {
                       onPressed: () {
                         controller.startWeakSession();
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const QuizScreen()),
+                          MaterialPageRoute(
+                            settings: const RouteSettings(name: 'quiz'),
+                            builder: (_) => const QuizScreen(),
+                          ),
                         );
                       },
                       icon: const Icon(Icons.replay_rounded),

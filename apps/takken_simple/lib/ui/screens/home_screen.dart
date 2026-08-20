@@ -36,14 +36,24 @@ class HomeScreen extends StatelessWidget {
             tooltip: '重要用語集',
             onPressed: () => Navigator.of(
               context,
-            ).push(MaterialPageRoute(builder: (_) => const GlossaryScreen())),
+            ).push(
+              MaterialPageRoute(
+                settings: const RouteSettings(name: 'glossary'),
+                builder: (_) => const GlossaryScreen(),
+              ),
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.bar_chart_rounded),
             tooltip: '成績',
             onPressed: () => Navigator.of(
               context,
-            ).push(MaterialPageRoute(builder: (_) => const StatsScreen())),
+            ).push(
+              MaterialPageRoute(
+                settings: const RouteSettings(name: 'stats'),
+                builder: (_) => const StatsScreen(),
+              ),
+            ),
           ),
         ],
       ),
@@ -83,6 +93,9 @@ class HomeScreen extends StatelessWidget {
                                   controller.startSession();
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
+                                      settings: const RouteSettings(
+                                        name: 'quiz',
+                                      ),
                                       builder: (_) => const QuizScreen(),
                                     ),
                                   );
@@ -312,7 +325,12 @@ class _CategorySelectionSheetState extends State<_CategorySelectionSheet> {
                   );
                   Navigator.of(
                     context,
-                  ).push(MaterialPageRoute(builder: (_) => const QuizScreen()));
+                  ).push(
+                    MaterialPageRoute(
+                      settings: const RouteSettings(name: 'quiz'),
+                      builder: (_) => const QuizScreen(),
+                    ),
+                  );
                 },
                 borderRadius: BorderRadius.circular(16),
                 child: Padding(

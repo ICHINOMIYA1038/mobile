@@ -116,6 +116,9 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
                             trailing: const Icon(Icons.chevron_right_rounded),
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(
+                                settings: const RouteSettings(
+                                  name: 'term_detail',
+                                ),
                                 builder: (_) => TermDetailScreen(term: term),
                               ),
                             ),

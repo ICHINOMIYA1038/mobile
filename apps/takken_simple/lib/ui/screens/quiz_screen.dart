@@ -117,7 +117,12 @@ class QuizScreen extends StatelessWidget {
     unawaited(controller.finishSession());
     Navigator.of(
       context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const ResultScreen()));
+    ).pushReplacement(
+      MaterialPageRoute(
+        settings: const RouteSettings(name: 'result'),
+        builder: (_) => const ResultScreen(),
+      ),
+    );
   }
 }
 
@@ -543,6 +548,7 @@ class _RelatedTermsSection extends StatelessWidget {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
+                        settings: const RouteSettings(name: 'term_detail'),
                         builder: (_) => TermDetailScreen(term: term),
                       ),
                     );

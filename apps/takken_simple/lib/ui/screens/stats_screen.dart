@@ -105,7 +105,12 @@ class _WeakQuestionsSection extends StatelessWidget {
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: () => Navigator.of(
           context,
-        ).push(MaterialPageRoute(builder: (_) => const WeakQuestionsScreen())),
+        ).push(
+          MaterialPageRoute(
+            settings: const RouteSettings(name: 'weak_questions'),
+            builder: (_) => const WeakQuestionsScreen(),
+          ),
+        ),
       ),
     );
   }

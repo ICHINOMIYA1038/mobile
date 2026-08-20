@@ -1,13 +1,17 @@
+import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'data/purchase_repository.dart';
+import 'firebase_options.dart';
 import 'logic/study_controller.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/theme.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 計測は失敗してもアプリを止めない作りなので、ここで待って問題ない。
+  await AppInsights.initialize(options: DefaultFirebaseOptions.currentPlatform);
   // 学習中に画面が回って問題文が読みにくくなるのを防ぐ。縦固定で十分なアプリ。
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -70,6 +74,10 @@ class _TakkenAppState extends State<TakkenApp> {
           theme: buildTheme(Brightness.light),
           darkTheme: buildTheme(Brightness.dark),
           home: const HomeScreen(),
+          // 画面遷移を screen_view として記録する。記録されるのは
+          // RouteSettings.name を付けたルートだけなので、画面を追加したら
+          // 名前も必ず付けること。
+          navigatorObservers: AppInsights.navigatorObservers,
           builder: (context, child) {
             // 端末の文字サイズ設定を尊重しつつ、レイアウトが壊れる倍率までは許さない。
             // アクセシビリティ対応として審査でも見られる箇所。

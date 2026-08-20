@@ -14,7 +14,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.3.3
   share_plus: ^10.1.2
-  google_mobile_ads: ^5.2.0
+  google_mobile_ads: ^9.0.0
   in_app_purchase: ^3.2.0
   package_info_plus: ^8.1.1
   url_launcher: ^6.3.1
@@ -22,6 +22,10 @@ dependencies:
   flutter_local_notifications: ^18.0.1
   timezone: ^0.10.0
   in_app_review: ^2.0.12
+  firebase_core: ^4.13.0
+  app_insights:
+    path: ../../packages/app_insights
+  firebase_crashlytics: ^5.2.7
 
 dev_dependencies:
   flutter_test:

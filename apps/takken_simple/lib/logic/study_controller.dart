@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:app_insights/app_insights.dart';
 // foundation にも Category があるため、こちらの Category と衝突しないよう隠す。
 import 'package:flutter/foundation.dart' hide Category;
 
@@ -294,6 +297,18 @@ class StudyController extends ChangeNotifier {
       now: DateTime.now(),
     );
     notifyListeners();
+
+    // 「全体からランダム」と「分野を選んで」のどちらが使われているかを見る。
+    unawaited(
+      AppInsights.logEvent(
+        'study_session_started',
+        parameters: {
+          'mode': categoryLabel == null ? 'all' : 'category',
+          'category': ?categoryLabel,
+          'medium_category': ?mediumCategoryLabel,
+        },
+      ),
+    );
   }
 
   void startWeakSession() {
@@ -311,6 +326,13 @@ class StudyController extends ChangeNotifier {
       now: DateTime.now(),
     );
     notifyListeners();
+
+    unawaited(
+      AppInsights.logEvent(
+        'study_session_started',
+        parameters: {'mode': 'weak', 'question_count': ids.length},
+      ),
+    );
   }
 
   /// ○×に回答する。保存はここで毎回行う（落ちてもデータを失わないため）。
@@ -340,6 +362,18 @@ class StudyController extends ChangeNotifier {
 
     await _progressRepo.saveStates(_states);
     await _progressRepo.saveStreak(_streak);
+
+    // 正答率そのものより、「何問目で離脱するか」を見るために出している。
+    unawaited(
+      AppInsights.logEvent(
+        'question_answered',
+        parameters: {
+          'is_correct': isCorrect ? 1 : 0,
+          'question_number': _session.length,
+          'category': question.category,
+        },
+      ),
+    );
   }
 
   /// 学習を終えたときに呼ぶ。次の復習日にお知らせを出せるよう予定を組み直す。
@@ -347,6 +381,17 @@ class StudyController extends ChangeNotifier {
   /// 回答のたびではなくセッションの終わりに1回だけ行う。
   /// 予約は全消し＋組み直しなので、1問ごとにやると無駄が大きい。
   Future<void> finishSession() async {
+    // お知らせの設定に関わらず、セッションを完走したことは記録する。
+    unawaited(
+      AppInsights.logEvent(
+        'study_session_finished',
+        parameters: {
+          'answered': _session.length,
+          'correct': _session.where((r) => r.isCorrect).length,
+        },
+      ),
+    );
+
     if (!_remindersEnabled) {
       await _notifications.cancelAll();
       return;

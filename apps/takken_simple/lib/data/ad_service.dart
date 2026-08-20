@@ -58,10 +58,11 @@ class AdService {
 
     await ensureInitialized();
 
-    final size = await AdSize.getAnchoredAdaptiveBannerAdSize(
-      Orientation.portrait,
-      width,
-    );
+    final size =
+        await AdSize.getLargeAnchoredAdaptiveBannerAdSizeWithOrientation(
+          Orientation.portrait,
+          width,
+        );
     if (size == null) return null;
 
     final completer = Completer<BannerAd?>();
