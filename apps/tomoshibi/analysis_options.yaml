@@ -9,6 +9,13 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  exclude:
+    # SPM 対応プラグインがあると flutter pub get だけで build/ 配下に
+    # 依存パッケージのソースが展開され、そのまま解析されて大量の指摘が出る。
+    # 自分たちのコードだけを見る。
+    - build/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

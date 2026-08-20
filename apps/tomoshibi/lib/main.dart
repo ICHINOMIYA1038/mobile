@@ -45,7 +45,8 @@ class TomoshibiWebView extends StatefulWidget {
   State<TomoshibiWebView> createState() => _TomoshibiWebViewState();
 }
 
-class _TomoshibiWebViewState extends State<TomoshibiWebView> {
+class _TomoshibiWebViewState extends State<TomoshibiWebView>
+    with WidgetsBindingObserver {
   late final WebViewController _controller;
   final AppLinks _appLinks = AppLinks();
   StreamSubscription<Uri>? _linkSubscription;
@@ -58,10 +59,12 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView> {
   // ログイン/ログアウトの連打でASWebAuthenticationSessionが多重起動されるのを防ぐ
   // (多重起動はACQUIRE_ROOT_VIEW_CONTROLLER_FAILED等の不安定な失敗の原因になる)。
   bool _authFlowBusy = false;
+  Completer<void>? _resumedCompleter;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF07060A))
@@ -91,8 +94,32 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _linkSubscription?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _resumedCompleter?.complete();
+    }
+  }
+
+  /// ATT許諾ダイアログは、ウィンドウが実際にkeyウィンドウ(resumed)になって
+  /// いない状態でリクエストすると、OSがダイアログを出さずに黙って未許諾扱いに
+  /// することがある(特にiPadのマルチタスク環境。iPadOS 26.6での審査指摘の原因)。
+  /// 初回フレーム描画後、AppLifecycleStateがresumedになるのを待ってから
+  /// リクエストすることでこれを防ぐ。
+  Future<void> _waitUntilResumed() async {
+    final frameCompleter = Completer<void>();
+    WidgetsBinding.instance.addPostFrameCallback((_) => frameCompleter.complete());
+    await frameCompleter.future;
+
+    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      _resumedCompleter = Completer<void>();
+      await _resumedCompleter!.future;
+    }
   }
 
   /// Guideline 5.1.2(i)対応: サイト側でトラッキングCookie(GA/AdSense)を使うため、
@@ -100,9 +127,7 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView> {
   /// 以降のすべての実ページ読み込みに載せ、サイト側(gikyoku_tosyokan)がdenied時に
   /// トラッキング系スクリプトを止められるようにする。
   Future<void> _bootstrap() async {
-    final completer = Completer<void>();
-    WidgetsBinding.instance.addPostFrameCallback((_) => completer.complete());
-    await completer.future;
+    await _waitUntilResumed();
 
     var status = await AppTrackingTransparency.trackingAuthorizationStatus;
     if (status == TrackingStatus.notDetermined) {
@@ -137,6 +162,12 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView> {
     // 置き換える。既存Web購読者の解約・支払い方法変更 (billing.stripe.com) は
     // 新規購入ではないので isInAppHost 側でそのまま許可する。
     if (host == stripeCheckoutHost) {
+      unawaited(_startNativePurchase());
+      return NavigationDecision.prevent;
+    }
+    // 未ログイン状態でもアプリ内から購入できるようにするための専用スキーム。
+    // navigation_policy.dartのisNativePurchaseRequestのコメント参照。
+    if (isNativePurchaseRequest(uri)) {
       unawaited(_startNativePurchase());
       return NavigationDecision.prevent;
     }
@@ -240,21 +271,94 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView> {
     );
   }
 
+  /// Guideline 5.1.1(v)対応: アカウントに紐付かない購入の前にサイトへの
+  /// ログイン(会員登録)を必須にしてはならない。ログイン状態に関わらずまず
+  /// 購入自体を進め(未ログインならRevenueCatの匿名IDのまま購入)、未ログインの
+  /// 場合のみ購入完了後に「複数端末で使うために任意でサインインしますか」と
+  /// 案内するだけに留める。
   Future<void> _startNativePurchase() async {
     setState(() => _purchaseBusy = true);
     try {
       final userId = await _fetchSessionUserId();
-      if (userId == null) {
-        _showMessage('購入するにはログインが必要です');
-        return;
-      }
-      await PurchaseService.purchasePro(userId);
+      await PurchaseService.purchasePro(gikyokutosyokanUserId: userId);
       _showMessage('ご購入ありがとうございます。Pro プランが有効になりました');
-      await _controller.reload();
+      if (userId == null) {
+        await _offerOptionalSignInAfterPurchase();
+      } else {
+        await _controller.reload();
+      }
     } on PurchaseCancelledException {
       // ユーザーがキャンセルしただけなので何もしない。
     } catch (e) {
       _showMessage('購入処理でエラーが発生しました: $e');
+    } finally {
+      if (mounted) setState(() => _purchaseBusy = false);
+    }
+  }
+
+  /// 匿名購入の直後、複数端末でPro機能を使うための任意のサインインを案内する。
+  /// あくまで任意で、後からいつでも行えるため、断ってもここでは何もしない。
+  Future<void> _offerOptionalSignInAfterPurchase() async {
+    if (!mounted) return;
+    final wantsToSignIn = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('他の端末でも使いますか?'),
+        content: const Text(
+          'サインインすると、この購入を他の端末でも引き続きご利用いただけます。'
+          '後からいつでもサインインできます。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('後で'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('サインインする'),
+          ),
+        ],
+      ),
+    );
+    if (wantsToSignIn != true) return;
+    if (_authFlowBusy) return;
+    _authFlowBusy = true;
+    try {
+      await _startWebAuth(buildAuthSignInUri());
+    } finally {
+      _authFlowBusy = false;
+    }
+    final newUserId = await _fetchSessionUserId();
+    if (newUserId != null) {
+      try {
+        await PurchaseService.linkPurchaseToAccount(newUserId);
+      } catch (_) {
+        // リンクに失敗しても購入自体は既に有効なので致命的ではない。
+      }
+    }
+    await _controller.reload();
+  }
+
+  /// Guideline 3.1.1対応: ユーザーが明示的にタップしたときのみ復元する
+  /// (自動復元では審査要件を満たさない)。未ログインでもStoreKit側の復元は
+  /// 必ず実行する(ログイン必須にすると復元操作自体が機能しなくなるため)。
+  Future<void> _restorePurchases() async {
+    setState(() => _purchaseBusy = true);
+    try {
+      final userId = await _fetchSessionUserId();
+      final info = await PurchaseService.restorePurchases(
+        gikyokutosyokanUserId: userId,
+      );
+      if (info.entitlements.active.isEmpty) {
+        _showMessage('復元できる購入が見つかりませんでした');
+      } else if (userId == null) {
+        _showMessage('購入を復元しました。反映するにはログインしてください');
+      } else {
+        _showMessage('購入を復元しました');
+        await _controller.reload();
+      }
+    } catch (e) {
+      _showMessage('購入の復元に失敗しました: $e');
     } finally {
       if (mounted) setState(() => _purchaseBusy = false);
     }
@@ -300,6 +404,8 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView> {
               // ATT許諾待ち〜初回ページ読み込み開始前は_progressが0のままなので、
               // 画面が固まって見えないよう全画面のローディング表示で覆う。
               if (_progress == 0 && _loadError == null) const _LaunchLoadingOverlay(),
+              if (_progress > 0 && !_purchaseBusy)
+                _RestorePurchasesButton(onPressed: _restorePurchases),
               if (_purchaseBusy) const _BusyOverlay(),
             ],
           ),
@@ -345,6 +451,37 @@ class _BusyOverlay extends StatelessWidget {
       color: Colors.black54,
       alignment: Alignment.center,
       child: const CircularProgressIndicator(color: Color(0xFFC8482D)),
+    );
+  }
+}
+
+class _RestorePurchasesButton extends StatelessWidget {
+  const _RestorePurchasesButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    // サイト側のヘッダーやフッター (右上のユーザーアバター、右下のシーン編集
+    // メニュー等) と衝突しないよう、常に空いている左下隅にアイコンのみで置く。
+    return Positioned(
+      bottom: 8,
+      left: 8,
+      child: Material(
+        color: Colors.black.withValues(alpha: 0.45),
+        shape: const CircleBorder(),
+        child: Tooltip(
+          message: '購入を復元',
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onPressed,
+            child: const Padding(
+              padding: EdgeInsets.all(10),
+              child: Icon(Icons.restore, size: 18, color: Color(0xFFF0E8DA)),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

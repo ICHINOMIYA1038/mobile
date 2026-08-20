@@ -29,6 +29,10 @@ const _authSignInPathPrefix = '/auth/signin';
 bool isAuthSignInRequest(Uri uri) =>
     uri.host == _authSignInHost && uri.path.startsWith(_authSignInPathPrefix);
 
+// 購入フロー側 (main.dart の _startNativePurchase) が未ログイン検出時に
+// サインインへ誘導するために使う。isAuthSignInRequest と対になっている。
+Uri buildAuthSignInUri() => Uri.https(_authSignInHost, _authSignInPathPrefix);
+
 // ログアウトも同じ理由でASWebAuthenticationSessionの共有Cookieストア側を
 // 明示的にクリアしないと、次回ログイン時に「既にログイン済み」判定のまま
 // 別アカウントを選べず元のアカウントに自動ログインされてしまう。
@@ -41,3 +45,11 @@ bool isLogoutRequest(Uri uri) =>
 // gikyoku_tosyokan側のNextAuth redirectアローリストにも同じ値を許可登録している。
 const authCallbackUrlScheme = 'tomoshibi';
 const authCallbackUrl = 'tomoshibi://auth-callback';
+
+// Guideline 5.1.1(v)対応: サイト側 (tomoshibi SPA) は本来Web購読者向けに
+// ログイン必須のStripe Checkoutへ誘導するが、アプリ内では未ログインでも
+// ネイティブIAPで購入できる必要がある。サイト側は window.webkit.messageHandlers.
+// TomoshibiSession の有無でアプリ内実行を検知し、未ログイン時はこのカスタム
+// スキームへのリンクを出す。ここへの遷移はネットワークに出る前に横取りする。
+bool isNativePurchaseRequest(Uri uri) =>
+    uri.scheme == authCallbackUrlScheme && uri.host == 'native-purchase';

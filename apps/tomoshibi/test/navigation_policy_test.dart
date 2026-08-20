@@ -18,4 +18,10 @@ void main() {
     expect(isInAppHost('github.com'), isFalse);
     expect(isInAppHost('evil.example.com'), isFalse);
   });
+
+  test('tomoshibi://native-purchase は未ログイン購入トリガーとして認識する', () {
+    expect(isNativePurchaseRequest(Uri.parse('tomoshibi://native-purchase')), isTrue);
+    expect(isNativePurchaseRequest(Uri.parse('tomoshibi://auth-callback')), isFalse);
+    expect(isNativePurchaseRequest(Uri.parse('https://native-purchase')), isFalse);
+  });
 }
