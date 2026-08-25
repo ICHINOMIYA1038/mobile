@@ -1,4 +1,5 @@
 name: etude_generator
+resolution: workspace
 description: "即興演劇の練習用お題（エチュード）を、人数・ジャンル・時間から生成するアプリ。"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.

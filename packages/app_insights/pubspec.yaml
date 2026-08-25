@@ -1,4 +1,5 @@
 name: app_insights
+resolution: workspace
 description: "全アプリ共通の計測基盤。Firebase Analytics と Crashlytics を1つの窓口にまとめる。"
 version: 0.1.0
 publish_to: 'none'

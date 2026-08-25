@@ -422,10 +422,12 @@ class _ShareCardState extends State<_ShareCard> {
       final file = File('${dir.path}/neko_chemistry_share.png');
       await file.writeAsBytes(bytes);
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: '「猫と学ぶ高校化学」で学習中です🐱',
-        subject: '猫と学ぶ高校化学の学習記録',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: '「猫と学ぶ高校化学」で学習中です🐱',
+          subject: '猫と学ぶ高校化学の学習記録',
+        ),
       );
     } catch (_) {
       if (mounted) {

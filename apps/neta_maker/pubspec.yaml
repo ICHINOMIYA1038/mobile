@@ -1,4 +1,5 @@
 name: neta_maker
+resolution: workspace
 description: "名前を入れるだけで二つ名・前世・脳内を診断するジョークジェネレーターアプリ。"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.

@@ -45,9 +45,11 @@ class ResultScreen extends StatelessWidget {
                 children: [
                   OutlinedButton.icon(
                     onPressed: () {
-                      Share.share(
-                        '「猫と学ぶ高校化学」で$score/$total問正解しました!🐱',
-                        subject: '猫と学ぶ高校化学の結果',
+                      SharePlus.instance.share(
+                        ShareParams(
+                          text: '「猫と学ぶ高校化学」で$score/$total問正解しました!🐱',
+                          subject: '猫と学ぶ高校化学の結果',
+                        ),
                       );
                     },
                     icon: const Icon(Icons.share, size: 18),

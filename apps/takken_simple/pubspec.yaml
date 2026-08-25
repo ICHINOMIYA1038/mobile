@@ -1,4 +1,5 @@
 name: takken_simple
+resolution: workspace
 description: "シンプルに学ぶ宅建アプリ - 広告なし・ログイン不要・完全オフラインの一問一答"
 publish_to: 'none'
 
@@ -13,10 +14,10 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.3.3
-  share_plus: ^10.1.2
+  share_plus: ^13.3.0
   google_mobile_ads: ^9.0.0
   in_app_purchase: ^3.2.0
-  package_info_plus: ^8.1.1
+  package_info_plus: ^10.1.0
   url_launcher: ^6.3.1
   # 復習のお知らせ。端末内で完結し、サーバーからのプッシュは使わない。
   flutter_local_notifications: ^18.0.1

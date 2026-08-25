@@ -481,7 +481,9 @@ class _DataSection extends StatelessWidget {
     final json = await controller.progressRepository.exportJson();
     if (!context.mounted) return;
 
-    await Share.share(json, subject: 'シンプルに学ぶ宅建アプリ 学習データ');
+    await SharePlus.instance.share(
+      ShareParams(text: json, subject: 'シンプルに学ぶ宅建アプリ 学習データ'),
+    );
   }
 
   Future<void> _import(BuildContext context) async {

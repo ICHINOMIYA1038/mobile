@@ -1,0 +1,24 @@
+name: mobile
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+workspace:
+  - apps/*
+  - packages/*
+
+dev_dependencies:
+  # 8.2.2以降はcli_util ^0.5.0を要求し、flutter_launcher_icons(全アプリのdev_dependency、
+  # cli_util ^0.4.1を要求)とworkspace内で共存できない。7.8.1が両立できる最後のバージョン。
+  melos: 7.8.1
+
+melos:
+  scripts:
+    analyze:
+      run: melos exec -- flutter analyze
+      description: Run `flutter analyze` in every app and package.
+
+    test:
+      run: melos exec -- flutter test
+      description: Run `flutter test` in every app and package.
