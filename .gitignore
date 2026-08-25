@@ -16,8 +16,9 @@
 **/ios/.symlinks/
 **/macos/Flutter/ephemeral/
 
-# Generated store media
-**/screenshots/
-**/screenshots_ipad/
-**/store_screenshots/
-**/store_screenshots_ipad/
+# Generated store media (各アプリ直下のtool/screenshots.sh出力のみが対象。
+# ios/fastlane/screenshots/ はFramefile.json等の手書き設定を含むため対象外)
+apps/*/screenshots/
+apps/*/screenshots_ipad/
+apps/*/store_screenshots/
+apps/*/store_screenshots_ipad/

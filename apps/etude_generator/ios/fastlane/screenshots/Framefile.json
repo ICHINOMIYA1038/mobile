@@ -1,0 +1,50 @@
+{
+  "default": {
+    "background": "../frame_assets/background.png",
+    "padding": "5%",
+    "stack_title": true,
+    "title_below_image": false,
+    "title": {
+      "font": "../frame_assets/fonts/HiraginoSansW6.ttc",
+      "color": "#282528",
+      "font_size": 88
+    },
+    "keyword": {
+      "font": "../frame_assets/fonts/HiraginoSansW3.ttc",
+      "color": "#E18379",
+      "font_size": 44
+    }
+  },
+  "data": [
+    {
+      "filter": "01_home",
+      "title": { "text": "即興のお題を\n一瞬で作れる" },
+      "keyword": { "text": "登録不要、すぐ使える" }
+    },
+    {
+      "filter": "02_settings",
+      "title": { "text": "人数・ジャンル・時間を\n選ぶだけ" },
+      "keyword": { "text": "稽古前の準備は要らない" }
+    },
+    {
+      "filter": "03_result",
+      "title": { "text": "場所・状況・秘密まで\n一瞬で出そろう" },
+      "keyword": { "text": "お題ごとに作り込み済み" }
+    },
+    {
+      "filter": "04_role_draw",
+      "title": { "text": "役ごとに目的と\n秘密がある" },
+      "keyword": { "text": "情報の非対称性から対話が生まれる" }
+    },
+    {
+      "filter": "05_performance",
+      "title": { "text": "タイマーつきで\nそのまま演じられる" },
+      "keyword": { "text": "残り時間がひと目でわかる" }
+    },
+    {
+      "filter": "06_reflection",
+      "title": { "text": "振り返りの視点も\nセットで" },
+      "keyword": { "text": "3つの問いで気づきを深める" }
+    }
+  ]
+}

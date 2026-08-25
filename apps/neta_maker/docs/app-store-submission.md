@@ -102,10 +102,19 @@ ATT（トラッキング許可）のダイアログは表示していません�
 ## 4. スクリーンショット
 
 `./tool/screenshots.sh` を用意済み（etude_generator と同じ方式）。撮る内容は
-`integration_test/screenshots_test.dart` にある。
+`integration_test/screenshots_test.dart` にある。見出し合成は2026-08-21〜 fastlane
+`frameit`（実機ベゼル付き）で行う。詳しい仕組みは
+[`docs/screenshot-guidelines.md`](../../../docs/screenshot-guidelines.md)参照。
 
 ```sh
 ./tool/screenshots.sh
+./tool/screenshots.sh "iPad Pro 13-inch (M4)" screenshots_ipad  # iPad 13インチ
+
+cp screenshots/*.png ios/fastlane/screenshots/ja/
+for f in 01_home 02_input 03_result_futatsuna 04_result_zensei 05_result_nounai; do
+  cp "screenshots_ipad/${f}.png" "ios/fastlane/screenshots/ja/${f}_ipad.png"
+done
+cd ios && bundle install && bundle exec fastlane ios compose_screenshots
 ```
 
 自動化環境（CI/エージェント経由の非対話シェル）では常駐プロセスとの連携がうまくいかず
@@ -116,6 +125,14 @@ ATT（トラッキング許可）のダイアログは表示していません�
 3. `03_result_futatsuna` — 二つ名メーカーの結果画面
 4. `04_result_zensei` — 前世メーカーの結果画面
 5. `05_result_nounai` — 脳内メーカーの結果画面
+
+見出し・サブ見出しの文言や背景色は `ios/fastlane/screenshots/Framefile.json` を編集する。
+完成品は `ios/fastlane/screenshots/ja/*_framed.png`。
+`bundle exec fastlane ios upload_metadata` でApp Store Connectへアップロードできるが、
+**実際に反映されるため実行前に必ずユーザーへ確認すること**。
+
+生成物（`screenshots/` `screenshots_ipad/` `ios/fastlane/screenshots/ja/*_framed.png`
+`ios/fastlane/frame_assets/fonts/`）は `.gitignore` 済み。UI を変えたら撮り直すこと。
 
 ## 5. バージョン管理
 

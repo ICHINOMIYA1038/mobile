@@ -47,3 +47,8 @@ app.*.map.json
 # ストア用スクリーンショット（tool/screenshots.sh で再生成できる生成物）
 /screenshots/
 .play_upload_venv/
+
+# fastlane frameitで実行時にコピーされるシステムフォント(コミット不要)
+ios/fastlane/frame_assets/fonts/
+ios/fastlane/screenshots/*/*.png
+ios/fastlane/report.xml

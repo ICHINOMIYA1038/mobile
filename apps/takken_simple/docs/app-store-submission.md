@@ -153,12 +153,22 @@ ATT（トラッキング許可）のダイアログは表示していません�
 
 ## 4. スクリーンショット
 
-**自動生成できる。手で撮らないこと。**
+**自動生成できる。手で撮らないこと。** 2026-08-21〜、見出し合成は
+`tool/store_previews.sh`（ImageMagick）から fastlane `frameit`（実機ベゼル付き）に
+移行済み。詳しい仕組みは [`docs/screenshot-guidelines.md`](../../../docs/screenshot-guidelines.md)
+参照。
 
 ```sh
 ./tool/screenshots.sh                      # iPhone 16 Pro Max = 6.9インチ（1320×2868）
 ./tool/screenshots.sh "iPhone 11 Pro Max"  # 6.5インチ（1242×2688）が要る場合
-./tool/store_previews.sh                   # 見出し入りのiPhone・iPad完成版を生成
+./tool/screenshots.sh "iPad Pro 13-inch (M4)" screenshots_ipad  # iPad 13インチ
+
+# 生スクショを fastlane のロケールフォルダへ配置してから frameit を実行
+cp screenshots/*.png ios/fastlane/screenshots/ja/
+for f in 01_home 02_quiz 03_explanation 04_pass_gauge 05_pass_graph; do
+  cp "screenshots_ipad/${f}.png" "ios/fastlane/screenshots/ja/${f}_ipad.png"
+done
+cd ios && bundle install && bundle exec fastlane ios compose_screenshots
 ```
 
 `screenshots/` に5枚書き出される。撮る内容は `integration_test/screenshots_test.dart`。
@@ -173,7 +183,13 @@ ATT（トラッキング許可）のダイアログは表示していません�
 作ってから撮っている（170/300問・12日連続）。この値を変えたい場合は
 `screenshots_test.dart` の `plan` を編集する。
 
-生成物なので `.gitignore` 済み。UI を変えたら撮り直すこと。
+見出し・サブ見出しの文言や背景色は `ios/fastlane/screenshots/Framefile.json` を編集する。
+完成品は `ios/fastlane/screenshots/ja/*_framed.png`。
+`bundle exec fastlane ios upload_metadata` でApp Store Connectへアップロードできるが、
+**実際に反映されるため実行前に必ずユーザーへ確認すること**。
+
+生成物（`screenshots/` `screenshots_ipad/` `ios/fastlane/screenshots/ja/*_framed.png`
+`ios/fastlane/frame_assets/fonts/`）は `.gitignore` 済み。UI を変えたら撮り直すこと。
 
 ## 5. バージョン管理
 

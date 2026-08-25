@@ -1,0 +1,45 @@
+{
+  "default": {
+    "background": "../frame_assets/background.png",
+    "padding": "5%",
+    "stack_title": true,
+    "title_below_image": false,
+    "title": {
+      "font": "../frame_assets/fonts/HiraginoSansW6.ttc",
+      "color": "#2A2438",
+      "font_size": 88
+    },
+    "keyword": {
+      "font": "../frame_assets/fonts/HiraginoSansW3.ttc",
+      "color": "#FF6B4A",
+      "font_size": 44
+    }
+  },
+  "data": [
+    {
+      "filter": "01_home",
+      "title": { "text": "シチュエーション別に\nお題が出てくる" },
+      "keyword": { "text": "配信の流れを止めない" }
+    },
+    {
+      "filter": "02_roulette",
+      "title": { "text": "ガチャを回すだけ" },
+      "keyword": { "text": "迷わずすぐ使える" }
+    },
+    {
+      "filter": "03_result",
+      "title": { "text": "かわいいカードで\nネタが届く" },
+      "keyword": { "text": "そのまま読み上げOK" }
+    },
+    {
+      "filter": "04_favorites",
+      "title": { "text": "気に入ったネタは\n保存できる" },
+      "keyword": { "text": "配信の定番ネタ帳に" }
+    },
+    {
+      "filter": "05_custom",
+      "title": { "text": "自分のネタも\n追加できる" },
+      "keyword": { "text": "オリジナルのお題帳に育てる" }
+    }
+  ]
+}

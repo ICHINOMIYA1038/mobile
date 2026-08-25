@@ -1,0 +1,45 @@
+{
+  "default": {
+    "background": "../frame_assets/background.png",
+    "padding": "5%",
+    "stack_title": true,
+    "title_below_image": false,
+    "title": {
+      "font": "../frame_assets/fonts/HiraginoSansW6.ttc",
+      "color": "#3D342F",
+      "font_size": 88
+    },
+    "keyword": {
+      "font": "../frame_assets/fonts/HiraginoSansW3.ttc",
+      "color": "#FF8438",
+      "font_size": 44
+    }
+  },
+  "data": [
+    {
+      "filter": "01_home",
+      "title": { "text": "配点の高い分野から\n自動で5問" },
+      "keyword": { "text": "忘れかけた問題も自動で復習" }
+    },
+    {
+      "filter": "02_quiz",
+      "title": { "text": "○×だけだから\nすきま時間に進む" },
+      "keyword": { "text": "迷わず、すぐに学習開始" }
+    },
+    {
+      "filter": "03_explanation",
+      "title": { "text": "全問に解説と\n根拠条文つき" },
+      "keyword": { "text": "その場で理由まで理解できる" }
+    },
+    {
+      "filter": "04_pass_gauge",
+      "title": { "text": "予想得点で\n合格まであと何点" },
+      "keyword": { "text": "未学習を含めて現実的に計算" }
+    },
+    {
+      "filter": "05_pass_graph",
+      "title": { "text": "本試験の配点が\nひと目でわかる" },
+      "keyword": { "text": "広い科目ほど合格に効く" }
+    }
+  ]
+}

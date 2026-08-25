@@ -37,40 +37,64 @@ UIの出来不出来ではなく、**「1枚ごとに何が嬉しいアプリか
    最初から使える
 4. **アイコンと同じ配色でスクショの背景を統一** — ブランドの一貫性が一目でわかる
 
-## 実装方法: `tool/store_previews.sh`
+## 実装方法: fastlane `frameit`（2026-08-21〜、旧`tool/store_previews.sh`から移行）
 
-`takken_simple/tool/store_previews.sh` に、上記1〜2（見出し合成）を機械的にやる
-ImageMagick スクリプトが既にある。**これを新しいアプリのテンプレートとして使うこと。**
+以前はアプリごとに`tool/store_previews.sh`（ImageMagickでベゼルなしの背景+見出し合成）
+を持っていたが、実機ベゼル付きスタイルに統一するため fastlane `frameit` に置き換えた。
+**新しいアプリのスクショもこの方式で作ること。**`tool/store_previews.sh`自体は各アプリの
+`tool/`から削除済み（撮影用の`tool/screenshots.sh`はそのまま残す）。
 
 仕組み:
 
-- `screenshots/`（`./tool/screenshots.sh` が吐く実機の生スクリーンショット）を入力にする
-- `magick` でクリーム背景 + タイトル（大・濃色）+ サブタイトル（小・アクセント色）を
-  上部に描画し、その下に実スクリーンショットを白枠付きでクロップ合成する
-- 出力は `store_screenshots/`（iPhone）と `store_screenshots_ipad/`（iPad）
-- タイトル・サブタイトルの文言、フォントサイズ、配色（`BG` / `INK` / `ACCENT`）は
-  スクリプト冒頭の変数を編集するだけで変えられる
+- `tool/screenshots.sh`（変更なし）でシミュレータの生スクリーンショットを撮る
+- 生スクショを `ios/fastlane/screenshots/ja/` に配置する（iPhone・iPad両方を同じ
+  フォルダに置いてよい。frameitが解像度からデバイス種別を自動判定する。iPadは
+  ファイル名に`_ipad`サフィックスを付けて、iPhone版と同じ`filter`にマッチさせる）
+- `ios/fastlane/screenshots/Framefile.json` に、ファイル名ごとの見出し（`title`）・
+  サブ見出し（`keyword`）・背景色・フォントを定義する
+- `ios/fastlane/frame_assets/background.png` にブランドカラーの単色背景画像を置く
+  （`magick -size 400x400 "xc:#ブランド色" background.png` で作れる。frameitが
+  スクリーンショットのサイズまで自動で引き伸ばす）
+- `cd ios && bundle install && bundle exec fastlane ios compose_screenshots` を
+  実行すると、実機ベゼル＋見出し・サブ見出しを合成した `*_framed.png` が
+  `ios/fastlane/screenshots/ja/` に生成される
 
 新しいアプリで使う手順:
 
-1. `takken_simple/tool/store_previews.sh` をコピーして対象アプリの `tool/` に置く
-2. `BG` / `INK` / `ACCENT` をそのアプリのアイコン配色に合わせる（要素4）
-3. `titles` / `subtitles` を、画面ごとに異なるベネフィット一言に書き換える（要素1）。
-   `files` 配列を `screenshots/` の実際のファイル名に合わせる
-4. 収録数・問題数などレビューに依存しない具体的な数字があれば入れる（要素3）
-5. `./tool/screenshots.sh` → `./tool/store_previews.sh` の順に実行し、
-   `store_screenshots/` を審査提出用に使う
+1. `scripts/create_app.sh` で新規アプリを作った時点で `ios/Gemfile` /
+   `ios/fastlane/{Appfile,Fastfile}` は自動生成済み。`ios/fastlane/frame_assets/`
+   と `ios/fastlane/screenshots/Framefile.json` だけ新規に作る
+2. 背景色はそのアプリのアイコン配色に合わせる（要素4）。既存アプリの例は
+   `apps/neta_gacha/ios/fastlane/screenshots/Framefile.json` 等を参照
+3. `Framefile.json`の`data[]`で、画面ごとに異なるベネフィット一言を`title`/`keyword`
+   に書き分ける（要素1）。`filter`は`screenshots/ja/`内のファイル名の一部と一致させる
+4. 収録数・問題数などレビューに依存しない具体的な数字があれば見出しに入れる（要素3）
+5. `./tool/screenshots.sh` で撮影 → 生スクショを`ios/fastlane/screenshots/ja/`へ配置
+   → `bundle exec fastlane ios compose_screenshots` を実行
+6. できあがった `*_framed.png` を目視確認し、`bundle exec fastlane ios upload_metadata`
+   でApp Store Connectへアップロードする（メタデータ・スクショのみ。ビルド・価格帯・
+   輸出コンプライアンスは触れない設定にしてある）。**このコマンドは実際にApp Store
+   Connectへ反映されるため、実行前に必ずユーザーへ確認すること**
 
-**未対応（優先度高）:** `neta_maker` と `etude_generator` にはこのスクリプトがまだ無い。
-次にこの2本のスクリーンショットを差し替えるときは、上記手順でまず作ること。
+既知の制約（2026-08-21時点のfastlane 2.238.0）:
+
+- iPad Pro 13インチ(M4)の実機解像度2064x2752はfastlaneの端末データベースにまだ無く、
+  そのままでは"Unsupported screen size"で失敗する。Fastfileの`compose_screenshots`
+  レーンが、ファイル名に`_ipad`を含む画像を自動的に2048x2732へリサイズしてから
+  frameitに渡す処理を入れているため、通常は意識しなくてよい
+- fastlane `snapshot`（シミュレータ自動操作でのスクショ撮影）はXCUITest専用で、
+  Flutterの`integration_test`を駆動する方法が存在しない
+  （[fastlane/fastlane#22040](https://github.com/fastlane/fastlane/issues/22040)は
+  Flutter対応を"not planned"でクローズ済み）。撮影は引き続き`tool/screenshots.sh`
+  （シミュレータのmarker-file pollingでのスクショ撮影）を使う
 
 ## まだやれていないこと（次の改善候補）
 
-`store_previews.sh` は要素1・2・4はカバーしているが、以下は未実装:
-
-- バッジ・リボン風の装飾（今はテキストを乗せているだけで、円形バッジや帯の背景色分けはない）
+- バッジ・リボン風の装飾（今は実機ベゼル+テキストのみで、円形バッジや帯の背景色分けはない）
 - 具体的な数字の強調表示（大きいフォント・色分けで数字だけ目立たせる、等）
-- 端末を斜めに配置する等の動きのある構図（今は正面固定）
+- `neko_chemistry` / `tomoshibi` / `korokoro_slope` / `sound_shield` はまだ
+  `ios/fastlane/screenshots/`の中身（Framefile.json・生スクショ）が無い
+  （Gemfile/Fastfileのひな形のみ配線済み）。審査提出が近づいたアプリから順に作ること
 
 これらは審査提出をブロックする話ではないので、余裕があれば試す程度でよい。
 まずは全スクリーンショットに見出しを入れることを優先する。

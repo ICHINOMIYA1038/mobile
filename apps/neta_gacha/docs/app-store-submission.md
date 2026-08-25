@@ -40,8 +40,9 @@ flutter test
 | ストア掲載文（説明・キーワード・カテゴリ） | 済 | `docs/store-listing.md` |
 | **Xcodeで Team を確認** | 済 | `DEVELOPMENT_TEAM = SZFUZ58P49`（他アプリと同じチーム）、
   `CODE_SIGN_STYLE = Automatic`設定済み |
-| ストア用スクリーンショット | 済 | `./tool/screenshots.sh && ./tool/store_previews.sh`で撮影・
-  合成済み（2026-08-19、`docs/screenshot-guidelines.md`のパターン適用）。UIを変えたら撮り直すこと |
+| ストア用スクリーンショット | 済 | `./tool/screenshots.sh`で撮影、fastlane `frameit`で
+  実機ベゼル付きに合成済み（2026-08-21〜、`tool/store_previews.sh`から移行。手順は
+  `docs/screenshot-guidelines.md`参照）。UIを変えたら撮り直すこと |
 | **App Store Connect 上の情報入力** | 未 | 下記「2. 提出状況」参照。アプリ未登録 |
 | **有料アプリ契約・納税・銀行口座（Apple）** | 該当なし | 無料アプリ・IAPなしのため不要 |
 
@@ -94,5 +95,7 @@ ATT（トラッキング許可）のダイアログは表示していません�
   - 価格および配信状況: Tier 0（無料）、175か国・地域に設定
   - iPad 13インチディスプレイのスクリーンショット: `./tool/screenshots.sh "iPad Pro 13-inch (M4)" screenshots_ipad`
     で撮影し、`tool/store_previews.sh`に`store_screenshots_ipad/`生成分を追加してASCへ
-    アップロード（2064×2752）
+    アップロード（2064×2752）（※`tool/store_previews.sh`は2026-08-21にfastlane
+    `frameit`へ移行済み。上表「ストア用スクリーンショット」の行と
+    `docs/screenshot-guidelines.md`参照）
 - Gitへのコミットもまだ（`git status`で`??`表示のまま）

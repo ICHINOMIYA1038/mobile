@@ -49,3 +49,8 @@ app.*.map.json
 /screenshots_ipad/
 /store_screenshots/
 /store_screenshots_ipad/
+
+# fastlane frameitで実行時にコピーされるシステムフォント(コミット不要)
+ios/fastlane/frame_assets/fonts/
+ios/fastlane/screenshots/*/*.png
+ios/fastlane/report.xml

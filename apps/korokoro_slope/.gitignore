@@ -48,3 +48,8 @@ app.*.map.json
 # committed (copied into assets/web/) so `flutter run` works without a
 # Node build step; only node_modules is ignored.
 /web_game/node_modules/
+
+# fastlane frameitで実行時にコピーされるシステムフォント(コミット不要)
+ios/fastlane/frame_assets/fonts/
+ios/fastlane/screenshots/*/*.png
+ios/fastlane/report.xml

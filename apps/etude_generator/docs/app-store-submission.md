@@ -107,11 +107,16 @@ App Store Connect の「App のプライバシー」、Google Play の「デー�
 
 ## 4. スクリーンショット
 
-**自動生成できる。手で撮らないこと。**
+**自動生成できる。手で撮らないこと。** 2026-08-21〜、見出し合成は fastlane `frameit`
+（実機ベゼル付き）で行う。詳しい仕組みは
+[`docs/screenshot-guidelines.md`](../../../docs/screenshot-guidelines.md)参照。
 
 ```sh
 ./tool/screenshots.sh                      # iPhone 16 Pro Max = 6.9インチ（1320×2868）
 ./tool/screenshots.sh "iPhone 11 Pro Max"  # 6.5インチ（1242×2688）が要る場合
+
+cp screenshots/*.png ios/fastlane/screenshots/ja/
+cd ios && bundle install && bundle exec fastlane ios compose_screenshots
 ```
 
 `screenshots/` に6枚書き出される。撮る内容は `integration_test/screenshots_test.dart`。
@@ -123,7 +128,13 @@ App Store Connect の「App のプライバシー」、Google Play の「デー�
 5. `05_performance` — 実演画面（タイマーと全員に見せてよい条件）
 6. `06_reflection` — 振り返り画面（演じた後の問い）
 
-生成物なので `.gitignore` 済み。UI を変えたら撮り直すこと。
+見出し・サブ見出しの文言や背景色は `ios/fastlane/screenshots/Framefile.json` を編集する。
+完成品は `ios/fastlane/screenshots/ja/*_framed.png`。
+`bundle exec fastlane ios upload_metadata` でApp Store Connectへアップロードできるが、
+**実際に反映されるため実行前に必ずユーザーへ確認すること**。
+
+生成物（`screenshots/` `ios/fastlane/screenshots/ja/*_framed.png`
+`ios/fastlane/frame_assets/fonts/`）は `.gitignore` 済み。UI を変えたら撮り直すこと。
 
 takken_simple と同じ「シミュレータのtmpディレクトリにマーカーファイルを置き、
 `tool/screenshots.sh` の常駐プロセスが `xcrun simctl io screenshot` で撮る」方式。
