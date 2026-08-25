@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- プライバシーマニフェスト（2024年5月以降 App Store で必須）。
+	     マイクの音声は端末内でリアルタイムに解析するだけで、録音として保存も
+	     外部送信もしない。計測結果（数値・グラフ用データ）も端末内にしか
+	     保存されず、外部に送信しない。Firebase Analytics/Crashlytics が扱う
+	     分は各SDK自身のマニフェストで申告される。 -->
+
+	<!-- トラッキング（他社データと突き合わせた追跡）は行わない。 -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<!-- このアプリ自身が収集するデータはない
+	     （マイク音声・計測結果は端末内処理のみで外部に出ない）。
+	     Firebase Analytics/Crashlytics が扱う分はSDK側のマニフェストが申告する。 -->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+
+	<!-- 使用理由の申告が要る API。アプリ自身のDart/Swiftコードでは
+	     UserDefaults・ファイル更新日時・ディスク容量・システム起動時刻の
+	     いずれも直接使用していない。 -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array/>
+</dict>
+</plist>

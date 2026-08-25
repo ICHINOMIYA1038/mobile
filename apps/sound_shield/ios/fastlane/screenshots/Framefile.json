@@ -1,0 +1,45 @@
+{
+  "default": {
+    "background": "../frame_assets/background.png",
+    "padding": "5%",
+    "stack_title": true,
+    "title_below_image": false,
+    "title": {
+      "font": "../frame_assets/fonts/HiraginoSansW6.ttc",
+      "color": "#2B2820",
+      "font_size": 88
+    },
+    "keyword": {
+      "font": "../frame_assets/fonts/HiraginoSansW3.ttc",
+      "color": "#B9792E",
+      "font_size": 44
+    }
+  },
+  "data": [
+    {
+      "filter": "01_home",
+      "title": { "text": "マイクだけで\n騒音レベルを計測" },
+      "keyword": { "text": "セットアップ不要、その場で分かる" }
+    },
+    {
+      "filter": "02_measuring",
+      "title": { "text": "計測中もひと目で\nわかるゲージ" },
+      "keyword": { "text": "静か・普通・うるさいを判定" }
+    },
+    {
+      "filter": "03_result",
+      "title": { "text": "最小・平均・ピークを\nグラフで見える化" },
+      "keyword": { "text": "周波数帯・時間経過もひと目で" }
+    },
+    {
+      "filter": "04_suggestions",
+      "title": { "text": "音源まで推定して\n改善提案も" },
+      "keyword": { "text": "何が原因かがわかる" }
+    },
+    {
+      "filter": "05_noise_scale",
+      "title": { "text": "環境省基準の\n騒音スケール" },
+      "keyword": { "text": "数字の意味がひと目でわかる" }
+    }
+  ]
+}

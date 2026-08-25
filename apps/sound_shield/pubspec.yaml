@@ -1,6 +1,6 @@
 name: sound_shield
 resolution: workspace
-description: "A new Flutter project."
+description: "Sound Shield - マイクだけで周囲の騒音レベルを計測し、音源推定と改善提案を表示するiOS専用アプリ"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -43,6 +43,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -50,6 +52,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -92,3 +95,22 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# アプリアイコン: `dart run flutter_launcher_icons` で各プラットフォームに書き出す。
+# 元データは tool/generate_icons.dart(アプリ内のLevelGauge=騒音計ゲージを
+# 1024角に描画するスクリプト)。
+flutter_launcher_icons:
+  image_path: "icon/icon.png"
+  ios: true
+  remove_alpha_ios: true
+  android: "ic_launcher"
+  adaptive_icon_background: "#EFEAE0"
+  adaptive_icon_foreground: "icon/icon_foreground.png"
+  macos:
+    generate: true
+    image_path: "icon/icon.png"
+  web:
+    generate: true
+    image_path: "icon/icon.png"
+    background_color: "#EFEAE0"
+    theme_color: "#B9792E"
