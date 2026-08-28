@@ -1,0 +1,65 @@
+{
+  "default": {
+    "background": "../frame_assets/background.png",
+    "padding": "5%",
+    "stack_title": true,
+    "title_below_image": false,
+    "title": {
+      "font": "../frame_assets/fonts/HiraginoSansW6.ttc",
+      "color": "#F5EDE0",
+      "font_size": 88
+    },
+    "keyword": {
+      "font": "../frame_assets/fonts/HiraginoSansW3.ttc",
+      "color": "#E8874F",
+      "font_size": 44
+    }
+  },
+  "data": [
+    {
+      "filter": "01_audience",
+      "title": {
+        "text": "客席からの見え方を\nそのまま確認"
+      },
+      "keyword": {
+        "text": "本番と同じ目線で"
+      }
+    },
+    {
+      "filter": "02_aerial",
+      "title": {
+        "text": "吊り位置と当たりを\n俯瞰でチェック"
+      },
+      "keyword": {
+        "text": "仕込み図がそのまま3Dに"
+      }
+    },
+    {
+      "filter": "03_sidewing",
+      "title": {
+        "text": "袖からの抜けも\n確かめられる"
+      },
+      "keyword": {
+        "text": "客席・俯瞰・袖・自由の4視点"
+      }
+    },
+    {
+      "filter": "04_houselights",
+      "title": {
+        "text": "客電を入れて\n明転も再現"
+      },
+      "keyword": {
+        "text": "作業灯と本番の差がわかる"
+      }
+    },
+    {
+      "filter": "05_panel",
+      "title": {
+        "text": "在来もLEDも\n22機種を収録"
+      },
+      "keyword": {
+        "text": "PAR・Fresnel・Source Four・ETC"
+      }
+    }
+  ]
+}

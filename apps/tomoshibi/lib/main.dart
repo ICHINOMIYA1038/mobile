@@ -14,12 +14,32 @@ import 'purchase_service.dart';
 
 const _homeUrl = 'https://tomoshibi.gikyokutosyokan.com/';
 
+/// 起動時に開くURL。既定は本番のホーム。
+/// ストア用スクリーンショットの撮影 (tool/screenshots.sh) から、シーンを
+/// 埋め込んだ `#scene=...` 付きURLを流し込むための差し替え口。
+/// リリースビルドではこのdefineを渡さないので常に _homeUrl になる。
+const _startUrl = String.fromEnvironment(
+  'TOMOSHIBI_START_URL',
+  defaultValue: _homeUrl,
+);
+
 void main() {
   runApp(const TomoshibiApp());
 }
 
 class TomoshibiApp extends StatelessWidget {
-  const TomoshibiApp({super.key});
+  const TomoshibiApp({
+    super.key,
+    this.startUrl = _startUrl,
+    this.requestTracking = true,
+  });
+
+  /// 最初に開くURL。既定は `--dart-define=TOMOSHIBI_START_URL` かホーム。
+  final String startUrl;
+
+  /// ATT許諾をリクエストするか。スクリーンショット撮影時のみfalseにして、
+  /// OSの許諾ダイアログが画面に被らないようにする。
+  final bool requestTracking;
 
   @override
   Widget build(BuildContext context) {
@@ -33,13 +53,23 @@ class TomoshibiApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: const Color(0xFF07060A),
       ),
-      home: const TomoshibiWebView(),
+      home: TomoshibiWebView(
+        startUrl: startUrl,
+        requestTracking: requestTracking,
+      ),
     );
   }
 }
 
 class TomoshibiWebView extends StatefulWidget {
-  const TomoshibiWebView({super.key});
+  const TomoshibiWebView({
+    super.key,
+    this.startUrl = _startUrl,
+    this.requestTracking = true,
+  });
+
+  final String startUrl;
+  final bool requestTracking;
 
   @override
   State<TomoshibiWebView> createState() => _TomoshibiWebViewState();
@@ -130,13 +160,13 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     await _waitUntilResumed();
 
     var status = await AppTrackingTransparency.trackingAuthorizationStatus;
-    if (status == TrackingStatus.notDetermined) {
+    if (widget.requestTracking && status == TrackingStatus.notDetermined) {
       status = await AppTrackingTransparency.requestTrackingAuthorization();
     }
     _attHeaders = {
       'X-ATT-Status': status == TrackingStatus.authorized ? 'authorized' : 'denied',
     };
-    await _controller.loadRequest(Uri.parse(_homeUrl), headers: _attHeaders);
+    await _controller.loadRequest(Uri.parse(widget.startUrl), headers: _attHeaders);
   }
 
   /// Universal Links (共有URL・戯曲図書館からのリンク等) をタップしてアプリが
