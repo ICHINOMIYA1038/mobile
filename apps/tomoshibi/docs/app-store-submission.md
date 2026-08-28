@@ -144,5 +144,7 @@ WebGLコンテキストとボリュメトリックのレンダーターゲット
 | 2026-08-04 | IAP「TOMOSHIBI Pro 月額」を「審査用に追加」まで完了 |
 | 2026-08-18 | ビルドアップロード成功を確認（APIキー `3URMU94JK9`） |
 | 2026-08-27 | 1.0 再提出 → **却下（Guideline 4.3(a) スパム）**。Submission ID `63369395-138f-4633-a4b2-bf511b86def9` |
-| 2026-08-28 | 対応方針を [4.3a-rejection-response.md](4.3a-rejection-response.md) にまとめた。**Resolution Centerへの返信は未送信** |
-| 2026-08-28 | Web側の袖カメラ・俯瞰・縦画面fovを修正し本番反映（tomoshibi PR #1）。ストア用スクリーンショット5枚を撮影・合成。**App Store Connectへの反映は未** |
+| 2026-08-28 | 対応方針を [4.3a-rejection-response.md](4.3a-rejection-response.md) にまとめた |
+| 2026-08-28 | Web側の袖カメラ・俯瞰・縦画面fovを修正し本番反映（tomoshibi PR #1）。ストア用スクリーンショット5枚を撮影・合成 |
+| 2026-08-28 | App Store Connectへ反映: スクリーンショット（iPhone 6.9インチ・iPad 13インチとも1枚→5枚、6.5インチのセットは削除）、説明文の加筆、審査メモの書き直し |
+| 2026-08-28 14:54 | Resolution Centerへ4.3(a)への返信を送信。**Appleからの回答待ち** |
