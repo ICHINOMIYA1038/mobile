@@ -146,13 +146,16 @@ cd ios && bundle install && bundle exec fastlane ios compose_screenshots
 
 ## 5. 提出状況（2026-08-28時点）
 
-- **v1.1.0 (build 2) を実装中/実装済み**: `docs/concept-v2.md` のコンセプトに沿って全面刷新。
-  再提出前チェック:
-  - [ ] ストア掲載文を `docs/store-listing.md` の v2 に差し替え(サブタイトル・カテゴリ・説明・キーワード・What's New)
-  - [ ] スクリーンショット撮り直し(`./tool/screenshots.sh` → frameit)。ARマップは実機で撮影
-  - [ ] 実機で内見診断(ノック/手叩き)・ARマップを動作確認
-  - [ ] `flutter build ipa --release` → `xcrun altool --upload-app`
-  - [ ] 提出時の審査メモを上記 v1.1.0 版に差し替え
+- **2026-09-01: v1.1.0 (build 2) を再提出**。手順の記録:
+  - 実機で内見診断(ノック/手叩き)・校正・自動終了計測をユーザー確認済み
+  - スクショ6枚(iPhone/iPad)を撮り直し → `bundle exec fastlane ios compose_screenshots`
+  - ストア掲載文v2は `ios/fastlane/metadata/`(deliver形式)に転記。カテゴリは
+    LIFESTYLE/UTILITIES、審査メモは `metadata/review_information/notes.txt`
+  - `Info.plist` に `ITSAppUsesNonExemptEncryption=false` を追加(輸出コンプライアンス省略)
+  - `flutter build ipa --release` → `xcrun altool --upload-app`(API キー 3URMU94JK9)
+  - ビルド処理完了を待って `bundle exec fastlane ios submit_review version:1.1.0 build:2`
+    (メタデータ+スクショ反映・ビルド紐付け・審査提出・承認後自動リリースまで一括)
+  - ARマップのスクショは今回未掲載(シミュレータで撮れないため)。次回更新で実機撮影分を追加
 
 - **2026-08-27〜28: iOS 1.0 却下（Guideline 4.3(a) Design - Spam）**。Submission ID
   `043650f1-5ac4-4532-aafb-0bde7bcd3ce0`。「他の開発者のアプリとバイナリ・メタデータ・コンセプトが

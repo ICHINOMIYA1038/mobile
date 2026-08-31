@@ -17,29 +17,58 @@
   },
   "data": [
     {
-      "filter": "01_home",
-      "title": { "text": "マイクだけで\n騒音レベルを計測" },
-      "keyword": { "text": "セットアップ不要、その場で分かる" }
+      "filter": "01_inspection_result",
+      "title": {
+        "text": "内見のその場で\n防音スコアを判定"
+      },
+      "keyword": {
+        "text": "窓・壁・ドアの弱点と壁の重さがわかる"
+      }
     },
     {
-      "filter": "02_measuring",
-      "title": { "text": "計測中もひと目で\nわかるゲージ" },
-      "keyword": { "text": "静か・普通・うるさいを判定" }
+      "filter": "02_simulator",
+      "title": {
+        "text": "買う前にわかる\n対策の効果予測"
+      },
+      "keyword": {
+        "text": "効かない対策は「効かない」と表示"
+      }
     },
     {
-      "filter": "03_result",
-      "title": { "text": "最小・平均・ピークを\nグラフで見える化" },
-      "keyword": { "text": "周波数帯・時間経過もひと目で" }
+      "filter": "03_compare",
+      "title": {
+        "text": "物件同士を\n防音性能で比較"
+      },
+      "keyword": {
+        "text": "引越し先選びの判断材料に"
+      }
     },
     {
-      "filter": "04_suggestions",
-      "title": { "text": "音源まで推定して\n改善提案も" },
-      "keyword": { "text": "何が原因かがわかる" }
+      "filter": "04_home",
+      "title": {
+        "text": "診断・マップ・検証\nぜんぶ無料"
+      },
+      "keyword": {
+        "text": "登録不要・広告なし"
+      }
     },
     {
-      "filter": "05_noise_scale",
-      "title": { "text": "環境省基準の\n騒音スケール" },
-      "keyword": { "text": "数字の意味がひと目でわかる" }
+      "filter": "05_before_after",
+      "title": {
+        "text": "対策の効果を\n実測で確かめる"
+      },
+      "keyword": {
+        "text": "予測と実測の差まで見える"
+      }
+    },
+    {
+      "filter": "06_meter_result",
+      "title": {
+        "text": "周波数帯まで見える\n騒音計つき"
+      },
+      "keyword": {
+        "text": "音源をその場で推定"
+      }
     }
   ]
 }
