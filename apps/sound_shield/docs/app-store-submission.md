@@ -146,7 +146,10 @@ cd ios && bundle install && bundle exec fastlane ios compose_screenshots
 
 ## 5. 提出状況（2026-08-28時点）
 
-- **2026-09-01: v1.1.0 (build 2) を再提出**。手順の記録:
+- **2026-09-01: v1.1.0 (build 2) を審査提出済み(WAITING_FOR_REVIEW)**。
+  却下された1.0の審査提出が UNRESOLVED_ISSUES のまま残っており「A review submission is
+  already in progress」で提出に失敗 → Spaceship の `cancel_submission` でキャンセルしてから
+  `submit_review` レーンで成功。承認後は自動リリース設定。手順の記録:
   - 実機で内見診断(ノック/手叩き)・校正・自動終了計測をユーザー確認済み
   - スクショ6枚(iPhone/iPad)を撮り直し → `bundle exec fastlane ios compose_screenshots`
   - ストア掲載文v2は `ios/fastlane/metadata/`(deliver形式)に転記。カテゴリは
