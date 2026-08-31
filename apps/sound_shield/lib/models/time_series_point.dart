@@ -5,6 +5,8 @@ class TimeSeriesPoint {
   final double t;
   final double db;
 
+  Map<String, Object?> toJson() => {'t': t, 'db': db};
+
   factory TimeSeriesPoint.fromMap(Map<Object?, Object?> map) {
     return TimeSeriesPoint(
       t: (map['t'] as num).toDouble(),

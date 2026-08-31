@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
@@ -13,12 +14,37 @@ class MeasuringScreen extends StatefulWidget {
     super.key,
     required this.soundMeterService,
     required this.duration,
+    this.returnResult = false,
+    this.title,
+    this.hint,
+    this.autoStop = false,
   });
 
   final SoundMeterService soundMeterService;
 
   /// nullなら「止めるまで測定」する時間無指定モード。
   final Duration? duration;
+
+  /// true なら結果画面へ遷移せず、計測結果を `Navigator.pop` の戻り値として返す
+  /// (内見モード・Before/After など、呼び出し側が結果を使う場合)。
+  final bool returnResult;
+
+  /// 計測中画面の見出し(内見モードのステップ名など)。
+  final String? title;
+
+  /// 見出し下に出す補足(「窓から30cmの位置で」など)。
+  final String? hint;
+
+  /// true なら「止めるまで測定」モードで開始し、値が安定したら自動で終える。
+  /// [duration] は無視される。静かな環境なら [autoStopMinSeconds] 秒程度で終わり、
+  /// 変動が大きくても [autoStopMaxSeconds] 秒で打ち切る。
+  final bool autoStop;
+
+  static const autoStopMinSeconds = 6;
+  static const autoStopMaxSeconds = 15;
+
+  /// 直近3秒で累積Leqの動きがこの幅(dB)に収まったら「安定」とみなす。
+  static const autoStopStableDb = 0.4;
 
   @override
   State<MeasuringScreen> createState() => _MeasuringScreenState();
@@ -33,7 +59,13 @@ class _MeasuringScreenState extends State<MeasuringScreen> {
   bool _isFinishing = false;
   bool _isEnding = false;
 
-  bool get _isOpenEnded => widget.duration == null;
+  bool get _isOpenEnded => widget.duration == null && !widget.autoStop;
+
+  /// 自動終了モード用: 200msごとのライブ値からの累積パワー平均(簡易Leq)。
+  double _livePowerSum = 0;
+  int _liveCount = 0;
+  final List<double> _leqHistory = [];
+  bool _stable = false;
 
   @override
   void initState() {
@@ -41,11 +73,17 @@ class _MeasuringScreenState extends State<MeasuringScreen> {
     _liveDbSubscription = widget.soundMeterService.liveDbStream.listen((db) {
       if (!mounted) return;
       setState(() => _currentDb = db);
+      if (widget.autoStop) _trackAutoStop(db);
     });
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() {
-        if (_isOpenEnded) {
+        if (widget.autoStop) {
+          _elapsed += const Duration(seconds: 1);
+          if (_elapsed.inSeconds >= MeasuringScreen.autoStopMaxSeconds) {
+            _endOpenEndedMeasurement();
+          }
+        } else if (_isOpenEnded) {
           _elapsed += const Duration(seconds: 1);
         } else {
           final nextSeconds = _remaining.inSeconds - 1;
@@ -54,6 +92,23 @@ class _MeasuringScreenState extends State<MeasuringScreen> {
       });
     });
     unawaited(_runMeasurement());
+  }
+
+  /// 累積Leqが3秒間動かなくなったら finishMeasurement で確定する。
+  void _trackAutoStop(double db) {
+    _livePowerSum += math.pow(10, db / 10).toDouble();
+    _liveCount++;
+    final leq = 10 * math.log(_livePowerSum / _liveCount) / math.ln10;
+    _leqHistory.add(leq);
+    // ライブ値は約200ms間隔 → 3秒 ≒ 15サンプル。
+    const window = 15;
+    const minCount = MeasuringScreen.autoStopMinSeconds * 5;
+    if (_liveCount < minCount || _leqHistory.length <= window) return;
+    final past = _leqHistory[_leqHistory.length - 1 - window];
+    if ((leq - past).abs() <= MeasuringScreen.autoStopStableDb) {
+      _stable = true;
+      _endOpenEndedMeasurement();
+    }
   }
 
   Future<void> _runMeasurement() async {
@@ -66,7 +121,7 @@ class _MeasuringScreenState extends State<MeasuringScreen> {
     );
     try {
       final result = await widget.soundMeterService.startMeasurement(
-        widget.duration,
+        widget.autoStop ? null : widget.duration,
       );
       await AppInsights.logEvent(
         'measurement_finished',
@@ -80,6 +135,10 @@ class _MeasuringScreenState extends State<MeasuringScreen> {
         },
       );
       _finish(() {
+        if (widget.returnResult) {
+          Navigator.of(context).pop(result);
+          return;
+        }
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             settings: const RouteSettings(name: 'result'),
@@ -151,15 +210,28 @@ class _MeasuringScreenState extends State<MeasuringScreen> {
     // 目安値のレンジ(概ね30〜100dB)を0.0〜1.0に正規化してゲージに反映する。
     final level = ((_currentDb - 30) / 70).clamp(0.0, 1.0);
     return Scaffold(
-      appBar: AppBar(title: const Text('計測中')),
+      appBar: AppBar(title: Text(widget.title ?? '計測中')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (widget.hint != null) ...[
+                Text(
+                  widget.hint!,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 12),
+              ],
               Text(
-                _isOpenEnded
+                widget.autoStop
+                    ? (_stable
+                          ? '安定しました'
+                          : '経過 ${_formatElapsed(_elapsed)} ・ 安定したら自動終了'
+                                '(最長${MeasuringScreen.autoStopMaxSeconds}秒)')
+                    : _isOpenEnded
                     ? '経過 ${_formatElapsed(_elapsed)}'
                     : '残り ${_remaining.inSeconds.toString().padLeft(2, '0')}秒',
                 style: Theme.of(
@@ -198,7 +270,12 @@ class _MeasuringScreenState extends State<MeasuringScreen> {
                 ],
               ),
               const SizedBox(height: 48),
-              if (_isOpenEnded) ...[
+              if (widget.autoStop)
+                OutlinedButton(
+                  onPressed: _isEnding ? null : _cancel,
+                  child: const Text('キャンセル'),
+                )
+              else if (_isOpenEnded) ...[
                 FilledButton(
                   onPressed: _isEnding ? null : _endOpenEndedMeasurement,
                   child: const Text('計測終了'),

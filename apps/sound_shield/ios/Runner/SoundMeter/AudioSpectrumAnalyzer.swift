@@ -27,9 +27,8 @@ final class AudioSpectrumAnalyzer {
 
     static let bandCenters: [Double] = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
 
-    // キャリブレーションをしていないため絶対SPLではなく相対値(dBFS)になる。
-    // 見慣れたレンジ(概ね30〜90)に寄せるための固定オフセット。
-    private static let displayOffsetDb: Double = 90.0
+    /// 表示用のオフセット(LevelCalibration 共通値)。
+    private static var displayOffsetDb: Double { LevelCalibration.offsetDb }
     private static let windowSize = 16384
     private static let hopSize = windowSize / 2
 

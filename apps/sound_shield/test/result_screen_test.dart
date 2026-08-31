@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sound_shield/data/app_scope.dart';
+import 'package:sound_shield/data/ar_noise_map_service.dart';
+import 'package:sound_shield/data/impulse_probe_service.dart';
+import 'package:sound_shield/data/calibration_repository.dart';
+import 'package:sound_shield/data/inspection_repository.dart';
+import 'package:sound_shield/data/sound_meter_service.dart';
 import 'package:sound_shield/models/band_level.dart';
 import 'package:sound_shield/models/detected_sound.dart';
 import 'package:sound_shield/models/measurement_result.dart';
@@ -27,8 +33,21 @@ MeasurementResult _buildResult({
   );
 }
 
+Widget _wrap(Widget child) {
+  return AppScope(
+    services: AppServices(
+      soundMeter: SoundMeterService(),
+      impulseProbe: ImpulseProbeService(),
+      arNoiseMap: ArNoiseMapService(),
+      inspections: InspectionRepository(),
+      calibration: CalibrationRepository(soundMeter: SoundMeterService()),
+    ),
+    child: MaterialApp(home: child),
+  );
+}
+
 void main() {
-  testWidgets('総合レベルとグラフが表示され、対策CTAから対策画面へ遷移できる', (tester) async {
+  testWidgets('総合レベルとグラフが表示され、対策CTAからシミュレーターへ遷移できる', (tester) async {
     // ListViewの全項目をスクロールなしで検証できるよう、十分な高さを確保する。
     tester.view.physicalSize = const Size(1000, 3000);
     tester.view.devicePixelRatio = 1.0;
@@ -50,19 +69,19 @@ void main() {
       ],
     );
 
-    await tester.pumpWidget(MaterialApp(home: ResultScreen(result: result)));
+    await tester.pumpWidget(_wrap(ResultScreen(result: result)));
 
     expect(find.text('52'), findsNWidgets(2)); // ヒーロー数値 + 「平均」統計
     expect(find.text('普通の生活音'), findsOneWidget);
-    expect(find.text('対策を見る'), findsOneWidget);
-    expect(find.textContaining('件の提案'), findsOneWidget);
+    expect(find.text('効く対策を予測する'), findsOneWidget);
+    expect(find.textContaining('件の候補'), findsOneWidget);
 
-    await tester.tap(find.text('対策を見る'));
+    await tester.tap(find.text('効く対策を予測する'));
     await tester.pumpAndSettle();
 
-    expect(find.text('検出された音'), findsOneWidget);
-    expect(find.text('車の音'), findsOneWidget);
-    expect(find.text('ホームに戻る'), findsOneWidget);
+    expect(find.text('対策シミュレーター'), findsOneWidget);
+    expect(find.textContaining('主な音: 車の音'), findsOneWidget);
+    expect(find.textContaining('現状 55dB'), findsOneWidget); // 帯域(55,40dB)の合算値
   });
 
   testWidgets(
@@ -75,11 +94,11 @@ void main() {
 
       final result = _buildResult(overallLeqDb: 25);
 
-      await tester.pumpWidget(MaterialApp(home: ResultScreen(result: result)));
+      await tester.pumpWidget(_wrap(ResultScreen(result: result)));
 
       expect(find.text('静かな環境'), findsOneWidget);
       expect(find.text('静かな環境でした'), findsOneWidget);
-      expect(find.text('対策を見る'), findsNothing);
+      expect(find.text('効く対策を予測する'), findsOneWidget);
     },
   );
 
@@ -91,7 +110,7 @@ void main() {
 
     final result = _buildResult(overallLeqDb: 82);
 
-    await tester.pumpWidget(MaterialApp(home: ResultScreen(result: result)));
+    await tester.pumpWidget(_wrap(ResultScreen(result: result)));
 
     expect(find.text('うるさい環境'), findsOneWidget);
   });
@@ -104,7 +123,7 @@ void main() {
 
     final result = _buildResult(overallLeqDb: 52);
 
-    await tester.pumpWidget(MaterialApp(home: ResultScreen(result: result)));
+    await tester.pumpWidget(_wrap(ResultScreen(result: result)));
 
     await tester.tap(find.text('普通の生活音'));
     await tester.pumpAndSettle();

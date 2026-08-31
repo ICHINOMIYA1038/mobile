@@ -8,9 +8,9 @@ import '../widgets/frequency_range_chart.dart';
 import '../widgets/sound_overlay_strip.dart';
 import '../widgets/time_series_chart.dart';
 import 'noise_scale_screen.dart';
-import 'suggestions_screen.dart';
+import 'simulator_screen.dart';
 
-/// 計測データ(数値+2つのグラフ)専用の画面。対策の提案は別画面([SuggestionsScreen])に分離し、
+/// 計測データ(数値+2つのグラフ)専用の画面。対策の予測は別画面([SimulatorScreen])に分離し、
 /// 「何が起きたか」→「どうすればいいか」の2段階で読めるようにしている。
 class ResultScreen extends StatelessWidget {
   const ResultScreen({super.key, required this.result});
@@ -59,10 +59,11 @@ class ResultScreen extends StatelessWidget {
               durationSeconds: result.durationSeconds,
             ),
             const SizedBox(height: 24),
-            if (suggestions.isEmpty)
-              const _NoActionNeededPanel()
-            else
-              _SuggestionsCta(result: result, suggestions: suggestions),
+            if (suggestions.isEmpty) ...[
+              const _NoActionNeededPanel(),
+              const SizedBox(height: 12),
+            ],
+            _SuggestionsCta(result: result, suggestions: suggestions),
           ],
         ),
       ),
@@ -266,8 +267,8 @@ class _SuggestionsCta extends StatelessWidget {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              settings: const RouteSettings(name: 'suggestions'),
-              builder: (_) => SuggestionsScreen(result: result),
+              settings: const RouteSettings(name: 'simulator'),
+              builder: (_) => SimulatorScreen(result: result),
             ),
           );
         },
@@ -280,7 +281,7 @@ class _SuggestionsCta extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '対策を見る',
+                      '効く対策を予測する',
                       style: TextStyle(
                         color: scheme.onPrimary,
                         fontWeight: FontWeight.w700,
@@ -288,7 +289,9 @@ class _SuggestionsCta extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '検出音から${suggestions.length}件の提案',
+                      suggestions.isEmpty
+                          ? '対策ごとの予測ΔdBと費用を確認'
+                          : '検出音から${suggestions.length}件の候補 ・ 予測ΔdBと費用',
                       style: TextStyle(
                         color: scheme.onPrimary.withValues(alpha: 0.8),
                         fontSize: 11,

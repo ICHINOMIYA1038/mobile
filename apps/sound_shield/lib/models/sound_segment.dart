@@ -12,6 +12,13 @@ class SoundSegment {
   final String identifier;
   final double confidence;
 
+  Map<String, Object?> toJson() => {
+    'startSeconds': startSeconds,
+    'endSeconds': endSeconds,
+    'identifier': identifier,
+    'confidence': confidence,
+  };
+
   factory SoundSegment.fromMap(Map<Object?, Object?> map) {
     return SoundSegment(
       startSeconds: (map['startSeconds'] as num).toDouble(),

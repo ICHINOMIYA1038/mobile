@@ -12,6 +12,13 @@ class BandLevel {
   final double peakDb;
   final double minDb;
 
+  Map<String, Object?> toJson() => {
+    'centerHz': centerHz,
+    'leqDb': leqDb,
+    'peakDb': peakDb,
+    'minDb': minDb,
+  };
+
   factory BandLevel.fromMap(Map<Object?, Object?> map) {
     return BandLevel(
       centerHz: (map['centerHz'] as num).toDouble(),

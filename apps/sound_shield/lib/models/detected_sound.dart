@@ -15,6 +15,12 @@ class DetectedSound {
   /// 検出されていた区間の平均信頼度(0.0〜1.0)。
   final double avgConfidence;
 
+  Map<String, Object?> toJson() => {
+    'identifier': identifier,
+    'activeShare': activeShare,
+    'avgConfidence': avgConfidence,
+  };
+
   factory DetectedSound.fromMap(Map<Object?, Object?> map) {
     return DetectedSound(
       identifier: map['identifier'] as String,

@@ -48,6 +48,10 @@ public class SoundMeterPlugin: NSObject, FlutterPlugin {
         switch call.method {
         case "checkAndRequestPermission":
             requestPermission(result: result)
+        case "setCalibration":
+            let args = call.arguments as? [String: Any]
+            LevelCalibration.userAdjustmentDb = (args?["adjustmentDb"] as? Double) ?? 0
+            result(nil)
         case "startMeasurement":
             guard let args = call.arguments as? [String: Any] else {
                 result(FlutterError(code: "invalid_args", message: "arguments are required", details: nil))

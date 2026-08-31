@@ -4,9 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sound_shield/data/app_scope.dart';
+import 'package:sound_shield/data/ar_noise_map_service.dart';
+import 'package:sound_shield/data/impulse_probe_service.dart';
+import 'package:sound_shield/data/calibration_repository.dart';
+import 'package:sound_shield/data/inspection_repository.dart';
 import 'package:sound_shield/data/sound_meter_service.dart';
 import 'package:sound_shield/models/band_level.dart';
+import 'package:sound_shield/models/countermeasure_record.dart';
 import 'package:sound_shield/models/detected_sound.dart';
+import 'package:sound_shield/models/impulse_result.dart';
+import 'package:sound_shield/models/inspection.dart';
 import 'package:sound_shield/models/measurement_result.dart';
 import 'package:sound_shield/models/sound_segment.dart';
 import 'package:sound_shield/models/time_series_point.dart';
@@ -23,114 +32,153 @@ import 'package:sound_shield/ui/theme.dart';
 /// マーカーファイルを置き、tool/screenshots.sh側の常駐プロセスが
 /// `xcrun simctl io screenshot` で実画面をそのタイミングで撮る方式。
 ///
-/// 計測画面(02_measuring)・結果画面(03〜05)は、実際にマイクへアクセスすると
-/// シミュレータでは音声入力が無く不安定なため、SoundMeterServiceが使う
-/// MethodChannel/EventChannelをこのテスト内でモックし、固定のダミー計測結果を
-/// 返すことで画面遷移だけは実際の操作(ボタンタップ)で再現している。
+/// シミュレータではマイク入力・ARが使えないため、SoundMeterService の
+/// MethodChannel をモックし、内見診断・対策記録は SharedPreferences に
+/// ダミーデータを流し込んでから画面を開く。
 const _methodChannel = MethodChannel('jp.pairof.sound_shield/sound_meter');
 const _eventChannel = EventChannel('jp.pairof.sound_shield/sound_meter/live');
 
-final _dummyResult = MeasurementResult(
-  durationSeconds: 15,
-  overallLeqDb: 62,
-  overallPeakDb: 78,
-  overallMinDb: 41,
-  bands: const [
-    BandLevel(centerHz: 31.5, leqDb: 38, peakDb: 45, minDb: 30),
-    BandLevel(centerHz: 63, leqDb: 42, peakDb: 50, minDb: 33),
-    BandLevel(centerHz: 125, leqDb: 48, peakDb: 58, minDb: 36),
-    BandLevel(centerHz: 250, leqDb: 55, peakDb: 66, minDb: 40),
-    BandLevel(centerHz: 500, leqDb: 60, peakDb: 74, minDb: 42),
-    BandLevel(centerHz: 1000, leqDb: 62, peakDb: 78, minDb: 41),
-    BandLevel(centerHz: 2000, leqDb: 57, peakDb: 70, minDb: 39),
-    BandLevel(centerHz: 4000, leqDb: 50, peakDb: 62, minDb: 34),
-    BandLevel(centerHz: 8000, leqDb: 44, peakDb: 55, minDb: 30),
-    BandLevel(centerHz: 16000, leqDb: 36, peakDb: 46, minDb: 26),
-  ],
-  soundLabels: const [
-    DetectedSound(
-      identifier: 'traffic_vehicle',
-      activeShare: 0.62,
-      avgConfidence: 0.81,
-    ),
-    DetectedSound(
-      identifier: 'speech',
-      activeShare: 0.18,
-      avgConfidence: 0.55,
-    ),
-  ],
-  timeSeries: const [
-    TimeSeriesPoint(t: 0, db: 46),
-    TimeSeriesPoint(t: 1, db: 48),
-    TimeSeriesPoint(t: 2, db: 58),
-    TimeSeriesPoint(t: 3, db: 66),
-    TimeSeriesPoint(t: 4, db: 72),
-    TimeSeriesPoint(t: 5, db: 68),
-    TimeSeriesPoint(t: 6, db: 60),
-    TimeSeriesPoint(t: 7, db: 55),
-    TimeSeriesPoint(t: 8, db: 52),
-    TimeSeriesPoint(t: 9, db: 50),
-    TimeSeriesPoint(t: 10, db: 62),
-    TimeSeriesPoint(t: 11, db: 64),
-    TimeSeriesPoint(t: 12, db: 58),
-    TimeSeriesPoint(t: 13, db: 49),
-    TimeSeriesPoint(t: 14, db: 44),
-  ],
-  soundTimeline: const [
-    SoundSegment(
-      startSeconds: 2,
-      endSeconds: 9,
-      identifier: 'traffic_vehicle',
-      confidence: 0.8,
-    ),
-    SoundSegment(
-      startSeconds: 10,
-      endSeconds: 13,
-      identifier: 'speech',
-      confidence: 0.6,
-    ),
-  ],
+MeasurementResult _measurement({
+  required double leq,
+  required List<double> bands,
+  List<DetectedSound> labels = const [],
+}) {
+  const centers = [31.5, 63.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0];
+  return MeasurementResult(
+    durationSeconds: 15,
+    overallLeqDb: leq,
+    overallPeakDb: leq + 14,
+    overallMinDb: leq - 18,
+    bands: [
+      for (var i = 0; i < bands.length; i++)
+        BandLevel(
+          centerHz: centers[i],
+          leqDb: bands[i],
+          peakDb: bands[i] + 10,
+          minDb: bands[i] - 8,
+        ),
+    ],
+    soundLabels: labels,
+    timeSeries: [
+      for (var t = 0; t <= 15; t++)
+        TimeSeriesPoint(t: t.toDouble(), db: leq - 8 + 12 * ((t * 7) % 5) / 4),
+    ],
+    soundTimeline: const [
+      SoundSegment(startSeconds: 2, endSeconds: 9, identifier: 'traffic_vehicle', confidence: 0.8),
+      SoundSegment(startSeconds: 10, endSeconds: 13, identifier: 'speech', confidence: 0.6),
+    ],
+  );
+}
+
+final _traffic = [
+  const DetectedSound(identifier: 'traffic_vehicle', activeShare: 0.62, avgConfidence: 0.81),
+  const DetectedSound(identifier: 'speech', activeShare: 0.18, avgConfidence: 0.55),
+];
+
+final _meterResult = _measurement(
+  leq: 62,
+  bands: [38, 42, 48, 55, 60, 62, 57, 50, 44, 36],
+  labels: _traffic,
 );
 
-Map<String, Object?> _dummyResultMap() {
-  return {
-    'durationSeconds': _dummyResult.durationSeconds,
-    'overallLeqDb': _dummyResult.overallLeqDb,
-    'overallPeakDb': _dummyResult.overallPeakDb,
-    'overallMinDb': _dummyResult.overallMinDb,
-    'bands': _dummyResult.bands
-        .map(
-          (b) => {
-            'centerHz': b.centerHz,
-            'leqDb': b.leqDb,
-            'peakDb': b.peakDb,
-            'minDb': b.minDb,
-          },
-        )
-        .toList(),
-    'soundLabels': _dummyResult.soundLabels
-        .map(
-          (s) => {
-            'identifier': s.identifier,
-            'activeShare': s.activeShare,
-            'avgConfidence': s.avgConfidence,
-          },
-        )
-        .toList(),
-    'timeSeries': _dummyResult.timeSeries
-        .map((p) => {'t': p.t, 'db': p.db})
-        .toList(),
-    'soundTimeline': _dummyResult.soundTimeline
-        .map(
-          (s) => {
-            'startSeconds': s.startSeconds,
-            'endSeconds': s.endSeconds,
-            'identifier': s.identifier,
-            'confidence': s.confidence,
-          },
-        )
-        .toList(),
-  };
+Map<String, Object?> _meterResultMap() => {
+  ..._meterResult.toJson(),
+  'soundTimeline': _meterResult.soundTimeline
+      .map(
+        (s) => {
+          'startSeconds': s.startSeconds,
+          'endSeconds': s.endSeconds,
+          'identifier': s.identifier,
+          'confidence': s.confidence,
+        },
+      )
+      .toList(),
+};
+
+ImpulseResult _impulse({required double centroid, required double t20, double? rt60}) {
+  return ImpulseResult(
+    peakDb: 82,
+    floorDb: 44,
+    snrDb: 38,
+    t10: t20 / 2,
+    t20: t20,
+    rt60: rt60 ?? t20 * 3,
+    spectralCentroidHz: centroid,
+    lowShare: 0.5,
+    highShare: 0.2,
+    peakHz: centroid,
+  );
+}
+
+/// 3物件分のダミー診断(スコアが散るように)。
+List<Inspection> _inspections() {
+  final now = DateTime(2026, 8, 28, 14);
+  return [
+    Inspection(
+      id: 'a',
+      name: 'サンライズ荻窪 302',
+      createdAt: now,
+      ambient: _measurement(leq: 41, bands: [30, 33, 36, 38, 40, 39, 36, 32, 28, 24]),
+      window: _measurement(
+        leq: 54,
+        bands: [40, 44, 47, 50, 52, 51, 47, 42, 36, 30],
+        labels: _traffic,
+      ),
+      knock: _impulse(centroid: 1650, t20: 0.19),
+      clap: _impulse(centroid: 900, t20: 0.24, rt60: 0.7),
+      neighbor: _measurement(leq: 43, bands: [31, 34, 37, 40, 42, 41, 38, 33, 28, 24]),
+    ),
+    Inspection(
+      id: 'b',
+      name: 'パークコート中野 805',
+      createdAt: now.subtract(const Duration(days: 1)),
+      ambient: _measurement(leq: 35, bands: [26, 28, 30, 32, 34, 33, 30, 26, 22, 20]),
+      window: _measurement(leq: 37, bands: [28, 30, 32, 34, 36, 35, 32, 28, 24, 20]),
+      knock: _impulse(centroid: 520, t20: 0.05),
+      clap: _impulse(centroid: 900, t20: 0.15, rt60: 0.45),
+      neighbor: _measurement(leq: 36, bands: [27, 29, 31, 33, 35, 34, 31, 27, 23, 20]),
+    ),
+    Inspection(
+      id: 'c',
+      name: 'メゾン高円寺 201',
+      createdAt: now.subtract(const Duration(days: 2)),
+      ambient: _measurement(leq: 48, bands: [36, 40, 43, 45, 47, 46, 42, 38, 32, 28]),
+      window: _measurement(leq: 51, bands: [38, 42, 45, 48, 50, 49, 45, 40, 34, 30]),
+      knock: _impulse(centroid: 1100, t20: 0.11),
+      neighbor: _measurement(leq: 55, bands: [40, 44, 48, 52, 54, 53, 49, 44, 38, 32]),
+    ),
+  ];
+}
+
+List<CountermeasureRecord> _records() {
+  final before = _measurement(
+    leq: 58,
+    bands: [34, 38, 44, 50, 55, 57, 54, 48, 42, 34],
+    labels: const [
+      DetectedSound(identifier: 'speech', activeShare: 0.55, avgConfidence: 0.7),
+    ],
+  );
+  return [
+    CountermeasureRecord(
+      id: 'r1',
+      measureId: 'curtain',
+      measureName: '防音カーテン',
+      createdAt: DateTime(2026, 8, 20),
+      before: before,
+      after: _measurement(leq: 54, bands: [34, 38, 44, 49, 53, 54, 50, 43, 36, 28]),
+      predictedDeltaDb: 3.4,
+      place: '寝室・窓側',
+    ),
+    CountermeasureRecord(
+      id: 'r2',
+      measureId: 'door_seal',
+      measureName: 'ドアの隙間塞ぎ(戸当たりテープ+ドア下ストッパー)',
+      createdAt: DateTime(2026, 8, 27),
+      before: before,
+      predictedDeltaDb: 2.1,
+      place: '寝室・ドア側',
+    ),
+  ];
 }
 
 void main() {
@@ -154,15 +202,13 @@ void main() {
   testWidgets('ストア用スクリーンショット', (tester) async {
     final messenger = tester.binding.defaultBinaryMessenger;
 
-    // マイク権限は常に許可済み、liveDbStreamは固定値を流す。
     messenger.setMockMethodCallHandler(_methodChannel, (call) async {
       switch (call.method) {
         case 'checkAndRequestPermission':
           return true;
         case 'startMeasurement':
-          // 02_measuringのシャッターが間に合うよう少し待ってから結果を返す。
           await Future<void>.delayed(const Duration(milliseconds: 800));
-          return _dummyResultMap();
+          return _meterResultMap();
         case 'finishMeasurement':
         case 'cancelMeasurement':
           return null;
@@ -180,64 +226,84 @@ void main() {
       messenger.setMockStreamHandler(_eventChannel, null);
     });
 
-    // 1枚目: ホーム画面(ゲージと計測方法・時間の選択)。
+    // ダミーの診断・記録を保存してから起動する。
+    SharedPreferences.setMockInitialValues({});
+    final repo = InspectionRepository();
+    for (final i in _inspections().reversed) {
+      await repo.saveInspection(i);
+    }
+    for (final r in _records().reversed) {
+      await repo.saveRecord(r);
+    }
+    final services = AppServices(
+      soundMeter: SoundMeterService(),
+      impulseProbe: ImpulseProbeService(),
+      arNoiseMap: ArNoiseMapService(),
+      inspections: repo,
+      calibration: CalibrationRepository(soundMeter: SoundMeterService()),
+    );
+
     await tester.pumpWidget(
-      MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: buildTheme(Brightness.light),
-        home: HomeScreen(soundMeterService: SoundMeterService()),
+      AppScope(
+        services: services,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: buildTheme(Brightness.light),
+          home: const HomeScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
-    await shoot(tester, '01_home');
 
-    // 「計測を開始」→ 計測中画面へ。startMeasurementの応答を遅らせているので、
-    // pumpAndSettleは使わずゲージが動いている状態を撮る。
-    await tester.tap(find.text('計測を開始'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
+    // 1枚目: 内見診断の結果(スコア・弱点・壁の推定)。
+    await tester.tap(find.text('サンライズ荻窪 302'));
+    await tester.pumpAndSettle();
+    await shoot(tester, '01_inspection_result');
 
-    // 2枚目: 計測中画面(ゲージが振れている状態)。
-    await shoot(tester, '02_measuring');
-
-    // startMeasurementの応答を待って結果画面へ自動遷移。
-    await tester.pumpAndSettle(const Duration(milliseconds: 200));
-
-    // 3枚目: 結果画面(Leq/最小/ピーク、ステータス、周波数帯・時系列グラフ)。
-    await shoot(tester, '03_result');
-
-    // 「対策を見る」は結果画面のListView末尾にあり画面外だとまだビルドされて
-    // いないため、タップ前にスクロールして表示させる。
+    // 2枚目: 対策シミュレーター(予測ΔdB・費用・効かない理由)。
     await tester.scrollUntilVisible(
-      find.text('対策を見る'),
+      find.text('効く対策を予測する'),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('対策を見る'));
+    await tester.tap(find.text('効く対策を予測する'));
     await tester.pumpAndSettle();
-
-    // 4枚目: 対策画面(検出音の内訳と改善提案)。
-    await shoot(tester, '04_suggestions');
+    await shoot(tester, '02_simulator');
 
     await tester.pageBack();
     await tester.pumpAndSettle();
 
-    // 結果画面のListViewは「対策を見る」までスクロールした位置のまま戻って
-    // くるため、画面上部のステータスバッジ(infoアイコン)が画面外にある。
-    // scrollUntilVisibleのdeltaが小さいとAppBar直下で「見えた」と誤判定して
-    // 実際にはAppBarをタップしてしまうため、大きくドラッグして確実に
-    // 先頭まで戻してからタップする。
-    await tester.drag(
-      find.byType(Scrollable).first,
-      const Offset(0, 3000),
+    // 3枚目: 物件の比較。
+    await tester.scrollUntilVisible(
+      find.text('他の物件と比較'),
+      200,
+      scrollable: find.byType(Scrollable).first,
     );
+    await tester.tap(find.text('他の物件と比較'));
+    await tester.pumpAndSettle();
+    await shoot(tester, '03_compare');
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.pageBack();
     await tester.pumpAndSettle();
 
-    // ステータスバッジ→ 騒音スケール画面へ。
-    await tester.tap(find.byIcon(Icons.info_outline));
+    // 4枚目: ホーム。
+    await shoot(tester, '04_home');
+
+    // 5枚目: 対策の効果検証(Before/After)。
+    await tester.tap(find.text('対策の効果を検証'));
+    await tester.pumpAndSettle();
+    await shoot(tester, '05_before_after');
+
+    await tester.pageBack();
     await tester.pumpAndSettle();
 
-    // 5枚目: 騒音スケール画面(環境省基準の3段階説明)。
-    await shoot(tester, '05_noise_scale');
+    // 6枚目: 騒音計の結果(周波数帯・時間推移)。
+    await tester.tap(find.text('騒音計'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('計測を開始'));
+    await tester.pumpAndSettle(const Duration(milliseconds: 200));
+    await shoot(tester, '06_meter_result');
   });
 }

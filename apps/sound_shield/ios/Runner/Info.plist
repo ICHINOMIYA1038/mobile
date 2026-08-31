@@ -30,6 +30,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>音の侵入マップで端末の位置を追跡し、部屋のどこで音が大きいかを表示するためにカメラを使用します。映像は保存・送信されません。</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>周囲の騒音を計測するためにマイクを使用します。録音データは保存・送信されません。</string>
 	<key>UIApplicationSceneManifest</key>

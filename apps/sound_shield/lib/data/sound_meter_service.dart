@@ -21,6 +21,13 @@ class SoundMeterService {
 
   Stream<double>? _liveDbStream;
 
+  /// 表示レベルのユーザー校正(基準の騒音計との差)をネイティブ側へ反映する。
+  Future<void> setCalibration(double adjustmentDb) {
+    return _methodChannel.invokeMethod('setCalibration', {
+      'adjustmentDb': adjustmentDb,
+    });
+  }
+
   Future<bool> checkAndRequestPermission() async {
     final granted = await _methodChannel.invokeMethod<bool>(
       'checkAndRequestPermission',
