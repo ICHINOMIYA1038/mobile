@@ -22,3 +22,8 @@ apps/*/screenshots/
 apps/*/screenshots_ipad/
 apps/*/store_screenshots/
 apps/*/store_screenshots_ipad/
+
+# env
+.env
+.env.*
+!.env.example
