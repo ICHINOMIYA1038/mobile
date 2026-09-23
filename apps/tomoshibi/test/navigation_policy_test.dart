@@ -24,4 +24,18 @@ void main() {
     expect(isNativePurchaseRequest(Uri.parse('tomoshibi://auth-callback')), isFalse);
     expect(isNativePurchaseRequest(Uri.parse('https://native-purchase')), isFalse);
   });
+
+  test('Universal Linkはtomoshibi本体のホストだけをアプリ内で開く', () {
+    expect(isUniversalLinkHost('tomoshibi.gikyokutosyokan.com'), isTrue);
+    expect(isUniversalLinkHost('gikyokutosyokan.com'), isFalse);
+    expect(isUniversalLinkHost('evil-tomoshibi.gikyokutosyokan.com'), isFalse);
+  });
+
+  test('OSに渡せるのはhttp(s)・mailto・tel・smsだけ', () {
+    expect(canOpenExternally(Uri.parse('https://github.com/x')), isTrue);
+    expect(canOpenExternally(Uri.parse('mailto:support@gikyokutosyokan.com')), isTrue);
+    expect(canOpenExternally(Uri.parse('about:blank')), isFalse);
+    expect(canOpenExternally(Uri.parse('blob:https://tomoshibi.gikyokutosyokan.com/abc')), isFalse);
+    expect(canOpenExternally(Uri.parse('javascript:void(0)')), isFalse);
+  });
 }

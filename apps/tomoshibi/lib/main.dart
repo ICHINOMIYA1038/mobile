@@ -90,6 +90,14 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
   // (多重起動はACQUIRE_ROOT_VIEW_CONTROLLER_FAILED等の不安定な失敗の原因になる)。
   bool _authFlowBusy = false;
   Completer<void>? _resumedCompleter;
+  // ATT許諾が終わって最初のページを読み込むまでは _attHeaders が確定しないため、
+  // その間に届いたUniversal Link(コールドスタート時の起動URL等)はここに溜めて
+  // _bootstrap 側で開く。溜めずに即 loadRequest すると、直後の _bootstrap が
+  // ホームを読み込んで上書きし、共有URLで開いたはずのシーンが消える。
+  Uri? _pendingUniversalLink;
+  bool _bootstrapped = false;
+  // loadRequest したページの onPageFinished を待つための口。
+  Completer<void>? _pageFinishedCompleter;
 
   @override
   void initState() {
@@ -102,20 +110,33 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
         'TomoshibiSession',
         onMessageReceived: (message) {
           final data = jsonDecode(message.message) as Map<String, dynamic>;
-          _sessionCompleter?.complete(data['userId'] as String?);
+          final completer = _sessionCompleter;
           _sessionCompleter = null;
+          // タイムアウト後に遅れて届いた応答で二重completeしないようにする。
+          if (completer != null && !completer.isCompleted) {
+            completer.complete(data['userId'] as String?);
+          }
         },
       )
       ..setNavigationDelegate(
         NavigationDelegate(
-          onProgress: (progress) => setState(() => _progress = progress / 100),
+          onProgress: (progress) {
+            if (mounted) setState(() => _progress = progress / 100);
+          },
           onNavigationRequest: _handleNavigationRequest,
           onWebResourceError: (error) {
-            if (error.isForMainFrame ?? true) {
+            if ((error.isForMainFrame ?? true) && mounted) {
               setState(() => _loadError = error.description);
             }
           },
-          onPageStarted: (_) => setState(() => _loadError = null),
+          onPageStarted: (_) {
+            if (mounted) setState(() => _loadError = null);
+          },
+          onPageFinished: (_) {
+            final completer = _pageFinishedCompleter;
+            _pageFinishedCompleter = null;
+            if (completer != null && !completer.isCompleted) completer.complete();
+          },
         ),
       );
     unawaited(_bootstrap());
@@ -166,7 +187,24 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     _attHeaders = {
       'X-ATT-Status': status == TrackingStatus.authorized ? 'authorized' : 'denied',
     };
-    await _controller.loadRequest(Uri.parse(widget.startUrl), headers: _attHeaders);
+    _bootstrapped = true;
+    // コールドスタート時にUniversal Linkで起動された場合はそのURLを優先する。
+    final initial = _pendingUniversalLink ?? Uri.parse(widget.startUrl);
+    _pendingUniversalLink = null;
+    await _controller.loadRequest(initial, headers: _attHeaders);
+  }
+
+  /// [uri] を読み込み、そのページの onPageFinished まで待つ。
+  /// 読み込み完了を待たずに runJavaScript すると前のページ上で実行されてしまう
+  /// (サインイン直後のセッション確認が未ログイン扱いになる原因)。
+  Future<void> _loadAndWaitFinished(Uri uri) async {
+    final completer = Completer<void>();
+    _pageFinishedCompleter = completer;
+    await _controller.loadRequest(uri, headers: _attHeaders);
+    await completer.future.timeout(
+      const Duration(seconds: 20),
+      onTimeout: () {},
+    );
   }
 
   /// Universal Links (共有URL・戯曲図書館からのリンク等) をタップしてアプリが
@@ -178,9 +216,12 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
   }
 
   void _openUniversalLink(Uri uri) {
-    if (uri.host.endsWith('tomoshibi.gikyokutosyokan.com')) {
-      _controller.loadRequest(uri, headers: _attHeaders);
+    if (!isUniversalLinkHost(uri.host)) return;
+    if (!_bootstrapped) {
+      _pendingUniversalLink = uri;
+      return;
     }
+    _controller.loadRequest(uri, headers: _attHeaders);
   }
 
   Future<NavigationDecision> _handleNavigationRequest(
@@ -224,7 +265,15 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     if (isInAppHost(host)) {
       return NavigationDecision.navigate;
     }
-    await launchUrl(Uri.parse(request.url), mode: LaunchMode.externalApplication);
+    // about:blank / blob: / data: 等はOSに渡しても開けず launchUrl が例外を投げる
+    // (NavigationDelegate内の未捕捉例外はWebViewの操作不能につながる)。
+    if (canOpenExternally(uri)) {
+      try {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        _showMessage('リンクを開けませんでした');
+      }
+    }
     return NavigationDecision.prevent;
   }
 
@@ -250,7 +299,7 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
           : Uri.https('gikyokutosyokan.com', '/api/auth/mobile-handoff', {
               'token': token,
             });
-      await _controller.loadRequest(target, headers: _attHeaders);
+      await _loadAndWaitFinished(target);
     } on PlatformException catch (e) {
       // "CANCELED" はユーザーが自分でシートを閉じた場合のみ。
       // それ以外(ACQUIRE_ROOT_VIEW_CONTROLLER_FAILED 等)は本物のエラーなので表示する。

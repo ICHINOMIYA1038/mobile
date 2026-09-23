@@ -18,6 +18,18 @@ const stripeCheckoutHost = 'checkout.stripe.com';
 
 bool isInAppHost(String host) => inAppHosts.contains(host);
 
+// Universal Link (apple-app-site-association) で受け取ったURLのうち、
+// アプリ内WebViewで開く対象。tomoshibi本体のホストのみ。
+bool isUniversalLinkHost(String host) =>
+    host == 'tomoshibi.gikyokutosyokan.com';
+
+// アプリ内で開かないURLをOS(Safari・メール等)に渡してよいか。
+// about:blank / blob: / data: / javascript: 等はOSでは開けず、launchUrl が
+// 例外を投げるので渡さない。
+const _externalSchemes = {'http', 'https', 'mailto', 'tel', 'sms'};
+
+bool canOpenExternally(Uri uri) => _externalSchemes.contains(uri.scheme);
+
 // Googleは埋め込みWebView内でのOAuthをセキュリティ上ブロックすることがあり、
 // (accounts.google.comをisInAppHostに含めていても)端末の外部Safariに逃げてしまう
 // ことがある(App Store審査 Guideline 4 で指摘)。サインイン導線だけはWebViewで

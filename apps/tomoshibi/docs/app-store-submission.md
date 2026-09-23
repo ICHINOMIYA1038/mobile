@@ -22,7 +22,7 @@ flutter test
 | Bundle ID | 済 | `com.gikyokutosyokan.tomoshibi` |
 | アプリアイコン | 済 | `assets/icon/app_icon.png`（`dart run flutter_launcher_icons`で反映） |
 | pubspec の説明文 | 済 | 2026-08-28に雛形の`"A new Flutter project."`から実内容へ修正 |
-| バージョン／ビルド番号 | **要更新** | 現在`1.0.0+6`。提出のたびに必ず上げる |
+| バージョン／ビルド番号 | **要更新** | 現在`1.0.1+7`。提出のたびに必ず上げる |
 | 課金SDK | 済 | RevenueCat (`purchases_flutter`)。商品 `com.gikyokutosyokan.tomoshibi.pro.monthly` は2026-08-04に「審査用に追加」済み |
 | ATT | 済 | `NSUserTrackingUsageDescription` 設定済み。許諾結果は`X-ATT-Status`ヘッダでサイト側へ渡す |
 | プライバシーポリシーの公開URL | 要確認 | サイト側フッターの「プライバシー」。ASCの申告と一致しているか確認 |
@@ -32,7 +32,7 @@ flutter test
 | 袖(sidewing)視点の不具合 | 済 | Web側 `src/App.tsx` の `CAMERA_VIEWS` を修正し、2026-08-28に本番反映済み（PR #1）。下記「3. スクリーンショット」参照 |
 | App Review Information の Notes | 済 | 2026-08-28にASC APIで更新済み。**上限4000文字**で、更新前は3997文字とほぼ限界だったため、解決済みの過去指摘を1行に圧縮して4.3(a)の説明を先頭に据えた。全文は下記「2. 審査メモ」 |
 | Team | 済 | `DEVELOPMENT_TEAM = SZFUZ58P49`、`CODE_SIGN_STYLE = Automatic` |
-| 端末上のアプリ名 | 要検討 | `CFBundleDisplayName = "Tomoshibi"` に対しストア名は「TOMOSHIBI小屋」。Guideline 2.3.8的には関連していれば可だが、揃えるなら文字数（ホーム画面で切れる）とセットで判断する |
+| 端末上のアプリ名 | 済 | 2026-09-24に `CFBundleDisplayName` を「TOMOSHIBI小屋」に変更しストア名と統一（1.0.1〜）。ホーム画面では英字9文字+漢字2文字で収まる |
 
 ## 2. 審査メモ（App Review Information の Notes）
 
@@ -147,4 +147,30 @@ WebGLコンテキストとボリュメトリックのレンダーターゲット
 | 2026-08-28 | 対応方針を [4.3a-rejection-response.md](4.3a-rejection-response.md) にまとめた |
 | 2026-08-28 | Web側の袖カメラ・俯瞰・縦画面fovを修正し本番反映（tomoshibi PR #1）。ストア用スクリーンショット5枚を撮影・合成 |
 | 2026-08-28 | App Store Connectへ反映: スクリーンショット（iPhone 6.9インチ・iPad 13インチとも1枚→5枚、6.5インチのセットは削除）、説明文の加筆、審査メモの書き直し |
-| 2026-08-28 14:54 | Resolution Centerへ4.3(a)への返信を送信。**Appleからの回答待ち** |
+| 2026-08-28 14:54 | Resolution Centerへ4.3(a)への返信を送信 |
+| 2026-09-02 | **1.0 審査通過・App Store公開**（返信とメタデータ差し替えのみで通過。バイナリ側の対策は不要になった） |
+| 2026-09-24 | 1.0.1(7) を提出（審査待ち）。コールドスタート時のUniversal Linkがホームに上書きされる不具合、サインイン直後のセッション確認の競合、about:blank等を外部に投げて例外になる問題、端末上の表示名を「TOMOSHIBI小屋」に統一、キーワード整理（下記「6. ASO」）。ASC API でバージョン作成→ビルド添付→輸出コンプライアンス→キーワード/リリースノート→reviewSubmission まで実施 |
+
+## 6. ASO（キーワード・検索順位）
+
+2026-09-24 に iTunes Search API（JP）で公開直後の検索順位を確認した。
+
+| 検索語 | 順位 / 件数 |
+| --- | --- |
+| 舞台照明 | 1位 / 17件 |
+| 照明シミュレーター | 1位 / 4件 |
+| 舞台 照明 | 1位 / 14件 |
+| ステージ照明 | 3位 / 13件 |
+| 照明デザイン | 2位 / 47件 |
+| 演劇 照明 | 2位 / 3件 |
+| 舞台美術 | 4位 / 9件 |
+| 劇団 | 12位 / 25件 |
+| 舞台監督 | 5位 / 6件 |
+| DMX | 圏外 / 47件 |
+
+競合がほぼ無いニッチなので、主要語ではすでに1位。伸びしろは**流入語の裾野を広げる**こと。
+1.0 のキーワード欄は「舞台照明,照明シミュレーター,3D,演劇,舞台美術,DMX,照明デザイン,劇団,
+ステージ照明,舞台監督」で、`舞台照明`・`3D` はアプリ名/サブタイトルと重複して枠を浪費していた
+（Appleはタイトル・サブタイトルの語をキーワード欄に重ねても加点しない）。1.0.1 では
+[store-listing.md](store-listing.md) のキーワード欄に差し替える。
+
