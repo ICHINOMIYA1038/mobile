@@ -16,8 +16,8 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _plugin;
 
-  /// 何日先まで予約するか(端末側で定期実行できないため、まとめて予約する)。
-  static const _daysAhead = 7;
+  /// 毎日繰り返す通知のID(1件だけ予約する)。
+  static const _dailyId = 0;
 
   static const _channelId = 'review_reminder';
 
@@ -30,6 +30,18 @@ class NotificationService {
     _initialized = true;
 
     tz.initializeTimeZones();
+    // tz.local は既定でUTC。毎日同じ壁時計の時刻に鳴らすため、端末の現在オフセットを
+    // 持つ固定ロケーションを local にする(追加パッケージ無し。夏時間のある地域では
+    // 切替日に1時間ずれるが、起動のたびに予約し直すので実害はない)。
+    final offset = DateTime.now().timeZoneOffset;
+    tz.setLocalLocation(
+      tz.Location(
+        'device',
+        [tz.minTime],
+        [0],
+        [tz.TimeZone(offset.inMilliseconds, isDst: false, abbreviation: 'LOCAL')],
+      ),
+    );
 
     await _plugin.initialize(
       const InitializationSettings(
@@ -69,7 +81,17 @@ class NotificationService {
     }
   }
 
+  /// 次に鳴らすべき日時。今日の指定時刻を過ぎていれば明日。
+  @visibleForTesting
+  static DateTime nextOccurrence(DateTime now, int hour, int minute) {
+    final today = DateTime(now.year, now.month, now.day, hour, minute);
+    return today.isAfter(now) ? today : today.add(const Duration(days: 1));
+  }
+
   /// 毎日決まった時刻に復習リマインダーを予約し直す。時刻を省略すると19:00。
+  ///
+  /// 以前は7日ぶんを個別に予約していて、設定画面を開き直さない限り8日目から
+  /// 鳴らなくなっていた。今は毎日繰り返す1件だけを予約する。
   Future<void> scheduleDailyReminder({
     DateTime? now,
     int hour = 19,
@@ -80,27 +102,15 @@ class NotificationService {
 
     try {
       await _plugin.cancelAll();
-
-      final base = now ?? DateTime.now();
-      for (var offset = 0; offset < _daysAhead; offset++) {
-        final day = DateTime(
-          base.year,
-          base.month,
-          base.day + offset,
-          hour,
-          minute,
-        );
-        if (!day.isAfter(base)) continue;
-        await _scheduleAt(id: offset, when: day);
-      }
+      await _scheduleDailyAt(nextOccurrence(now ?? DateTime.now(), hour, minute));
     } catch (_) {
       // 通知の予約に失敗しても学習は続けられる。黙って諦める。
     }
   }
 
-  Future<void> _scheduleAt({required int id, required DateTime when}) async {
+  Future<void> _scheduleDailyAt(DateTime when) async {
     await _plugin.zonedSchedule(
-      id,
+      _dailyId,
       '猫が待っています🐱',
       '今日も少しだけ化学を復習してみませんか?',
       tz.TZDateTime.from(when, tz.local),
@@ -117,6 +127,8 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.wallClockTime,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      // 同じ時刻に毎日繰り返す。
+      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 

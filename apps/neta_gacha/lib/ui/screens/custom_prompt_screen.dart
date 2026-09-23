@@ -7,6 +7,9 @@ import '../theme.dart';
 import '../widgets/dashed_border.dart';
 import '../widgets/dot_pattern_background.dart';
 
+/// カスタムお題の最大文字数。カードや共有文に収まる長さ。
+const kCustomPromptMaxLength = 100;
+
 class CustomPromptScreen extends StatefulWidget {
   const CustomPromptScreen({super.key});
 
@@ -63,7 +66,9 @@ class _CustomPromptScreenState extends State<CustomPromptScreen> {
                     controller: controller,
                     autofocus: true,
                     maxLines: 3,
+                    maxLength: kCustomPromptMaxLength,
                     decoration: const InputDecoration(hintText: 'お題の内容'),
+                    onChanged: (_) => setDialogState(() {}),
                   ),
                   const SizedBox(height: 16),
                   DropdownButton<String>(
@@ -90,8 +95,11 @@ class _CustomPromptScreenState extends State<CustomPromptScreen> {
                   child: const Text('キャンセル'),
                 ),
                 FilledButton(
-                  onPressed: () =>
-                      Navigator.of(dialogContext).pop(controller.text.trim()),
+                  onPressed: controller.text.trim().isEmpty
+                      ? null
+                      : () => Navigator.of(
+                          dialogContext,
+                        ).pop(controller.text.trim()),
                   child: const Text('追加'),
                 ),
               ],
@@ -102,6 +110,13 @@ class _CustomPromptScreenState extends State<CustomPromptScreen> {
     );
 
     if (text == null || text.isEmpty) return;
+    if (_all.any((p) => p.situationId == situationId && p.text == text)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('同じお題がすでに登録されています')),
+      );
+      return;
+    }
 
     final prompt = Prompt(
       id: 'custom-${DateTime.now().millisecondsSinceEpoch}',

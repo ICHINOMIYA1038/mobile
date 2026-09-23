@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../logic/quiz_controller.dart';
 import '../widgets/cat_mascot.dart' show CatAccessory;
 import '../widgets/result_cat_show.dart';
+import 'quiz_screen.dart';
 
 class ResultScreen extends StatelessWidget {
   const ResultScreen({
@@ -58,8 +59,17 @@ class ResultScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: () {
+                      // クイズ画面は結果画面に置き換わっている(スタックに無い)ので、
+                      // pop するとホームに戻ってしまう。クイズ画面を積み直す。
                       controller.restart();
-                      Navigator.of(context).pop();
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) => QuizScreen(
+                            key: UniqueKey(),
+                            controller: controller,
+                          ),
+                        ),
+                      );
                     },
                     child: const Text('もう一度'),
                   ),

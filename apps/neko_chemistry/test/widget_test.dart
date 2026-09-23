@@ -333,7 +333,7 @@ void main() {
     expect(find.text('炭素'), findsOneWidget);
   });
 
-  testWidgets('クイズを1問正解すると「はじめの一歩」と「満点クリア」バッジが解放される', (
+  testWidgets('クイズを1問正解すると「はじめの一歩」は解放されるが、「満点クリア」は5問以上でないと解放されない', (
     WidgetTester tester,
   ) async {
     // ResultScreenへの実際の画面遷移は結果演出用のTimerが残り続けテストの
@@ -350,6 +350,20 @@ void main() {
 
     final badges = await ProgressRepository().loadUnlockedBadges();
     expect(badges, contains(ProgressRepository.badgeFirstStep));
-    expect(badges, contains(ProgressRepository.badgePerfectClear));
+    expect(badges, isNot(contains(ProgressRepository.badgePerfectClear)));
+
+    final five = QuizController(questionCount: 5);
+    await tester.runAsync(() => five.init());
+    for (var i = 0; i < 5; i++) {
+      five.selectAnswer(five.currentQuestion.answerIndex);
+      five.nextQuestion();
+    }
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 50)),
+    );
+    expect(
+      await ProgressRepository().loadUnlockedBadges(),
+      contains(ProgressRepository.badgePerfectClear),
+    );
   });
 }

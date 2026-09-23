@@ -41,7 +41,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   void _share(Prompt prompt) {
-    SharePlus.instance.share(ShareParams(text: '${prompt.text}\n#配信ネタガチャ'));
+    SharePlus.instance.share(ShareParams(text: '${prompt.text}\n#ネタガチャ'));
   }
 
   @override

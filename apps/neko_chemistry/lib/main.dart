@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'data/notification_service.dart';
 import 'data/progress_repository.dart';
 import 'ui/screens/onboarding_screen.dart';
 import 'ui/theme.dart';
@@ -12,7 +16,24 @@ void main() {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  // リマインダーは毎日繰り返す1件の予約だが、OSの都合で消えることがあるため
+  // 起動のたびに予約し直す。
+  unawaited(_rescheduleReminderIfEnabled());
   runApp(const NekoChemistryApp());
+}
+
+Future<void> _rescheduleReminderIfEnabled() async {
+  try {
+    final repo = ProgressRepository();
+    if (!await repo.loadNotificationsEnabled()) return;
+    final minutes = await repo.loadReminderMinutes();
+    await NotificationService().scheduleDailyReminder(
+      hour: minutes ~/ 60,
+      minute: minutes % 60,
+    );
+  } catch (_) {
+    // 起動を止めない。
+  }
 }
 
 class NekoChemistryApp extends StatelessWidget {
@@ -23,6 +44,14 @@ class NekoChemistryApp extends StatelessWidget {
     return MaterialApp(
       title: '猫と学ぶ高校化学',
       debugShowCheckedModeBanner: false,
+      // 時刻ピッカー等の標準ウィジェットを日本語にする。
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('ja')],
+      locale: const Locale('ja'),
       theme: buildTheme(Brightness.light),
       darkTheme: buildTheme(Brightness.dark),
       home: const _AppRoot(),

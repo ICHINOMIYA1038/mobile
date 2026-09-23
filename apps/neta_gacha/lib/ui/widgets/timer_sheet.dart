@@ -28,6 +28,8 @@ class _TimerSheetState extends State<TimerSheet> {
   int _secondsLeft = _defaultSeconds;
   bool _running = false;
   Timer? _timer;
+  // 残り時間は終了予定時刻から計算する(ティックを数えるとバックグラウンド中に止まる)。
+  DateTime? _endsAt;
 
   @override
   void dispose() {
@@ -45,9 +47,12 @@ class _TimerSheetState extends State<TimerSheet> {
 
   void _start() {
     if (_running) return;
+    _endsAt = DateTime.now().add(Duration(seconds: _secondsLeft));
     setState(() => _running = true);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_secondsLeft <= 1) {
+      if (!mounted) return;
+      final remaining = _endsAt!.difference(DateTime.now()).inSeconds;
+      if (remaining <= 0) {
         _timer?.cancel();
         setState(() {
           _secondsLeft = 0;
@@ -55,13 +60,18 @@ class _TimerSheetState extends State<TimerSheet> {
         });
         return;
       }
-      setState(() => _secondsLeft -= 1);
+      setState(() => _secondsLeft = remaining);
     });
   }
 
   void _pause() {
     _timer?.cancel();
-    setState(() => _running = false);
+    setState(() {
+      _secondsLeft = _endsAt == null
+          ? _secondsLeft
+          : _endsAt!.difference(DateTime.now()).inSeconds.clamp(0, _maxSeconds);
+      _running = false;
+    });
   }
 
   void _reset() {
@@ -112,8 +122,10 @@ class _TimerSheetState extends State<TimerSheet> {
               ],
             ),
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
               children: [
                 if (!_running)
                   ElevatedButton.icon(
@@ -127,7 +139,6 @@ class _TimerSheetState extends State<TimerSheet> {
                     icon: const Icon(Icons.pause_rounded),
                     label: const Text('一時停止'),
                   ),
-                const SizedBox(width: 12),
                 OutlinedButton.icon(
                   onPressed: _reset,
                   icon: const Icon(Icons.replay_rounded),

@@ -112,6 +112,9 @@ class AdService {
   /// 設定画面などから同意内容をいつでも見直せるようにする入り口が必要か。
   static Future<bool> isPrivacyOptionsRequired() async {
     if (disableForTests) return false;
+    // 同意情報を取得する前に問い合わせると unknown になり、EEAのユーザーに
+    // 見直し導線が出ないことがある。
+    await ensureInitialized();
     final status = await ConsentInformation.instance
         .getPrivacyOptionsRequirementStatus();
     return status == PrivacyOptionsRequirementStatus.required;
@@ -158,15 +161,38 @@ class AdService {
     return completer.future;
   }
 
-  /// インタースティシャル広告を読み込んで表示する。表示できたか(shown)を返す。
-  /// 読み込み・表示に失敗しても例外は投げず false を返すだけ(抽選は止めない)。
+  /// 事前に読み込んであるインタースティシャル。showInterstitial は
+  /// これがある場合だけ表示する(その場で読み込むと数秒後に別の画面へ被さる)。
+  static InterstitialAd? _preloaded;
+  static Future<void>? _preloading;
+
+  /// インタースティシャルを裏で読み込んでおく。抽選画面を開いたときに呼ぶ。
+  Future<void> preloadInterstitial() {
+    if (kIsWeb || (!Platform.isIOS && !Platform.isAndroid)) {
+      return Future.value();
+    }
+    if (_preloaded != null) return Future.value();
+    return _preloading ??= () async {
+      try {
+        await ensureInitialized();
+        if (!(await canRequestAds())) return;
+        _preloaded = await _loadInterstitial();
+      } finally {
+        _preloading = null;
+      }
+    }();
+  }
+
+  /// 読み込み済みのインタースティシャルを表示する。表示できたか(shown)を返す。
+  /// 未読み込みなら何も出さず false(抽選は止めない)。表示後は次を読み込んでおく。
   Future<bool> showInterstitial() async {
     if (kIsWeb || (!Platform.isIOS && !Platform.isAndroid)) return false;
-    await ensureInitialized();
-    if (!(await canRequestAds())) return false;
-
-    final ad = await _loadInterstitial();
-    if (ad == null) return false;
+    final ad = _preloaded;
+    _preloaded = null;
+    if (ad == null) {
+      unawaited(preloadInterstitial());
+      return false;
+    }
 
     final completer = Completer<bool>();
     ad.fullScreenContentCallback = FullScreenContentCallback(
@@ -181,10 +207,12 @@ class AdService {
       },
     );
     await ad.show();
-    return completer.future.timeout(
+    final shown = await completer.future.timeout(
       _dismissFallbackTimeout,
       onTimeout: () => true,
     );
+    unawaited(preloadInterstitial());
+    return shown;
   }
 
   Future<InterstitialAd?> _loadInterstitial() {

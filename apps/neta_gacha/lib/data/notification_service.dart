@@ -18,8 +18,8 @@ class NotificationService {
   static const _minutesKey = 'reminder_minutes_v1';
   static const _defaultMinutes = 19 * 60; // 19:00
 
-  /// 何日先まで予約するか(端末側で定期実行できないため、まとめて予約する)。
-  static const _daysAhead = 7;
+  /// 毎日繰り返す通知のID(1件だけ予約する)。
+  static const _dailyId = 1;
 
   static const _channelId = 'stream_reminder';
 
@@ -52,6 +52,19 @@ class NotificationService {
     _initialized = true;
 
     tz.initializeTimeZones();
+    // tz.local は既定でUTC。毎日同じ「壁時計の時刻」に鳴らすには端末のローカル時刻で
+    // 予約する必要があるので、端末の現在オフセットを持つ固定ロケーションを local にする
+    // (追加パッケージ無しで済ませる。夏時間のある地域では切替日に1時間ずれるが、
+    // 起動のたびに予約し直すので実害はない)。
+    final offset = DateTime.now().timeZoneOffset;
+    tz.setLocalLocation(
+      tz.Location(
+        'device',
+        [tz.minTime],
+        [0],
+        [tz.TimeZone(offset.inMilliseconds, isDst: false, abbreviation: 'LOCAL')],
+      ),
+    );
 
     await _plugin.initialize(
       const InitializationSettings(
@@ -91,7 +104,59 @@ class NotificationService {
     }
   }
 
+  /// 端末側で通知が許可されているか。判定できない環境では null。
+  Future<bool?> areNotificationsAllowed() async {
+    if (!_isSupported) return null;
+    await _ensureInitialized();
+    try {
+      if (Platform.isIOS) {
+        final options = await _plugin
+            .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin
+            >()
+            ?.checkPermissions();
+        return options?.isEnabled;
+      }
+      return await _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.areNotificationsEnabled();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 設定がONなら予約し直す。起動時に呼ぶ。
+  Future<void> rescheduleIfEnabled() async {
+    if (!_isSupported) return;
+    try {
+      if (!await loadEnabled()) return;
+      await scheduleDailyReminder(
+        minutesSinceMidnight: await loadMinutesSinceMidnight(),
+      );
+    } catch (_) {
+      // 起動を止めない。
+    }
+  }
+
+  /// 次に鳴らすべき日時。今日の指定時刻を過ぎていれば明日。
+  @visibleForTesting
+  static DateTime nextOccurrence(DateTime now, int minutesSinceMidnight) {
+    final today = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      minutesSinceMidnight ~/ 60,
+      minutesSinceMidnight % 60,
+    );
+    return today.isAfter(now) ? today : today.add(const Duration(days: 1));
+  }
+
   /// 毎日決まった時刻に配信前リマインダーを予約し直す。
+  ///
+  /// 以前は7日ぶんを個別に予約していて、設定画面を開き直さない限り8日目から
+  /// 鳴らなくなっていた。今は毎日繰り返す1件だけを予約する。
   Future<void> scheduleDailyReminder({
     DateTime? now,
     required int minutesSinceMidnight,
@@ -101,31 +166,18 @@ class NotificationService {
 
     try {
       await _plugin.cancelAll();
-
-      final base = now ?? DateTime.now();
-      final hour = minutesSinceMidnight ~/ 60;
-      final minute = minutesSinceMidnight % 60;
-      for (var offset = 0; offset < _daysAhead; offset++) {
-        final day = DateTime(
-          base.year,
-          base.month,
-          base.day + offset,
-          hour,
-          minute,
-        );
-        if (!day.isAfter(base)) continue;
-        await _scheduleAt(id: offset, when: day);
-      }
+      final when = nextOccurrence(now ?? DateTime.now(), minutesSinceMidnight);
+      await _scheduleDailyAt(when);
     } catch (_) {
       // 通知の予約に失敗してもアプリは通常どおり使える。黙って諦める。
     }
   }
 
-  Future<void> _scheduleAt({required int id, required DateTime when}) async {
+  Future<void> _scheduleDailyAt(DateTime when) async {
     await _plugin.zonedSchedule(
-      id,
+      _dailyId,
       '配信の準備はできてる?🎙️',
-      '今日のネタ、配信ネタガチャで引いてみませんか?',
+      '今日のネタ、ネタガチャで引いてみませんか?',
       tz.TZDateTime.from(when, tz.local),
       const NotificationDetails(
         iOS: DarwinNotificationDetails(),
@@ -140,6 +192,8 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.wallClockTime,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      // 同じ時刻に毎日繰り返す。
+      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 

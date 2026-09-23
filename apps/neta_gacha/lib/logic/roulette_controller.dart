@@ -71,7 +71,24 @@ class RouletteController extends ChangeNotifier {
 
     isLoading = false;
     notifyListeners();
+    // 全画面広告は事前読み込みしておき、表示のタイミングは画面側が決める。
+    unawaited(_adService.preloadInterstitial());
   }
+
+  /// 直近の抽選で全画面広告を出す番になったか。画面側が演出の後に取り出して表示する。
+  bool _interstitialDue = false;
+  bool takeInterstitialDue() {
+    final due = _interstitialDue;
+    _interstitialDue = false;
+    return due;
+  }
+
+  /// 事前読み込み済みの全画面広告を表示する(画面がまだ表示中のときだけ呼ぶこと)。
+  Future<bool> showInterstitial() => _adService.showInterstitial();
+
+  /// プールの件数(テスト用)。
+  @visibleForTesting
+  int get poolSize => _pool.length;
 
   /// お題を1件抽選する。プールが空(NG設定で全滅した等)ならfalseを返す。
   Future<bool> draw() async {
@@ -92,7 +109,7 @@ class RouletteController extends ChangeNotifier {
     _drawsSinceInterstitial++;
     if (_drawsSinceInterstitial >= _interstitialInterval) {
       _drawsSinceInterstitial = 0;
-      unawaited(_adService.showInterstitial());
+      _interstitialDue = true;
     }
     return true;
   }

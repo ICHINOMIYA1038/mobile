@@ -19,7 +19,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('配信ネタガチャ'),
+        title: const Text('ネタガチャ'),
         actions: [
           IconButton(
             tooltip: 'お気に入り',
@@ -68,11 +68,17 @@ class HomeScreen extends StatelessWidget {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
-                  childAspectRatio: 0.92,
+                  // 文字サイズを大きくしている端末では説明の2行目が切れるので、
+                  // タイルを縦に伸ばす。
+                  childAspectRatio:
+                      0.92 /
+                      MediaQuery.textScalerOf(context)
+                          .scale(1.0)
+                          .clamp(1.0, 1.6),
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {

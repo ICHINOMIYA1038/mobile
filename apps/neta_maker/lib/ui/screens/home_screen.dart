@@ -5,6 +5,7 @@ import '../../models/maker_result.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/maker_category_card.dart';
 import '../widgets/parchment_background.dart';
+import '../widgets/privacy_options_action.dart';
 import 'input_screen.dart';
 
 /// カテゴリ選択画面。広告は一切置かない。
@@ -21,6 +22,7 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: colors.textPrimary,
+        actions: const [PrivacyOptionsAction()],
       ),
       body: ParchmentBackground(
         child: SafeArea(

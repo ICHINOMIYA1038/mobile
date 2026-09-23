@@ -51,6 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _toggleTag(String tagId) async {
     await _ngRepository.toggleTag(tagId);
+    if (!mounted) return;
     setState(() {
       if (!_disabledTagIds.add(tagId)) {
         _disabledTagIds.remove(tagId);
@@ -60,7 +61,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _onReminderChanged(bool enabled) async {
     if (enabled) {
-      await _notificationService.requestPermission();
+      final granted = await _notificationService.requestPermission();
+      // 一度拒否されると iOS はダイアログを二度と出さないので、その場合も含めて
+      // 端末側の許可状態を確認する。届かないのにスイッチだけONにしない。
+      final allowed =
+          granted || (await _notificationService.areNotificationsAllowed() ?? true);
+      if (!allowed) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              '通知が許可されていません。「設定」アプリ→「通知」→「ネタガチャ」で許可してください。',
+            ),
+          ),
+        );
+        setState(() => _reminderEnabled = false);
+        return;
+      }
       await _notificationService.setEnabled(true);
       await _notificationService.scheduleDailyReminder(
         minutesSinceMidnight: _reminderMinutes,

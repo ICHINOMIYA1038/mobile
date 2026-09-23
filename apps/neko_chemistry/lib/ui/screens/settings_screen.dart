@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../data/notification_service.dart';
 import '../../data/progress_repository.dart';
@@ -13,6 +14,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  String? _appVersion;
   final _progressRepository = ProgressRepository();
 
   bool _notificationsEnabled = false;
@@ -23,6 +25,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _appVersion = info.version);
+    }).catchError((_) {
+      // テスト等、プラグインが無い環境ではバージョンを出さないだけ。
+    });
     _load();
   }
 
@@ -205,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 24),
                 Center(
                   child: Text(
-                    '猫と学ぶ高校化学 v1.0.0',
+                    '猫と学ぶ高校化学 v${_appVersion ?? ''}',
                     style: TextStyle(
                       color: colors.textPrimary.withValues(alpha: 0.5),
                       fontSize: 12,

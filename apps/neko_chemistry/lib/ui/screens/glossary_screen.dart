@@ -312,44 +312,47 @@ class _FlashcardTabState extends State<_FlashcardTab> {
                   ],
                 ),
                 child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: labMint.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          term.unit,
-                          style: const TextStyle(
-                            color: labMint,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
+                  // 大きな文字設定・小さい端末では説明が収まらないのでスクロール可能に。
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: labMint.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            term.unit,
+                            style: const TextStyle(
+                              color: labMint,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        _flipped ? term.explanation : term.term,
-                        textAlign: TextAlign.center,
-                        style: _flipped
-                            ? Theme.of(context).textTheme.bodyLarge
-                            : Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        _flipped ? 'タップして表に戻す' : 'タップして意味を見る',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.textPrimary.withValues(alpha: 0.4),
+                        const SizedBox(height: 20),
+                        Text(
+                          _flipped ? term.explanation : term.term,
+                          textAlign: TextAlign.center,
+                          style: _flipped
+                              ? Theme.of(context).textTheme.bodyLarge
+                              : Theme.of(context).textTheme.headlineSmall,
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+                        Text(
+                          _flipped ? 'タップして表に戻す' : 'タップして意味を見る',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.textPrimary.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

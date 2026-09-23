@@ -11,7 +11,7 @@ void main() {
     await tester.pumpWidget(const NetaGachaApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('配信ネタガチャ'), findsOneWidget);
+    expect(find.text('ネタガチャ'), findsOneWidget);
     expect(find.text('オープニング'), findsOneWidget);
     expect(find.text('初見さん向け'), findsOneWidget);
   });

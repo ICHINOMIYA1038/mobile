@@ -37,120 +37,154 @@ class _QuizScreenState extends State<QuizScreen> {
     setState(() => _accessory = CatAccessory.fromId(id));
   }
 
+  Future<void> _confirmLeave() async {
+    final c = widget.controller;
+    // 1問も解いていない、または終了済みならそのまま戻る。
+    if (!c.isLoaded || c.isFinished || (c.currentIndex == 0 && !c.isAnswered)) {
+      Navigator.of(context).pop();
+      return;
+    }
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('クイズをやめますか?'),
+        content: const Text('ここまでの回答は記録されています。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('続ける'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('やめる'),
+          ),
+        ],
+      ),
+    );
+    if (leave == true && mounted) Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('猫と学ぶ高校化学')),
-      body: AnimatedBuilder(
-        animation: widget.controller,
-        builder: (context, _) {
-          final c = widget.controller;
-          if (!c.isLoaded) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (c.isFinished) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) =>
-                      ResultScreen(controller: c, accessory: _accessory),
-                ),
-              );
-            });
-            return const SizedBox.shrink();
-          }
-
-          final q = c.currentQuestion;
-          final trackSize = Size(
-            cardSize.width + trackPad * 2,
-            cardSize.height + trackPad * 2,
-          );
-
-          return SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+    // 戻るボタン・画面端スワイプの両方を確認ダイアログに通す。
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _confirmLeave();
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('猫と学ぶ高校化学')),
+        body: AnimatedBuilder(
+          animation: widget.controller,
+          builder: (context, _) {
+            final c = widget.controller;
+            if (!c.isLoaded) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (c.isFinished) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ResultScreen(controller: c, accessory: _accessory),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '第${c.currentIndex + 1}問 / ${c.totalCount}',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      Text(
-                        'スコア: ${c.score}',
-                        style: Theme.of(context).textTheme.bodyMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                    ],
+                );
+              });
+              return const SizedBox.shrink();
+            }
+
+            final q = c.currentQuestion;
+            final trackSize = Size(
+              cardSize.width + trackPad * 2,
+              cardSize.height + trackPad * 2,
+            );
+
+            return SafeArea(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '第${c.currentIndex + 1}問 / ${c.totalCount}',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        Text(
+                          'スコア: ${c.score}',
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                Expanded(
-                  // 画面が低い端末では収まりきらないことがあるため、その場合はスクロールで逃がす。
-                  child: SingleChildScrollView(
-                    child: Center(
-                      widthFactor: 1,
-                      child: SizedBox(
-                        width: trackSize.width,
-                        height:
-                            trackSize.height +
-                            _buttonGap +
-                            _nextButtonAreaHeight,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Positioned(
-                              left: trackPad,
-                              top: trackPad,
-                              child: _QuizCard(
-                                size: cardSize,
-                                unit: q.unit,
-                                question: q.question,
-                                choices: q.choices,
-                                selectedIndex: c.selectedIndex,
-                                answerIndex: q.answerIndex,
-                                explanation: q.explanation,
-                                onSelect: c.selectAnswer,
-                                isBookmarked: c.isCurrentBookmarked,
-                                onToggleBookmark: c.toggleBookmark,
+                  Expanded(
+                    // 画面が低い端末では収まりきらないことがあるため、その場合はスクロールで逃がす。
+                    child: SingleChildScrollView(
+                      child: Center(
+                        widthFactor: 1,
+                        child: SizedBox(
+                          width: trackSize.width,
+                          height:
+                              trackSize.height +
+                              _buttonGap +
+                              _nextButtonAreaHeight,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Positioned(
+                                left: trackPad,
+                                top: trackPad,
+                                child: _QuizCard(
+                                  size: cardSize,
+                                  unit: q.unit,
+                                  question: q.question,
+                                  choices: q.choices,
+                                  selectedIndex: c.selectedIndex,
+                                  answerIndex: q.answerIndex,
+                                  explanation: q.explanation,
+                                  onSelect: c.selectAnswer,
+                                  isBookmarked: c.isCurrentBookmarked,
+                                  onToggleBookmark: c.toggleBookmark,
+                                ),
                               ),
-                            ),
-                            // カードの外(固定領域)に置くことで、解説文の長さに高さが左右されない。
-                            Positioned(
-                              left: 0,
-                              right: 0,
-                              top: trackSize.height + _buttonGap,
-                              height: _nextButtonAreaHeight,
-                              child: Center(
-                                child: c.isAnswered
-                                    ? ElevatedButton(
-                                        onPressed: c.nextQuestion,
-                                        child: const Text('つぎへ'),
-                                      )
-                                    : null,
+                              // カードの外(固定領域)に置くことで、解説文の長さに高さが左右されない。
+                              Positioned(
+                                left: 0,
+                                right: 0,
+                                top: trackSize.height + _buttonGap,
+                                height: _nextButtonAreaHeight,
+                                child: Center(
+                                  child: c.isAnswered
+                                      ? ElevatedButton(
+                                          onPressed: c.nextQuestion,
+                                          child: const Text('つぎへ'),
+                                        )
+                                      : null,
+                                ),
                               ),
-                            ),
-                            // 猫はボタンに抱きつくため、一番上(最後)に描いてボタンに隠れないようにする。
-                            CatMascot(
-                              trackSize: trackSize,
-                              waiting: c.isAnswered,
-                              accessory: _accessory,
-                              correct: c.isCurrentCorrect,
-                            ),
-                          ],
+                              // 猫はボタンに抱きつくため、一番上(最後)に描いてボタンに隠れないようにする。
+                              CatMascot(
+                                trackSize: trackSize,
+                                waiting: c.isAnswered,
+                                accessory: _accessory,
+                                correct: c.isCurrentCorrect,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -235,7 +269,9 @@ class _QuizCard extends StatelessWidget {
                     isBookmarked ? Icons.star : Icons.star_border,
                     color: isBookmarked
                         ? nekoOrange
-                        : AppColors.of(context).textPrimary.withValues(alpha: 0.4),
+                        : AppColors.of(
+                            context,
+                          ).textPrimary.withValues(alpha: 0.4),
                   ),
                 ),
               ],
@@ -315,18 +351,44 @@ class _ChoiceButton extends StatelessWidget {
         break;
     }
 
-    return InkWell(
-      onTap: state == _ChoiceState.idle ? onTap : null,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: border, width: 1.4),
+    // 正誤を色だけで伝えない(色覚・VoiceOver対応)。
+    final IconData? icon = switch (state) {
+      _ChoiceState.correct => Icons.check_circle_rounded,
+      _ChoiceState.wrong => Icons.cancel_rounded,
+      _ => null,
+    };
+    final semanticLabel = switch (state) {
+      _ChoiceState.correct => '正解: $label',
+      _ChoiceState.wrong => '不正解: $label',
+      _ => label,
+    };
+    return Semantics(
+      button: state == _ChoiceState.idle,
+      label: semanticLabel,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: state == _ChoiceState.idle ? onTap : null,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: border, width: 1.4),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(label, style: TextStyle(color: fg)),
+              ),
+              if (icon != null) ...[
+                const SizedBox(width: 8),
+                Icon(icon, size: 18, color: border),
+              ],
+            ],
+          ),
         ),
-        child: Text(label, style: TextStyle(color: fg)),
       ),
     );
   }

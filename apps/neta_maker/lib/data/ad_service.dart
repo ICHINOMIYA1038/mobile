@@ -48,21 +48,27 @@ class AdService {
     await MobileAds.instance.initialize();
   }
 
-  static Future<void> _requestConsent() {
-    final completer = Completer<void>();
+  static Future<void> _requestConsent() async {
+    // タイムアウトは同意情報の取得だけに掛ける。フォームを読んでいる時間まで含めると
+    // 10秒で打ち切られて canRequestAds が false のまま固定され、その画面では広告が出ない。
+    final updated = Completer<bool>();
     ConsentInformation.instance.requestConsentInfoUpdate(
       ConsentRequestParameters(),
-      () async {
-        if (await ConsentInformation.instance.isConsentFormAvailable()) {
-          await _loadAndShowConsentForm();
-        }
-        if (!completer.isCompleted) completer.complete();
+      () {
+        if (!updated.isCompleted) updated.complete(true);
       },
       (_) {
-        if (!completer.isCompleted) completer.complete();
+        if (!updated.isCompleted) updated.complete(false);
       },
     );
-    return completer.future.timeout(const Duration(seconds: 10), onTimeout: () {});
+    final ok = await updated.future.timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => false,
+    );
+    if (!ok) return;
+    if (await ConsentInformation.instance.isConsentFormAvailable()) {
+      await _loadAndShowConsentForm();
+    }
   }
 
   static Future<void> _loadAndShowConsentForm() {
@@ -78,6 +84,7 @@ class AdService {
 
   static Future<bool> isPrivacyOptionsRequired() async {
     if (disableForTests) return false;
+    await ensureInitialized();
     final status = await ConsentInformation.instance
         .getPrivacyOptionsRequirementStatus();
     return status == PrivacyOptionsRequirementStatus.required;

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
@@ -78,28 +79,34 @@ class QuizController extends ChangeNotifier {
   /// ブックマークした問題だけ、通常モードなら単元で絞り込んだ上でシャッフルして
   /// 出題数ぶんを切り出す。
   void _pickSession() {
+    final random = Random();
+    _studiedMarked = false;
     if (weakReviewOnly) {
-      _questions = _allQuestions
-          .where((q) => _weakIds.contains(q.id))
-          .toList();
+      _questions = [
+        for (final q in _allQuestions)
+          if (_weakIds.contains(q.id)) q.shuffled(random),
+      ];
       return;
     }
     if (bookmarkOnly) {
-      _questions = _allQuestions
-          .where((q) => _bookmarkIds.contains(q.id))
-          .toList();
+      _questions = [
+        for (final q in _allQuestions)
+          if (_bookmarkIds.contains(q.id)) q.shuffled(random),
+      ];
       return;
     }
 
     final pool = (units == null || units!.isEmpty)
         ? _allQuestions
         : _allQuestions.where((q) => units!.contains(q.unit)).toList();
-    final shuffled = List<Question>.from(pool)..shuffle();
+    final shuffled = List<Question>.from(pool)..shuffle(random);
     final count = questionCount == null
         ? shuffled.length
         : questionCount!.clamp(1, shuffled.isEmpty ? 1 : shuffled.length);
-    _questions = shuffled.take(count).toList();
+    _questions = [for (final q in shuffled.take(count)) q.shuffled(random)];
   }
+
+  bool _studiedMarked = false;
 
   void selectAnswer(int index) {
     if (isAnswered || isFinished) return;
@@ -115,6 +122,12 @@ class QuizController extends ChangeNotifier {
         correct: correct,
       ),
     );
+    // 最初の1問に答えた時点で「今日学習した」ことにする。途中で戻っても
+    // 連続日数と学習カレンダーが食い違わないようにするため。
+    if (!_studiedMarked) {
+      _studiedMarked = true;
+      unawaited(_progressRepository.markStudiedToday());
+    }
     notifyListeners();
   }
 
@@ -152,7 +165,8 @@ class QuizController extends ChangeNotifier {
       unitStats: unitStats,
       streak: streak,
     );
-    if (totalCount > 0 && _score == totalCount) {
+    // 1問だけの苦手復習で満点になっても「満点クリア」バッジは出さない。
+    if (totalCount >= 5 && _score == totalCount) {
       await _progressRepository.unlockBadge(ProgressRepository.badgePerfectClear);
     }
 

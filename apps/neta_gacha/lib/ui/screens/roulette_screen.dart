@@ -44,12 +44,21 @@ class _RouletteScreenState extends State<RouletteScreen> {
 
   Future<void> _draw() async {
     final ok = await _controller.draw();
-    if (!ok && mounted) {
+    if (!mounted) return;
+    if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('引けるお題がありません。NG設定を見直してみてください。'),
+          content: Text('引けるお題がありません。設定の「表示しないテーマ」を見直してみてください。'),
         ),
       );
+      return;
+    }
+    // 全画面広告はカプセルの演出が終わってから、この画面がまだ表示中のときだけ出す
+    // (お題を読む前や、戻った先のホームに被せない)。
+    if (_controller.takeInterstitialDue()) {
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
+      if (!mounted || !(ModalRoute.of(context)?.isCurrent ?? false)) return;
+      await _controller.showInterstitial();
     }
   }
 
@@ -57,7 +66,7 @@ class _RouletteScreenState extends State<RouletteScreen> {
     final prompt = _controller.currentPrompt;
     if (prompt == null) return;
     SharePlus.instance.share(
-      ShareParams(text: '${prompt.text}\n#配信ネタガチャ'),
+      ShareParams(text: '${prompt.text}\n#ネタガチャ'),
     );
   }
 

@@ -3,7 +3,7 @@ resolution: workspace
 description: "猫と学ぶ高校化学 - デザイン重視の一問一答クイズアプリ"
 publish_to: 'none'
 
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: ^3.11.5
@@ -18,6 +18,9 @@ dependencies:
   timezone: ^0.10.0
   share_plus: ^13.3.0
   path_provider: ^2.1.5
+  package_info_plus: ^10.1.0
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:

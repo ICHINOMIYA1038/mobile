@@ -456,12 +456,15 @@ class _ShareCardState extends State<_ShareCard> {
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
+              // 共有画像は inkBrown の文字で描くので、ダークテーマでも背景を
+              // 不透明なクリーム色に固定する(以前は半透明で黒地に茶文字になっていた)。
+              color: nekoCream,
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  nekoOrange.withValues(alpha: 0.18),
-                  labMint.withValues(alpha: 0.18),
+                  Color.alphaBlend(nekoOrange.withValues(alpha: 0.18), nekoCream),
+                  Color.alphaBlend(labMint.withValues(alpha: 0.18), nekoCream),
                 ],
               ),
               borderRadius: BorderRadius.circular(24),
@@ -527,7 +530,7 @@ class _CatTypeCard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                '猫タイプ診断: 各分野を5問以上解くと診断できます',
+                '猫タイプ診断: いずれかの分野を5問以上解くと診断できます',
                 style: TextStyle(
                   fontSize: 12,
                   color: colors.textPrimary.withValues(alpha: 0.6),

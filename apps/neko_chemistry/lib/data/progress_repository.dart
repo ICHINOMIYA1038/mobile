@@ -32,11 +32,7 @@ class UnitStats {
 
 /// 連続学習日数の記録。
 class StreakData {
-  const StreakData({
-    this.current = 0,
-    this.best = 0,
-    this.lastStudyDate,
-  });
+  const StreakData({this.current = 0, this.best = 0, this.lastStudyDate});
 
   final int current;
   final int best;
@@ -94,7 +90,7 @@ class ProgressRepository {
     return (data['bookmarks'] as List).cast<String>().toSet();
   }
 
-  Future<void> toggleBookmark(String questionId) async {
+  Future<void> toggleBookmark(String questionId) => _serialized(() async {
     final data = await _loadProgress();
     final bookmarks = (data['bookmarks'] as List).cast<String>().toSet();
     if (!bookmarks.remove(questionId)) {
@@ -102,7 +98,7 @@ class ProgressRepository {
     }
     data['bookmarks'] = bookmarks.toList();
     await _saveProgress(data);
-  }
+  });
 
   /// 暗記カードモードで「覚えた」と回答した用語(GlossaryTerm.term)の集合。
   Future<Set<String>> loadKnownTerms() async {
@@ -124,8 +120,7 @@ class ProgressRepository {
     final data = await _loadProgress();
     final raw = (data['unitStats'] as Map).cast<String, dynamic>();
     return raw.map(
-      (unit, json) =>
-          MapEntry(unit, UnitStats.fromJson((json as Map).cast())),
+      (unit, json) => MapEntry(unit, UnitStats.fromJson((json as Map).cast())),
     );
   }
 
@@ -153,7 +148,7 @@ class ProgressRepository {
     required String unit,
     required bool correct,
     DateTime? now,
-  }) async {
+  }) => _serialized(() async {
     final data = await _loadProgress();
 
     final weak = (data['weak'] as List).cast<String>().toSet();
@@ -177,8 +172,7 @@ class ProgressRepository {
 
     data['totalAnswered'] = ((data['totalAnswered'] as num?)?.toInt() ?? 0) + 1;
     if (correct) {
-      data['totalCorrect'] =
-          ((data['totalCorrect'] as num?)?.toInt() ?? 0) + 1;
+      data['totalCorrect'] = ((data['totalCorrect'] as num?)?.toInt() ?? 0) + 1;
     }
 
     final studyLog = (data['studyLog'] as Map).cast<String, dynamic>();
@@ -187,7 +181,7 @@ class ProgressRepository {
     data['studyLog'] = studyLog;
 
     await _saveProgress(data);
-  }
+  });
 
   Future<Map<String, dynamic>> _loadProgress() async {
     try {
@@ -220,22 +214,43 @@ class ProgressRepository {
     'knownTerms': <String>[],
   };
 
-  Future<StreakData> loadStreak() async {
+  Future<StreakData> loadStreak({DateTime? now}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_streakKey);
       if (raw == null) return const StreakData();
-      return StreakData.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      final streak = StreakData.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
+      // 昨日までに学習していなければ連続は途切れている。保存値は回答時にしか
+      // 更新されないので、表示用にはここで0に落とす(bestは残す)。
+      final base = now ?? DateTime.now();
+      final last = streak.lastStudyDate;
+      if (last != null &&
+          last != _dateKey(base) &&
+          last != _dateKey(base.subtract(const Duration(days: 1)))) {
+        return StreakData(current: 0, best: streak.best, lastStudyDate: last);
+      }
+      return streak;
     } catch (_) {
       return const StreakData();
     }
+  }
+
+  /// progress_v1 への読み書きを直列化する。回答直後の★など、2つの
+  /// 読み込み→保存が重なると後勝ちで片方の変更が消えていた。
+  Future<void> _writeQueue = Future.value();
+  Future<T> _serialized<T>(Future<T> Function() op) {
+    final result = _writeQueue.then((_) => op());
+    _writeQueue = result.then((_) {}, onError: (_) {});
+    return result;
   }
 
   /// 今日学習したことを記録し、ストリークを更新する。1日1回だけ呼んでも安全
   /// (同じ日に複数回呼んでも連続日数は二重に増えない)。
   Future<StreakData> markStudiedToday({DateTime? now}) async {
     final today = _dateKey(now ?? DateTime.now());
-    final streak = await loadStreak();
+    final streak = await loadStreak(now: now);
 
     if (streak.lastStudyDate == today) return streak;
 
@@ -341,7 +356,9 @@ class ProgressRepository {
     final conditions = {
       badgeFirstStep: totalAnswered >= 1,
       badgeCentury: totalAnswered >= 100,
-      badgeAllUnits: kAllUnits.every((unit) => (unitStats[unit]?.correct ?? 0) >= 1),
+      badgeAllUnits: kAllUnits.every(
+        (unit) => (unitStats[unit]?.correct ?? 0) >= 1,
+      ),
       badgeWeekStreak: streak.best >= 7,
     };
     final newlyUnlocked = <String>[];

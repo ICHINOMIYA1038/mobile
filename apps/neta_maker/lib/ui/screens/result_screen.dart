@@ -96,8 +96,9 @@ class _ResultScreenState extends State<ResultScreen>
                 Text(
                   result.headline,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium
-                      ?.copyWith(color: colors.textSecondary),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: colors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 44),
                 FadeTransition(
@@ -129,26 +130,32 @@ class _ResultScreenState extends State<ResultScreen>
                   key: const Key('resultDetail'),
                   textAlign: TextAlign.center,
                   style: GoogleFonts.shipporiMincho(
-                    textStyle: Theme.of(context).textTheme.bodyMedium
-                        ?.copyWith(color: colors.textSecondary, height: 1.7),
+                    textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.textSecondary,
+                      height: 1.7,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 28),
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _share(context),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colors.textPrimary,
-                          side: BorderSide(color: colors.border),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                      // iPadの共有ポップオーバーをボタンの位置に出すため、
+                      // ボタン自身のcontextを渡す。
+                      child: Builder(
+                        builder: (buttonContext) => OutlinedButton.icon(
+                          onPressed: () => _share(buttonContext),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: colors.textPrimary,
+                            side: BorderSide(color: colors.border),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          icon: const Icon(Icons.share, size: 18),
+                          label: const Text('シェア'),
                         ),
-                        icon: const Icon(Icons.share, size: 18),
-                        label: const Text('シェア'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -157,7 +164,10 @@ class _ResultScreenState extends State<ResultScreen>
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4),
                           color: colors.accent,
-                          border: Border.all(color: colors.accentDeep, width: 1),
+                          border: Border.all(
+                            color: colors.accentDeep,
+                            width: 1,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: colors.shadow.withValues(alpha: 0.3),
@@ -274,20 +284,26 @@ class _ResultHero extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          FittedBox(
-            child: Text(
-              result.answer,
-              key: const Key('resultAnswer'),
-              textAlign: TextAlign.center,
-              style: GoogleFonts.yujiSyuku(
-                fontSize: 38,
-                color: colors.accentDeep,
-                height: 1.3,
-              ),
+          // 前世の答えは最長26文字。FittedBoxで1行に縮めると11pt程度まで小さく
+          // なっていたので、折り返して大きさを保つ。
+          Text(
+            result.answer,
+            key: const Key('resultAnswer'),
+            textAlign: TextAlign.center,
+            softWrap: true,
+            style: GoogleFonts.yujiSyuku(
+              fontSize: result.answer.length > 12 ? 30 : 38,
+              color: colors.accentDeep,
+              height: 1.3,
             ),
           ),
           if (result.keywords.isNotEmpty) ...[
             const SizedBox(height: 20),
+            Text(
+              '理＝理性寄り　本＝本能寄り',
+              style: TextStyle(fontSize: 10, color: colors.textMuted),
+            ),
+            const SizedBox(height: 6),
             Wrap(
               alignment: WrapAlignment.center,
               spacing: 8,
@@ -304,12 +320,11 @@ class _ResultHero extends StatelessWidget {
                       borderRadius: BorderRadius.circular(3),
                       border: Border.all(color: colors.border),
                     ),
+                    // 「集中力 5%」のような数値は意味が伝わらないので、
+                    // 理性寄り/本能寄りのどちらの言葉かだけを示す。
                     child: Text(
-                      '${keyword.label} ${(keyword.instinctRatio * 100).round()}%',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textPrimary,
-                      ),
+                      '${keyword.instinctRatio < 0.5 ? '理' : '本'}｜${keyword.label}',
+                      style: TextStyle(fontSize: 12, color: colors.textPrimary),
                     ),
                   ),
               ],

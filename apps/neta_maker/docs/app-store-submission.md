@@ -18,7 +18,7 @@ flutter test
 | --- | --- | --- |
 | Bundle ID / applicationId | 済 | `jp.pairof.netamaker`（iOS/Androidで統一済み） |
 | アプリアイコン | 仮 | `icon/icon.png`・`icon/icon_foreground.png` はプレースホルダー（星のシンプル図形）。本番リリース前にブランド用アイコンへ差し替え、`dart run flutter_launcher_icons` で再生成すること |
-| pubspec の説明文・バージョン | 済 | `description` を実際の内容に更新済み（`version: 1.0.0+1` のまま初回提出） |
+| pubspec の説明文・バージョン | 済 | `description` を実際の内容に更新済み。現在 `version: 1.0.2+3`（提出のたびに上げる） |
 | 広告SDK（Google AdMob） | 済 | `google_mobile_ads` を組み込み済み。AdMobで「ネタメーカー」(iOS/Android)を登録し、実アプリID・実広告ユニットIDに差し替え済み（2026-08-01）。新規広告ユニットは配信開始まで1時間程度かかる場合がある |
 | 課金/アナリティクスSDK | 該当なし | アプリ内課金・分析SDKは組み込んでいない |
 | プライバシーマニフェスト（iOS） | 未確認 | `ios/Runner/PrivacyInfo.xcprivacy` の内容が実際のデータ収集方針（トラッキングなし、収集データなし）と合っているか確認すること |
@@ -136,7 +136,7 @@ cd ios && bundle install && bundle exec fastlane ios compose_screenshots
 
 ## 5. バージョン管理
 
-`pubspec.yaml` の `version: 1.0.0+1` が iOS の `CFBundleShortVersionString` /
+`pubspec.yaml` の `version: 1.0.2+3` が iOS の `CFBundleShortVersionString` /
 `CFBundleVersion`、Android の `versionName` / `versionCode` に反映される。
 再提出のたびにビルド番号（`+1` の部分）を上げること。
 
@@ -246,3 +246,23 @@ python3 tool/upload_to_play.py jp.pairof.netamaker build/app/outputs/bundle/rele
 - iOS: Xcodeでのビルド作成・アップロードと審査提出（開発者本人の作業）
 - Android: リリースビルドの作成・署名、テストトラックへのアップロード、
   クローズドテスト（12人以上×14日間）の実施、その後の本番リリース申請（開発者本人の作業）
+
+## 8. 2026-09-24 追記: 1.0.2(3)
+
+監査で見つかった不具合の修正と ASO 更新。ビルド・提出は ASC API（`scripts/asc/`）で実施。
+
+- 前世の答え（最長26文字）を FittedBox で1行に縮めていて約11ptになっていた → 折り返し表示
+- 脳内メーカーで「気持ちが悪いタイプ。」等の悪口が出うる組み合わせがあった（後半だけを独立抽選）→
+  該当語と、前半 '' と組むと文にならない後半（「というタイプ。」等）を削除。重複語も整理。
+  `test/vocabulary_lint_test.dart` で固定
+- 脳内メーカーの3分類がバランス型 54% に偏っていた → 閾値を 0.44/0.53 に。分布テストを追加
+- キーワードチップの「集中力 5%」は意味が伝わらないので「理｜集中力」「本｜食欲」に
+- 結果画面のバナーが右端48pt切れていた → スロット幅で読み込む
+- 入力画面がキーボード表示中に縦に溢れる（iPhone SE・大きな文字設定）→ スクロール可能に
+- EEA/UK 向けの同意見直し導線が無かった → ホームの AppBar に追加（必要な地域のみ表示）
+- UMP のタイムアウトがフォーム表示中も走り、その画面で広告が出なくなることがあった
+- iPad の共有ポップオーバーの位置、iPad で横向きになる（`UIRequiresFullScreen`＋横向き削除）、
+  SKAdNetworkItems 0件→50件、`ITSAppUsesNonExemptEncryption=false`、未使用の shared_preferences を削除、
+  4+ 維持のため「お酒欲」を削除
+- 注意: 語彙バンクを変えたので、同じ名前でも以前のバージョンとは結果が変わる（バージョン内では決定的）
+
