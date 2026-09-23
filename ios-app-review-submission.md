@@ -53,3 +53,42 @@ TOMOSHIBI小屋の審査却下(2026-07-31 提出分、Submission ID `c976f520-27
 ## 補足: RevenueCat側の "Could not check" 表示について
 
 RevenueCatの商品詳細ページ(Products > 該当商品)で `Store Status: Could not check` と出ることがあるが、これはRevenueCat自体のApp Store Connect API連携(RevenueCatダッシュボード内の別設定)が未設定なだけで、実際の審査提出状況とは無関係。気になる場合はRevenueCatの Project Settings → Integrations → App Store Connect で上記いずれかのAPIキーを登録する。
+
+## App Store Connect API だけで提出する（2026-09-24 に3アプリで実施・成功）
+
+ブラウザ操作なしで「バージョン作成 → メタデータ → ビルド添付 → 輸出コンプライアンス → 審査提出」まで
+できる。スクリプトは `scripts/asc/`（`pyjwt` が必要）。
+
+```sh
+cd apps/<app>
+flutter build ipa --release --export-options-plist=build/ios/ipa/ExportOptions.plist
+xcrun altool --upload-app -f "build/ios/ipa/<表示名>.ipa" -t ios \
+  --apiKey 3URMU94JK9 --apiIssuer 1039c5ec-53b4-4125-b857-d5059f3f3e74
+# ipa のファイル名は CFBundleDisplayName（日本語名のことがある）。ls build/ios/ipa/*.ipa で確認。
+
+python3 scripts/asc/asc.py                      # appId・バージョンID・状態の一覧
+# バージョン作成とローカライズ更新は asc.send() を使う（例は git log の 2026-09-24 のコミット参照）:
+#   POST  /v1/appStoreVersions {platform: IOS, versionString, relationships.app}
+#   PATCH /v1/appStoreVersionLocalizations/{id} {keywords, promotionalText, description, whatsNew}
+#   PATCH /v1/appInfoLocalizations/{id} {name, subtitle}
+#         ← READY_FOR_DISTRIBUTION 側の appInfo は 409 INVALID_STATE になる。
+#           PREPARE_FOR_SUBMISSION 側（新バージョンを作ると出来る）に対して行う。
+#   promotionalText は配信中バージョンにも即時反映できる（審査不要）。
+python3 scripts/asc/attach_submit.py <appId> <appStoreVersionId> <buildNumber>
+#   ビルド処理（数分）を待ち → usesNonExemptEncryption=false → 添付 → reviewSubmission 作成 →
+#   reviewSubmissionItems 追加 → submitted=true。最後に WAITING_FOR_REVIEW になれば完了。
+```
+
+### 落とし穴
+
+- **Crashlytics の dSYM アップロード用スクリプトが見つからず ARCHIVE FAILED**
+  （`Could not find the Crashlytics upload symbols script at .../DerivedData/Runner-xxx/SourcePackages/...`）:
+  `flutter build ipa` は Swift パッケージを `<app>/build/ios/SourcePackages/` に解決するが、
+  flutterfire が生成した Run Script は `$BUILD_DIR` / DerivedData しか見ない。
+  `apps/takken_simple` と `apps/sound_shield` の `project.pbxproj` には
+  `$SRCROOT/../build/ios/SourcePackages/...` を先に探す分岐を足してある（2026-09-24）。
+  他のアプリで同じエラーが出たら同じ分岐を足す（`git show` で差分を見る）。
+- `ExportOptions.plist` が無いアプリは、他アプリの `build/ios/ipa/ExportOptions.plist` をコピーすれば
+  よい（Team ID・自動署名は共通）。
+- `altool` の警告 `MinimumOSVersion too low`（90068）は無視してよい。
+
