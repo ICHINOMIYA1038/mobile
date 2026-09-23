@@ -76,7 +76,7 @@ class InspectionPdf {
           ],
           pw.Divider(color: PdfColors.grey400),
           pw.Text(
-            '判定基準: 室内の静けさは環境省「騒音に係る環境基準」の住居地域(昼間55dB/夜間45dB)を参考に'
+            '判定基準: 室内の静けさは環境省「騒音に係る環境基準」で特に静穏を要する地域の夜間基準(40dB)を参考に'
             '40dB未満を「静か」とし、窓・隣室側は部屋中央との差分、壁はノック音のスペクトルと余韻、'
             '響きは手叩きの減衰時間(RT60換算)から評価しています。正式な音響測定・法的証明に代わるものではありません。',
             style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),

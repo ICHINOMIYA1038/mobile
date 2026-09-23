@@ -44,11 +44,35 @@ public final class ArNoiseMapPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: "unsupported", message: "ARKit world tracking is not supported", details: nil))
                 return
             }
-            do {
-                try view.start()
-                result(nil)
-            } catch {
-                result(FlutterError(code: "start_failed", message: error.localizedDescription, details: nil))
+            // カメラが拒否されていると ARSession は黙って何も出さず、Flutter 側は永遠に
+            // 「計測中」のまま終了ボタンも押せなかった。先に権限を確認する。
+            let startView = { [weak view] in
+                guard let view else {
+                    result(FlutterError(code: "no_view", message: "AR view is not mounted", details: nil))
+                    return
+                }
+                do {
+                    try view.start()
+                    result(nil)
+                } catch {
+                    result(FlutterError(code: "start_failed", message: error.localizedDescription, details: nil))
+                }
+            }
+            switch AVCaptureDevice.authorizationStatus(for: .video) {
+            case .authorized:
+                startView()
+            case .notDetermined:
+                AVCaptureDevice.requestAccess(for: .video) { granted in
+                    DispatchQueue.main.async {
+                        if granted {
+                            startView()
+                        } else {
+                            result(FlutterError(code: "camera_denied", message: "Camera access denied", details: nil))
+                        }
+                    }
+                }
+            default:
+                result(FlutterError(code: "camera_denied", message: "Camera access denied", details: nil))
             }
         case "setTag":
             let args = call.arguments as? [String: Any]
@@ -165,6 +189,11 @@ final class ArNoiseMapView: NSObject, FlutterPlatformView {
             guard let self, self.running else { return }
             self.plugin.eventSink?(["tracking": "interrupted", "db": 0.0, "count": self.samples.count])
         }
+    }
+
+    deinit {
+        // Flutter 側の dispose より先に UiKitView が破棄されるため、ここでも止める。
+        _ = stop()
     }
 
     func stop() -> [[String: Any]] {

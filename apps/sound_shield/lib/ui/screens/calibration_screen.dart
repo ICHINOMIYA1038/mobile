@@ -61,6 +61,8 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
     final delta = ref - measured.overallLeqDb;
     final next = services.calibration.adjustmentDb + delta;
     await services.calibration.setAdjustment(next);
+    // 保存側で±20dBに丸められるので、実際に保存された値で表示する。
+    final applied = services.calibration.adjustmentDb - (next - delta);
     await AppInsights.logEvent(
       'calibration_applied',
       parameters: {'delta_db': delta.round()},
@@ -71,7 +73,12 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
       _reference.clear();
     });
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('校正しました(${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}dB)。')),
+      SnackBar(
+        content: Text(
+          '校正しました(${applied >= 0 ? '+' : ''}${applied.toStringAsFixed(1)}dB)。'
+          '${(applied - delta).abs() > 0.05 ? ' 補正は±20dBまでです。' : ''}',
+        ),
+      ),
     );
   }
 
@@ -92,8 +99,8 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
                 Text(
                   'iPhoneのマイクは機種ごとの差が小さいため、既定値でもおおよその目安になります。'
                   '手持ちの騒音計に合わせたい場合は、同じ音を両方で測って差を保存してください。'
-                  'この校正が影響するのは騒音計の表示と3段階判定だけで、'
-                  '内見診断・侵入マップ・対策の検証(いずれも同じ端末内の差分で評価)には影響しません。',
+                  '校正は騒音計の表示と3段階判定のほか、内見診断の「室内の静けさ」の判定と'
+                  '対策の予測値にも反映されます(窓・壁・ドアの差分評価には影響しません)。',
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(color: scheme.outline),

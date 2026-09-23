@@ -93,7 +93,11 @@ class _ArMapScreenState extends State<ArMapScreen>
       setState(() => _running = true);
       await AppInsights.logEvent('ar_map_started');
     } on PlatformException catch (e) {
-      setState(() => _error = 'ARを開始できませんでした(${e.code})');
+      setState(
+        () => _error = e.code == 'camera_denied'
+            ? 'カメラの利用が許可されていません。設定アプリの「Sound Shield」でカメラを許可してください。'
+            : 'ARを開始できませんでした(${e.code})',
+      );
     }
   }
 
@@ -170,7 +174,15 @@ class _ArMapScreenState extends State<ArMapScreen>
                   children: [
                     IconButton(
                       icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () async {
+                        // 先にネイティブ側を止める。dispose に任せると UiKitView が
+                        // 先に破棄され、エンジンと AR セッションが止まらない。
+                        if (_running) {
+                          await AppScope.of(context).arNoiseMap.stop();
+                          _running = false;
+                        }
+                        if (context.mounted) Navigator.of(context).pop();
+                      },
                     ),
                     const Spacer(),
                     if (_live != null)

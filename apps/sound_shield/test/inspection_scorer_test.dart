@@ -105,6 +105,15 @@ void main() {
     expect(score.score, 95);
   });
 
+  test('余韻が測れなかったノック(SNRは足りている)は重い壁ではなく判定不能', () {
+    // 叩きが弱いと ImpulseAnalyzer は T10/T20 を出せない。以前は「余韻なし=重い壁」で
+    // 最良判定(減点0)になっていた。
+    expect(
+      WallEstimate.fromKnock(_knock(centroid: 300, t20: null, snr: 12, lowShare: 0.4)),
+      WallEstimate.unknown,
+    );
+  });
+
   test('低域共振が強く余韻が中程度でも軽い壁、短く乾いた音は重い壁', () {
     expect(
       WallEstimate.fromKnock(_knock(centroid: 220, t20: 0.08, lowShare: 0.95)),

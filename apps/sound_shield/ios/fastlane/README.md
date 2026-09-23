@@ -31,6 +31,14 @@ Frame captured screenshots with a device bezel + title/subtitle (see fastlane/sc
 
 Upload store metadata + framed screenshots to App Store Connect (no binary upload)
 
+### ios submit_review
+
+```sh
+[bundle exec] fastlane ios submit_review
+```
+
+Create/update the app version, upload metadata+screenshots, attach the build, submit for review
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.

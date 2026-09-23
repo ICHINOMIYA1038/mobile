@@ -147,7 +147,16 @@ class _MeasuringScreenState extends State<MeasuringScreen> {
         );
       });
     } on MeasurementCancelledException {
-      _finish(() => Navigator.of(context).pop());
+      _finish(() {
+        Navigator.of(context).pop();
+        // 自分でキャンセルしたのでなければ(着信・バックグラウンド等)、黙って
+        // 消えたように見えないよう理由を出す。
+        if (!_userCancelled) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('着信や画面の切り替えで計測が中断されました。')),
+          );
+        }
+      });
     } on PlatformException catch (e) {
       final message = _messageForError(e);
       _finish(() {
@@ -184,10 +193,19 @@ class _MeasuringScreenState extends State<MeasuringScreen> {
   void dispose() {
     _liveDbSubscription?.cancel();
     _tickTimer?.cancel();
+    // 万一 PopScope を経ずに破棄された場合の保険。
+    if (!_isFinishing) {
+      unawaited(
+        widget.soundMeterService.cancelMeasurement().catchError((_) {}),
+      );
+    }
     super.dispose();
   }
 
+  bool _userCancelled = false;
+
   Future<void> _cancel() async {
+    _userCancelled = true;
     await widget.soundMeterService.cancelMeasurement();
   }
 
@@ -209,88 +227,97 @@ class _MeasuringScreenState extends State<MeasuringScreen> {
     final scheme = Theme.of(context).colorScheme;
     // 目安値のレンジ(概ね30〜100dB)を0.0〜1.0に正規化してゲージに反映する。
     final level = ((_currentDb - 30) / 70).clamp(0.0, 1.0);
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.title ?? '計測中')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (widget.hint != null) ...[
+    // 戻るボタン・画面端スワイプで抜けるときも必ずネイティブ側の計測を止める。
+    // 止めずに抜けると「止めるまで測定」「内見診断」ではマイクが回り続け、以降の計測が
+    // すべて「既に計測中です」で失敗していた。
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && !_isFinishing) _cancel();
+      },
+      child: Scaffold(
+        appBar: AppBar(title: Text(widget.title ?? '計測中')),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (widget.hint != null) ...[
+                  Text(
+                    widget.hint!,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 Text(
-                  widget.hint!,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  widget.autoStop
+                      ? (_stable
+                            ? '安定しました'
+                            : '経過 ${_formatElapsed(_elapsed)} ・ 安定したら自動終了'
+                                  '(最長${MeasuringScreen.autoStopMaxSeconds}秒)')
+                      : _isOpenEnded
+                      ? '経過 ${_formatElapsed(_elapsed)}'
+                      : '残り ${_remaining.inSeconds.toString().padLeft(2, '0')}秒',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelMedium?.copyWith(color: scheme.outline),
                 ),
                 const SizedBox(height: 12),
-              ],
-              Text(
-                widget.autoStop
-                    ? (_stable
-                          ? '安定しました'
-                          : '経過 ${_formatElapsed(_elapsed)} ・ 安定したら自動終了'
-                                '(最長${MeasuringScreen.autoStopMaxSeconds}秒)')
-                    : _isOpenEnded
-                    ? '経過 ${_formatElapsed(_elapsed)}'
-                    : '残り ${_remaining.inSeconds.toString().padLeft(2, '0')}秒',
-                style: Theme.of(
-                  context,
-                ).textTheme.labelMedium?.copyWith(color: scheme.outline),
-              ),
-              const SizedBox(height: 12),
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  LevelGauge(level: level),
-                  // 針とハブが円の中心にあるため、読み取り値はそこと重ならないよう
-                  // ダイヤル上部の空きスペースに寄せて表示する。
-                  Positioned(
-                    top: 40,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _currentDb.round().toString(),
-                            style: Theme.of(context).textTheme.headlineMedium
-                                ?.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          Text(
-                            'dB ・ 目安値',
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(color: scheme.outline),
-                          ),
-                        ],
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    LevelGauge(level: level),
+                    // 針とハブが円の中心にあるため、読み取り値はそこと重ならないよう
+                    // ダイヤル上部の空きスペースに寄せて表示する。
+                    Positioned(
+                      top: 40,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _currentDb.round().toString(),
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            Text(
+                              'dB ・ 目安値',
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(color: scheme.outline),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 48),
+                if (widget.autoStop)
+                  OutlinedButton(
+                    onPressed: _isEnding ? null : _cancel,
+                    child: const Text('キャンセル'),
+                  )
+                else if (_isOpenEnded) ...[
+                  FilledButton(
+                    onPressed: _isEnding ? null : _endOpenEndedMeasurement,
+                    child: const Text('計測終了'),
                   ),
-                ],
-              ),
-              const SizedBox(height: 48),
-              if (widget.autoStop)
-                OutlinedButton(
-                  onPressed: _isEnding ? null : _cancel,
-                  child: const Text('キャンセル'),
-                )
-              else if (_isOpenEnded) ...[
-                FilledButton(
-                  onPressed: _isEnding ? null : _endOpenEndedMeasurement,
-                  child: const Text('計測終了'),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: _isEnding ? null : _cancel,
-                  child: const Text('破棄してやり直す'),
-                ),
-              ] else
-                OutlinedButton(
-                  onPressed: _cancel,
-                  child: const Text('キャンセル'),
-                ),
-            ],
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: _isEnding ? null : _cancel,
+                    child: const Text('破棄してやり直す'),
+                  ),
+                ] else
+                  OutlinedButton(
+                    onPressed: _cancel,
+                    child: const Text('キャンセル'),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

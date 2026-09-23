@@ -39,8 +39,13 @@ class ArMapAnalysis {
   final double minDb;
   final double maxDb;
 
-  /// 平均が最も高い面(=主な侵入経路)。
-  SurfaceStat? get hottest => stats.isEmpty ? null : stats.first;
+  /// 平均が最も高い面(=主な侵入経路)。「部屋の中央」と未分類は経路ではないので除く。
+  SurfaceStat? get hottest {
+    for (final s in stats) {
+      if (s.surface != null && s.surface != ArSurface.center) return s;
+    }
+    return null;
+  }
 
   /// 平均の高い順に、対策シミュレーターへ渡す侵入経路(最大2つ)。
   List<NoiseRoute> get routes {

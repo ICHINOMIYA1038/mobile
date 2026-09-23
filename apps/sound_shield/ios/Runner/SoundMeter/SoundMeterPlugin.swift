@@ -330,14 +330,16 @@ public class SoundMeterPlugin: NSObject, FlutterPlugin {
         let center = NotificationCenter.default
         center.addObserver(self, selector: #selector(handleInterruption(_:)), name: AVAudioSession.interruptionNotification, object: nil)
         center.addObserver(self, selector: #selector(handleRouteChange(_:)), name: AVAudioSession.routeChangeNotification, object: nil)
-        center.addObserver(self, selector: #selector(handleResignActive), name: UIApplication.willResignActiveNotification, object: nil)
+        // willResignActive はコントロールセンターや通知センターを引き出しただけでも飛ぶため、
+        // 本当にバックグラウンドへ行ったときだけ止める。
+        center.addObserver(self, selector: #selector(handleResignActive), name: UIApplication.didEnterBackgroundNotification, object: nil)
     }
 
     private func removeNotifications() {
         let center = NotificationCenter.default
         center.removeObserver(self, name: AVAudioSession.interruptionNotification, object: nil)
         center.removeObserver(self, name: AVAudioSession.routeChangeNotification, object: nil)
-        center.removeObserver(self, name: UIApplication.willResignActiveNotification, object: nil)
+        center.removeObserver(self, name: UIApplication.didEnterBackgroundNotification, object: nil)
     }
 
     @objc private func handleInterruption(_ notification: Notification) {

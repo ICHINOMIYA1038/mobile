@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../data/app_scope.dart';
+
 import '../../logic/noise_level.dart';
 import '../../logic/suggestion_engine.dart';
 import '../../models/measurement_result.dart';
@@ -168,7 +170,8 @@ class _Hero extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          '${result.durationSeconds}秒間の目安値・キャリブレーション未実施',
+          '${result.durationSeconds}秒間の目安値・'
+          '${AppScope.of(context).calibration.isCalibrated ? '校正済み' : 'キャリブレーション未実施'}',
           style: Theme.of(
             context,
           ).textTheme.labelSmall?.copyWith(color: scheme.outline),

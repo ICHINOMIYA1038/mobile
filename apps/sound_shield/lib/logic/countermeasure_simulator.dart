@@ -183,8 +183,10 @@ class CountermeasureSimulator {
           ? beforeOverall
           : MeasurementResult.overallFromBands(afterBands);
       final delta = beforeOverall - afterOverall;
+      // 音源対策(防振ゴム等)は侵入経路の推定対象外なので、経路不一致にしない。
       final matchesRoute =
           m.routes.contains(NoiseRoute.personal) ||
+          m.routes.contains(NoiseRoute.source) ||
           m.routes.any(inferred.contains);
       final (verdict, reason) = _judge(m, delta, result, matchesRoute);
       predictions.add(

@@ -39,7 +39,9 @@ enum WallEstimate {
     if (ring != null && ring >= longRingSeconds) return light;
     if (resonant && ring != null && ring >= shortRingSeconds) return light;
     if (ring != null && ring < shortRingSeconds && !resonant) return heavy;
-    if (ring == null && !resonant) return heavy;
+    // 余韻が測れなかった(叩きが弱くSNR不足、または1.2秒以内に減衰しない)ときは
+    // 「重い壁」と決めつけず判定不能にする(以前は最良判定=減点0になっていた)。
+    if (ring == null) return unknown;
     return medium;
   }
 }
