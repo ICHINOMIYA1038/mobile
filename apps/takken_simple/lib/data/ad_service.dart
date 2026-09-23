@@ -46,8 +46,13 @@ class AdService {
   /// SDK の初期化。広告を出さない場合は呼ばない（＝SDKを起動しない）。
   static Future<void> ensureInitialized() async {
     if (_initialized) return;
-    _initialized = true;
-    await MobileAds.instance.initialize();
+    try {
+      await MobileAds.instance.initialize();
+      _initialized = true;
+    } catch (_) {
+      // SDK の初期化失敗は広告が出ないだけ。次回の読み込みで再試行する。
+      // ここで投げると未捕捉の非同期例外として Crashlytics に「クラッシュ」で記録される。
+    }
   }
 
   /// 結果画面用のバナーを読み込む。失敗しても null を返すだけで、画面は通常どおり出る。
@@ -84,7 +89,12 @@ class AdService {
       ),
     );
 
-    await banner.load();
+    try {
+      await banner.load();
+    } catch (_) {
+      banner.dispose();
+      return null;
+    }
     return completer.future;
   }
 }

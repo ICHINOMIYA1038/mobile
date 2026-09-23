@@ -127,18 +127,28 @@ class ProgressRepository {
 
   /// 書き出したデータを読み戻す。形式が違えば false を返し、既存データには触れない。
   Future<bool> importJson(String raw) async {
+    // 保存は全ての解釈が終わってから行う。states を保存した後で streak の解釈に
+    // 失敗すると、「false を返して既存データには触れない」という約束が破れる。
+    final Map<String, ReviewState> states;
+    final StreakData? streak;
     try {
       final decoded = jsonDecode(raw) as Map<String, dynamic>;
-      final states = (decoded['states'] as Map<String, dynamic>).map(
+      final schema = decoded['schema'];
+      if (schema != null && schema != 1) return false;
+      states = (decoded['states'] as Map<String, dynamic>).map(
         (key, value) =>
             MapEntry(key, ReviewState.fromJson(value as Map<String, dynamic>)),
       );
+      final rawStreak = decoded['streak'];
+      streak = rawStreak is Map<String, dynamic>
+          ? StreakData.fromJson(rawStreak)
+          : null;
+    } catch (_) {
+      return false;
+    }
+    try {
       await saveStates(states);
-
-      final streak = decoded['streak'];
-      if (streak is Map<String, dynamic>) {
-        await saveStreak(StreakData.fromJson(streak));
-      }
+      if (streak != null) await saveStreak(streak);
       return true;
     } catch (_) {
       return false;
@@ -161,6 +171,20 @@ class StreakData {
 
   /// 最終学習日（日付のみ。時刻は保持しない）。
   final DateTime? lastStudyDate;
+
+  /// [now] 時点で有効な連続日数。
+  ///
+  /// [current] は回答したときにしか更新されないため、数日空けて開くと
+  /// 途切れているはずの連続日数がそのまま表示されてしまう。表示や判定には
+  /// こちらを使い、昨日までに学習していなければ 0 とみなす。
+  int currentAsOf(DateTime now) {
+    final last = lastStudyDate;
+    if (last == null) return 0;
+    final today = DateTime(now.year, now.month, now.day);
+    final lastDay = DateTime(last.year, last.month, last.day);
+    final gap = today.difference(lastDay).inDays;
+    return gap <= 1 ? current : 0;
+  }
 
   StreakData markStudied(DateTime now) {
     final today = DateTime(now.year, now.month, now.day);

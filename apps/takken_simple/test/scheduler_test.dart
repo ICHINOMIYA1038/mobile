@@ -248,4 +248,75 @@ void main() {
       expect(state.isDue(now), isTrue);
     });
   });
+
+  test('期限が来た復習は、未学習が大量にあっても先に出る', () {
+    final scheduler = Scheduler(random: Random(1));
+    final now = DateTime(2026, 9, 24, 20);
+    final questions = [
+      for (var i = 0; i < 300; i++)
+        Question(
+          id: 'q$i',
+          category: i < 120 ? '宅建業法' : '権利関係',
+          topic: 't',
+          statement: 's',
+          answer: true,
+          explanation: 'e',
+          reference: 'r',
+          difficulty: 1,
+        ),
+    ];
+    // 10問だけ「昨日が期限」の復習にし、残り290問は未学習のまま。
+    final states = {
+      for (var i = 0; i < 10; i++)
+        'q$i': ReviewState(
+          questionId: 'q$i',
+          repetition: 1,
+          correctCount: 1,
+          lastAnsweredAt: now.subtract(const Duration(days: 2)),
+          dueAt: now.subtract(const Duration(days: 1)),
+        ),
+    };
+    for (var trial = 0; trial < 50; trial++) {
+      final picked = scheduler.pickNext(
+        questions: questions,
+        states: states,
+        now: now,
+      );
+      expect(int.parse(picked!.id.substring(1)), lessThan(10),
+          reason: '復習待ちがあるのに未学習が出た');
+    }
+  });
+
+  test('復習待ちが無ければ未学習から出る', () {
+    final scheduler = Scheduler(random: Random(1));
+    final now = DateTime(2026, 9, 24, 20);
+    final questions = [
+      for (var i = 0; i < 5; i++)
+        Question(
+          id: 'q$i',
+          category: '宅建業法',
+          topic: 't',
+          statement: 's',
+          answer: true,
+          explanation: 'e',
+          reference: 'r',
+          difficulty: 1,
+        ),
+    ];
+    final states = {
+      'q0': ReviewState(
+        questionId: 'q0',
+        repetition: 1,
+        correctCount: 1,
+        lastAnsweredAt: now,
+        dueAt: now.add(const Duration(days: 1)),
+      ),
+    };
+    final picked = scheduler.pickNext(
+      questions: questions,
+      states: states,
+      now: now,
+    );
+    expect(picked!.id, isNot('q0'));
+  });
 }

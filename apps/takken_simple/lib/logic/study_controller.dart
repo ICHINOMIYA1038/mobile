@@ -127,7 +127,10 @@ class StudyController extends ChangeNotifier {
   int get masteredCount =>
       _questions.where((q) => _states[q.id]?.isMastered ?? false).length;
 
-  int get answeredCount => _states.values.where((s) => !s.isNew).length;
+  /// 回答済みの問題数。収録されている問題だけを数える（読み込んだ履歴に
+  /// 収録外のIDが混ざっていても「301 / 300」のような表示にしない）。
+  int get answeredCount =>
+      _questions.where((q) => !(_states[q.id]?.isNew ?? true)).length;
 
   int get correctlyAnsweredCount =>
       _questions.where((q) => (_states[q.id]?.correctCount ?? 0) > 0).length;
@@ -382,6 +385,8 @@ class StudyController extends ChangeNotifier {
   /// 予約は全消し＋組み直しなので、1問ごとにやると無駄が大きい。
   Future<void> finishSession() async {
     // お知らせの設定に関わらず、セッションを完走したことは記録する。
+    // 通知の組み直しだけが目的の呼び出し（許可直後・設定変更・読み込み）では
+    // 記録しないよう、_rescheduleReminders と分けている。
     unawaited(
       AppInsights.logEvent(
         'study_session_finished',
@@ -391,7 +396,10 @@ class StudyController extends ChangeNotifier {
         },
       ),
     );
+    await _rescheduleReminders();
+  }
 
+  Future<void> _rescheduleReminders() async {
     if (!_remindersEnabled) {
       await _notifications.cancelAll();
       return;
@@ -413,26 +421,32 @@ class StudyController extends ChangeNotifier {
     await _progressRepo.markAskedNotificationPermission();
 
     final granted = await _notifications.requestPermission();
-    if (granted) await finishSession();
+    if (granted) await _rescheduleReminders();
     return granted;
   }
 
   /// 復習通知はアプリ内からいつでも止められるようにする。
-  Future<void> setRemindersEnabled(bool value) async {
+  ///
+  /// 戻り値は「通知が実際に届く状態か」。オンにしても端末側で通知が拒否されて
+  /// いれば false を返すので、画面は設定アプリへの案内を出せる。
+  Future<bool> setRemindersEnabled(bool value) async {
     _remindersEnabled = value;
     notifyListeners();
     await _progressRepo.saveRemindersEnabled(value);
 
-    if (value) {
-      await finishSession();
-    } else {
+    if (!value) {
       await _notifications.cancelAll();
+      return true;
     }
+    await _rescheduleReminders();
+    return await _notifications.areNotificationsAllowed() ?? true;
   }
 
   /// 十分使って価値を体験した人にだけ、一度だけ標準の評価依頼を出す。
   Future<bool> maybeRequestReview() async {
-    if (answeredCount < 30 || _streak.current < 3) return false;
+    if (answeredCount < 30 || _streak.currentAsOf(DateTime.now()) < 3) {
+      return false;
+    }
     if (await _progressRepo.hasRequestedReview()) return false;
 
     final requested = await _reviews.request();
@@ -459,6 +473,18 @@ class StudyController extends ChangeNotifier {
       }
       return true;
     }).toList();
+
+    // 苦手モードでは、正解し直した問題はもう出さない。残りが無くなったら
+    // null にして画面側でセッションを終える（同じ1問を5回出さないため）。
+    if (_sessionQuestionIds != null) {
+      final stillWeak = weakQuestions.map((q) => q.id).toSet();
+      filteredQuestions.removeWhere((q) => !stillWeak.contains(q.id));
+      if (filteredQuestions.isEmpty) {
+        _current = null;
+        notifyListeners();
+        return;
+      }
+    }
 
     _current = _scheduler.pickNext(
       questions: filteredQuestions,
@@ -489,7 +515,7 @@ class StudyController extends ChangeNotifier {
     _streak = await _progressRepo.loadStreak();
     notifyListeners();
     // 読み込んだ履歴に合わせて復習の予定も組み直す。
-    await finishSession();
+    await _rescheduleReminders();
     return true;
   }
 }

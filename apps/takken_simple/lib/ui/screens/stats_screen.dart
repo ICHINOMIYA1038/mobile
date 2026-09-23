@@ -135,7 +135,19 @@ class _ReminderSection extends StatelessWidget {
         ),
       ),
       value: controller.remindersEnabled,
-      onChanged: controller.setRemindersEnabled,
+      onChanged: (value) async {
+        final messenger = ScaffoldMessenger.of(context);
+        final deliverable = await controller.setRemindersEnabled(value);
+        if (value && !deliverable) {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text(
+                '端末の設定で通知が許可されていません。「設定」アプリ→「通知」→「シンプルに学ぶ宅建」で許可してください。',
+              ),
+            ),
+          );
+        }
+      },
     );
   }
 }
@@ -260,7 +272,7 @@ class _StudySummary extends StatelessWidget {
             total: controller.totalQuestions,
           ),
           _SummaryItem(
-            value: '${controller.streak.current}',
+            value: '${controller.streak.currentAsOf(DateTime.now())}',
             label: '連続学習日数',
             unit: '日',
           ),
@@ -291,6 +303,7 @@ class _SummaryItem extends StatelessWidget {
     return Column(
       children: [
         RichText(
+          textScaler: MediaQuery.textScalerOf(context),
           text: TextSpan(
             children: [
               TextSpan(
@@ -418,6 +431,9 @@ class _RemoveAdsSection extends StatelessWidget {
     final outcome = await purchases.restore();
 
     final message = switch (outcome) {
+      PurchaseOutcome.restored => '購入を復元しました。広告は表示されません',
+      PurchaseOutcome.nothingToRestore =>
+        '復元できる購入が見つかりませんでした。購入時と同じApple IDでサインインしているかご確認ください',
       PurchaseOutcome.unavailable => 'この端末では復元できません',
       PurchaseOutcome.error => '復元できませんでした',
       _ => '購入情報を確認しています',
@@ -447,7 +463,7 @@ class _DataSection extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'データは端末内にのみ保存され、外部には送信されません。機種変更に備えて書き出せます。',
+          '学習履歴は端末内にのみ保存されます（送信されるのは個人を特定しない利用状況の統計とクラッシュ情報だけです）。機種変更に備えて書き出せます。',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
             height: 1.6,

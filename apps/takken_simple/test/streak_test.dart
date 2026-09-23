@@ -44,4 +44,16 @@ void main() {
       expect(restored.lastStudyDate, streak.lastStudyDate);
     });
   });
+
+  test('currentAsOf は昨日までに学習していれば継続、空くと0', () {
+    final streak = StreakData(
+      current: 10,
+      best: 10,
+      lastStudyDate: DateTime(2026, 9, 20),
+    );
+    expect(streak.currentAsOf(DateTime(2026, 9, 20, 23)), 10);
+    expect(streak.currentAsOf(DateTime(2026, 9, 21, 7)), 10);
+    expect(streak.currentAsOf(DateTime(2026, 9, 22, 7)), 0);
+    expect(const StreakData().currentAsOf(DateTime(2026, 9, 22)), 0);
+  });
 }

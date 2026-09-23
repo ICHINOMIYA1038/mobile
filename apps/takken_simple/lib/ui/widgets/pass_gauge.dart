@@ -94,6 +94,7 @@ class _ScoreText extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return RichText(
+      textScaler: MediaQuery.textScalerOf(context),
       textAlign: TextAlign.center,
       text: TextSpan(
         children: [

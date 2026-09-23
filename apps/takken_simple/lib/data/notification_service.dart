@@ -86,6 +86,28 @@ class NotificationService {
     }
   }
 
+  /// 端末側で通知が許可されているか。判定できない環境では null。
+  ///
+  /// iOS は一度拒否されると requestPermissions を呼んでもダイアログが出ないため、
+  /// アプリ内のスイッチをオンにしても届かない状態を画面側で案内できるようにする。
+  Future<bool?> areNotificationsAllowed() async {
+    if (!_isSupported) return null;
+    await _ensureInitialized();
+    try {
+      if (Platform.isIOS) {
+        final options = await _plugin
+            .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+            ?.checkPermissions();
+        return options?.isEnabled;
+      }
+      return await _plugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.areNotificationsEnabled();
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// 今後の復習予定を通知として仕込み直す。
   ///
   /// 復習が0件の日には何も出さない。用がないのに鳴らすアプリにはしない。
@@ -157,8 +179,9 @@ class NotificationService {
           priority: Priority.defaultPriority,
         ),
       ),
-      // 端末のローカル時刻の20時に出す。旅行や時差で絶対時刻がずれても、
-      // 生活時間の夜に届いてほしいため。
+      // tz.local は setLocalLocation を呼んでいないので UTC のまま。TZDateTime.from は
+      // 絶対時刻を保って変換するため、予約時点のローカル20時に相当する瞬間に届く
+      // （日本は夏時間が無いのでずれない）。旅行中の時差までは追従しない。
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.wallClockTime,
       // 正確な時刻を要求すると Android で SCHEDULE_EXACT_ALARM の許可が要る。

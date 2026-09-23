@@ -24,10 +24,14 @@ class TermDetailScreen extends StatelessWidget {
       _ => (theme.colorScheme.primary, theme.colorScheme.primaryContainer),
     };
 
+    // 自分自身（別名も含む）へのリンクは張らない。
+    final selfNames = {term.name, ...term.aliases};
     final hasHighlights = baseTerms.any(
       (t) =>
           t.name != term.name &&
-          [t.name, ...t.aliases].any(term.detailedDescription.contains),
+          [t.name, ...t.aliases]
+              .where((name) => !selfNames.contains(name))
+              .any(term.detailedDescription.contains),
     );
 
     return Scaffold(
@@ -152,7 +156,7 @@ class TermDetailScreen extends StatelessWidget {
                     const Divider(height: 24),
                     HighlightedText(
                       text: term.detailedDescription,
-                      excludeName: term.name,
+                      excludeNames: selfNames,
                       style:
                           theme.textTheme.bodyLarge?.copyWith(
                             fontSize: 16,

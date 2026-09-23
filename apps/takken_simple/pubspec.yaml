@@ -1,9 +1,9 @@
 name: takken_simple
 resolution: workspace
-description: "シンプルに学ぶ宅建アプリ - 広告なし・ログイン不要・完全オフラインの一問一答"
+description: "シンプルに学ぶ宅建アプリ - 配点順に出る一問一答。広告は結果画面のみ・ログイン不要・問題はオフラインで解ける"
 publish_to: 'none'
 
-version: 1.0.0+4
+version: 1.0.1+5
 
 environment:
   sdk: ^3.11.5

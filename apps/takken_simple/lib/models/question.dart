@@ -23,6 +23,24 @@ class Question {
   /// 分野の中区分（大区分の科目をさらに数個に分類したもの）
   String get mediumCategory {
     if (category == '宅建業法') {
+      // 「業務上の規制」を先に判定する。後にすると「媒介契約」が「契約」に、
+      // 「案内所等の届出」が「届出」に引っ張られて、同じ話題が別の区分に散らばる。
+      if (topic.contains('35条') ||
+          topic.contains('37条') ||
+          topic.contains('説明') ||
+          topic.contains('重要事項') ||
+          topic.contains('広告') ||
+          topic.contains('規制') ||
+          topic.contains('明示') ||
+          topic.contains('案内所') ||
+          topic.contains('媒介') ||
+          topic.contains('流通機構') ||
+          topic.contains('帳簿') ||
+          topic.contains('名簿') ||
+          topic.contains('従業者') ||
+          topic.contains('書面')) {
+        return '業務上の規制（35条・37条等）';
+      }
       if (topic.contains('免許') ||
           topic.contains('事務所') ||
           topic.contains('宅建士') ||
@@ -34,20 +52,6 @@ class Question {
           topic.contains('定義') ||
           topic.contains('標識')) {
         return '免許・宅建士・保証制度';
-      }
-      if (topic.contains('35条') ||
-          topic.contains('37条') ||
-          topic.contains('説明') ||
-          topic.contains('重要事項') ||
-          topic.contains('広告') ||
-          topic.contains('規制') ||
-          topic.contains('明示') ||
-          topic.contains('案内所') ||
-          topic.contains('帳簿') ||
-          topic.contains('名簿') ||
-          topic.contains('従業者') ||
-          topic.contains('書面')) {
-        return '業務上の規制（35条・37条等）';
       }
       return '契約・報酬・8種制限・罰則';
     } else if (category == '権利関係') {

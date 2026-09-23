@@ -222,10 +222,14 @@ class _CategorySelectionSheetState extends State<_CategorySelectionSheet> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        category.label,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Text(
+                          category.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       Row(
@@ -472,6 +476,7 @@ class _ProgressHeader extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         RichText(
+          textScaler: MediaQuery.textScalerOf(context),
           text: TextSpan(
             children: [
               TextSpan(

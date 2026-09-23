@@ -22,12 +22,33 @@ class QuizScreen extends StatelessWidget {
     final result = controller.result;
 
     if (question == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      // 出せる問題が無い（苦手問題を全部正解し直した等）。1問でも解いていれば
+      // 結果画面へ、そうでなければホームへ戻す。くるくる回したまま放置しない。
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) _finish(context, controller);
+      });
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.close_rounded),
+            tooltip: '終了',
+            onPressed: () => _finish(context, controller),
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
     }
 
     final solved = controller.session.length;
 
-    return Scaffold(
+    // iOS の画面端スワイプで戻ると finishSession を通らず、復習通知の予定が
+    // 組み直されないまま抜けてしまう。戻る操作はすべて _finish に集約する。
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _finish(context, controller);
+      },
+      child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close_rounded),
@@ -103,6 +124,7 @@ class QuizScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

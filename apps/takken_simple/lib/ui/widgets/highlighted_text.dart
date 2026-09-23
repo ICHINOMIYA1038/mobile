@@ -11,12 +11,14 @@ class HighlightedText extends StatefulWidget {
     super.key,
     required this.text,
     required this.style,
-    this.excludeName,
+    this.excludeNames = const {},
   });
 
   final String text;
   final TextStyle style;
-  final String? excludeName;
+
+  /// リンクにしない用語名（用語解説画面でその用語自身と別名を除外する）。
+  final Set<String> excludeNames;
 
   @override
   State<HighlightedText> createState() => _HighlightedTextState();
@@ -52,7 +54,7 @@ class _HighlightedTextState extends State<HighlightedText> {
     final termNames =
         baseTerms
             .expand((t) => [t.name, ...t.aliases])
-            .where((name) => name != widget.excludeName)
+            .where((name) => !widget.excludeNames.contains(name))
             .toList()
           ..sort((a, b) => b.length.compareTo(a.length));
 
@@ -111,7 +113,9 @@ class _HighlightedTextState extends State<HighlightedText> {
       spans.add(TextSpan(text: widget.text.substring(start)));
     }
 
+    // RichText は既定で端末の文字サイズ設定を無視するため、明示的に渡す。
     return RichText(
+      textScaler: MediaQuery.textScalerOf(context),
       text: TextSpan(style: widget.style, children: spans),
     );
   }

@@ -47,9 +47,12 @@ class _FakeNotifications implements NotificationService {
 }
 
 class _FakeQuestions implements QuestionRepository {
+  _FakeQuestions({this.count = 6});
+  final int count;
+
   @override
   Future<List<Question>> load() async => [
-    for (var i = 0; i < 6; i++)
+    for (var i = 0; i < count; i++)
       Question(
         id: 'gyo-$i',
         category: '宅建業法',
@@ -195,14 +198,17 @@ void main() {
 
   group('評価依頼', () {
     test('30問・3日継続後に一度だけ依頼する', () async {
+      // 回答済みは収録問題の中で数える（履歴だけにある問題IDは数えない）ので、
+      // 30問ぶんの問題を用意する。連続日数は「今日まで続いている」必要がある。
+      final today = DateTime.now();
       final states = {
         for (var i = 0; i < 30; i++)
           'gyo-$i': ReviewState(
             questionId: 'gyo-$i',
             repetition: 1,
             correctCount: 1,
-            lastAnsweredAt: DateTime(2026, 7, 22),
-            dueAt: DateTime(2026, 7, 23),
+            lastAnsweredAt: today,
+            dueAt: today.add(const Duration(days: 1)),
           ).toJson(),
       };
       SharedPreferences.setMockInitialValues({
@@ -210,12 +216,13 @@ void main() {
         'streak_v1': jsonEncode({
           'current': 3,
           'best': 3,
-          'lastStudyDate': DateTime(2026, 7, 22).toIso8601String(),
+          'lastStudyDate': DateTime(today.year, today.month, today.day)
+              .toIso8601String(),
         }),
       });
       final reviews = _FakeReviews();
       final eligible = StudyController(
-        questions: _FakeQuestions(),
+        questions: _FakeQuestions(count: 30),
         progress: ProgressRepository(),
         notifications: notifications,
         reviews: reviews,

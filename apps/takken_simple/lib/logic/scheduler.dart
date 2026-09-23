@@ -80,6 +80,13 @@ class Scheduler {
 
     var pool = questions.where((q) => stateOf(q).isDue(now)).toList();
 
+    // 期限が来ている復習（一度解いたことがある問題）があれば、未学習より先に出す。
+    // isDue は未学習(dueAt == null)も true にするため、これを分けないと
+    // 300問の未学習に紛れて復習がほとんど出ず、「今日の復習」を押しても
+    // 復習と無関係な新問ばかりになる（通知で呼び戻した意味がなくなる）。
+    final reviews = pool.where((q) => !stateOf(q).isNew).toList();
+    if (reviews.isNotEmpty) pool = reviews;
+
     // 全問が復習待ち（今日やることがない）なら、期限が近い順に先取りで演習させる。
     // 「今日はもうやることがありません」で終わらせない。
     if (pool.isEmpty) pool = List.of(questions);

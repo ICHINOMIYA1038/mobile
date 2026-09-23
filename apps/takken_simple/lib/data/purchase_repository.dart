@@ -16,6 +16,9 @@ enum PurchaseOutcome {
   restored,
   cancelled,
   pending,
+
+  /// 復元を実行したが、このアカウントに復元できる購入が無かった。
+  nothingToRestore,
   unavailable,
   productUnavailable,
   error,
@@ -38,6 +41,13 @@ class PurchaseRepository extends ChangeNotifier {
   bool _storeAvailable = false;
   bool _purchasePending = false;
   ProductDetails? _product;
+
+  /// 復元の結果待ち。purchaseStream から何か届いたら完了させる。
+  Completer<void>? _restoreCompleter;
+
+  /// 復元できる購入が無いとき、StoreKit は何も通知しないことがある。
+  /// この時間待って何も来なければ「復元対象なし」とみなす。
+  static const _restoreTimeout = Duration(seconds: 8);
 
   /// 広告を消してよいか。これが true の間、アプリは広告を一切読み込まない。
   bool get adsRemoved => _adsRemoved;
@@ -128,12 +138,28 @@ class PurchaseRepository extends ChangeNotifier {
 
   /// 購入の復元。App Store の審査では「復元できること」が必須要件。
   Future<PurchaseOutcome> restore() async {
+    if (_adsRemoved) return PurchaseOutcome.restored;
     if (!_storeAvailable) return PurchaseOutcome.unavailable;
+    if (_purchasePending) return PurchaseOutcome.pending;
+
+    final completer = Completer<void>();
+    _restoreCompleter = completer;
+    _purchasePending = true;
+    notifyListeners();
     try {
       await _iap.restorePurchases();
-      return PurchaseOutcome.pending;
+      // 復元対象が無いと purchaseStream には何も流れてこないため、
+      // 「確認しています」のまま終わらないように上限を設けて待つ。
+      await completer.future.timeout(_restoreTimeout, onTimeout: () {});
+      return _adsRemoved
+          ? PurchaseOutcome.restored
+          : PurchaseOutcome.nothingToRestore;
     } catch (_) {
       return PurchaseOutcome.error;
+    } finally {
+      _restoreCompleter = null;
+      _purchasePending = false;
+      notifyListeners();
     }
   }
 
@@ -160,6 +186,8 @@ class PurchaseRepository extends ChangeNotifier {
         await _iap.completePurchase(purchase);
       }
     }
+    final restore = _restoreCompleter;
+    if (restore != null && !restore.isCompleted) restore.complete();
     notifyListeners();
   }
 
