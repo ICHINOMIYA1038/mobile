@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:clock/clock.dart';
+import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'data/ad_service.dart';
 import 'data/favorites_repository.dart';
@@ -11,7 +14,16 @@ import 'models/etude_prompt.dart';
 import 'theme/app_colors.dart';
 import 'ui/widgets/ad_banner_slot.dart';
 
-void main() => runApp(const EtudeApp());
+/// App Storeの製品ページ。共有文の末尾に添える。
+const appStoreUrl = 'https://apps.apple.com/jp/app/id6794500656';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // タイトル画面は固定高さのColumnで、横向きだと収まりきらない。
+  // 他の画面も縦向き前提のレイアウトなので縦に固定する（Info.plistも同様に更新済み）。
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  runApp(const EtudeApp());
+}
 
 class EtudeApp extends StatelessWidget {
   const EtudeApp({super.key});
@@ -445,8 +457,12 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
   }
 
   Future<void> _loadFavorites() async {
-    final favorites = await _favoritesRepository.load();
-    if (mounted) setState(() => _favorites = favorites);
+    final stored = await _favoritesRepository.load();
+    if (!mounted) return;
+    // 読み込み完了前にユーザーが保存した分を上書きで消さないよう、IDで統合する。
+    final storedIds = stored.map((item) => item.id).toSet();
+    final added = _favorites.where((item) => !storedIds.contains(item.id));
+    setState(() => _favorites = [...added, ...stored]);
   }
 
   // 実演・振り返り画面に着くより前に同意取得（UMP）とSDK初期化を済ませておく。
@@ -998,24 +1014,34 @@ class PromptCard extends StatelessWidget {
                   value: prompt.relationship,
                 ),
                 _PromptRow(
-                  icon: Icons.place_rounded,
-                  label: '場所',
-                  value: prompt.place,
-                ),
-                _PromptRow(
                   icon: Icons.bolt_rounded,
                   label: '状況',
                   value: prompt.situation,
                 ),
+                if (prompt.players < 4)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: Text(
+                      // 関係・状況の本文は4人を想定して書かれているため、2〜3人で
+                      // 遊ぶときに「登場しない人物」が出てくることを先に断っておく。
+                      '※ 関係と状況は最大4人を想定した説明です。'
+                      '役として引かれなかった人物は、その場にいないものとして進めてください。',
+                      style: TextStyle(
+                        color: colors.textMuted,
+                        fontSize: 11,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
                 _PromptRow(
                   icon: Icons.person_rounded,
                   label: '役',
-                  value: '${prompt.players}人分の役を、開始時に個別表示します',
+                  value: '${prompt.players}人分の役（目的と秘密つき）を、開始時に一人ずつ表示します',
                 ),
                 _PromptRow(
                   icon: Icons.lock_rounded,
-                  label: '秘密',
-                  value: '役を引いた本人だけに表示します',
+                  label: '種明かし',
+                  value: 'この場面の「本当のこと」は、演じ終えた振り返り画面で表示します',
                 ),
                 _PromptRow(
                   icon: Icons.rule_rounded,
@@ -1068,7 +1094,8 @@ class PromptCard extends StatelessWidget {
             '状況：${prompt.situation}\n'
             '関係性：${prompt.relationship}\n'
             '制約：${prompt.constraint}\n\n'
-            'エチュードメーカーで生成',
+            'エチュードメーカーで生成\n'
+            '$appStoreUrl',
         sharePositionOrigin: box == null
             ? null
             : box.localToGlobal(Offset.zero) & box.size,
@@ -1108,7 +1135,7 @@ class _RoleDrawScreenState extends State<RoleDrawScreen> {
       builder: (context) => AlertDialog(
         title: const Text('役を引く前に'),
         content: const Text(
-          '次の画面から、この端末を順番に回して一人ずつ「役を引く」を押してください。'
+          'この画面で、端末を順番に回して一人ずつ「役を引く」を押してください。'
           '表示される目的と秘密は、押した本人だけに見せる内容です。'
           '他の人に画面が見えないように気をつけてください。',
         ),
@@ -1371,31 +1398,59 @@ class PerformanceScreen extends StatefulWidget {
 
 class _PerformanceScreenState extends State<PerformanceScreen> {
   Timer? _timer;
+  // 残り時間は「終了予定時刻」から都度計算する。ティック数を数える方式だと
+  // 端末がスリープした間のティックが飛び、10分のエチュードが終わらなくなる。
+  // DateTime.now() ではなく clock.now() を使う: widgetテストのFakeAsync内で
+  // 時間を進められる(実機では同じもの)。
+  late DateTime _endsAt = clock.now().add(
+    Duration(minutes: widget.prompt.durationMinutes),
+  );
   late int _secondsLeft = widget.prompt.durationMinutes * 60;
   bool _running = true;
+  bool _finished = false;
 
   @override
   void initState() {
     super.initState();
+    // 実演中は端末が自動ロックしないようにする（画面が消えるとタイマーも見えない）。
+    // 失敗しても(テスト環境・非対応端末)タイマー自体は動かす。
+    unawaited(WakelockPlus.enable().catchError((_) {}));
     _startTimer();
   }
 
   void _startTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted || !_running) return;
-      if (_secondsLeft <= 1) {
-        setState(() => _secondsLeft = 0);
-        _finish();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
+
+  void _tick() {
+    if (!mounted || !_running || _finished) return;
+    final remaining = _endsAt.difference(clock.now()).inSeconds;
+    if (remaining <= 0) {
+      setState(() => _secondsLeft = 0);
+      HapticFeedback.heavyImpact();
+      _finish();
+    } else if (remaining != _secondsLeft) {
+      setState(() => _secondsLeft = remaining);
+    }
+  }
+
+  void _toggleTimer() {
+    setState(() {
+      if (_running) {
+        // 一時停止: 残り秒数を固定しておき、再開時に終了予定時刻を引き直す。
+        _secondsLeft = _endsAt.difference(clock.now()).inSeconds.clamp(0, 1 << 30);
+        _running = false;
       } else {
-        setState(() => _secondsLeft--);
+        _endsAt = clock.now().add(Duration(seconds: _secondsLeft));
+        _running = true;
       }
     });
   }
 
-  void _toggleTimer() => setState(() => _running = !_running);
-
   void _finish() {
+    if (_finished) return;
+    _finished = true;
     _timer?.cancel();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
@@ -1408,6 +1463,7 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    unawaited(WakelockPlus.disable().catchError((_) {}));
     super.dispose();
   }
 
@@ -1420,7 +1476,11 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Scaffold(
+    // 戻るボタンは隠しているが、iOSの画面端スワイプでも生成画面へ戻れてしまう
+    // (タイマー進行中に確認なしで抜ける) ため、明示的に無効化する。
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: colors.background,
@@ -1484,7 +1544,10 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
                     Text(
                       _running ? '残り時間' : '一時停止中',
                       style: TextStyle(
-                        color: colors.accentSoft,
+                        // ダークテーマでは ink が明色になり accentSoft(淡いピンク)
+                        // とのコントラストが1.7:1まで落ちるので、地色に対する
+                        // 前景色(onInk)を使う。
+                        color: colors.onInk.withValues(alpha: .72),
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1.3,
@@ -1553,6 +1616,7 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -1606,7 +1670,9 @@ class ReflectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: colors.background,
@@ -1669,6 +1735,10 @@ class ReflectionScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              // 場面ごとに用意している「本当のこと」(prompt.secret)。実演中は誰にも
+              // 見せない前提の情報なので、演じ終えたここで初めて種明かしする。
+              _SecretRevealCard(secret: prompt.secret),
               const SizedBox(height: 20),
               const AdBannerSlot(),
               const SizedBox(height: 20),
@@ -1688,7 +1758,10 @@ class ReflectionScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).pop(),
+                // お気に入りから実行した場合はスタックにお気に入り画面が挟まるので、
+                // 単純なpopではなく生成画面(最初のルート)まで戻す。
+                onPressed: () =>
+                    Navigator.of(context).popUntil((route) => route.isFirst),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: colors.textPrimary,
                   minimumSize: const Size.fromHeight(56),
@@ -1701,12 +1774,74 @@ class ReflectionScreen extends StatelessWidget {
           ),
         ),
       ),
+      ),
     );
   }
 
   List<String> get _questions => prompt.reflectionQuestions.isNotEmpty
       ? prompt.reflectionQuestions
       : const ['いちばん意外だった展開は？', '相手の演技で印象に残った瞬間は？', 'もう一度なら、何を変えてみたい？'];
+}
+
+class _SecretRevealCard extends StatelessWidget {
+  const _SecretRevealCard({required this.secret});
+  final String secret;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return Container(
+      padding: const EdgeInsets.all(21),
+      decoration: BoxDecoration(
+        color: colors.accentSurface,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(22),
+          topRight: Radius.circular(11),
+          bottomLeft: Radius.circular(10),
+          bottomRight: Radius.circular(24),
+        ),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.lock_open_rounded, size: 16, color: colors.accentDeep),
+              const SizedBox(width: 8),
+              Text(
+                '種明かし',
+                style: TextStyle(
+                  color: colors.accentDeep,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            secret,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w700,
+              height: 1.55,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'この場面で実際に起きていたこと。誰かの秘密と噛み合っていたか、話してみてください。',
+            style: TextStyle(
+              color: colors.textSecondary,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ReflectionQuestion extends StatelessWidget {
@@ -1780,7 +1915,9 @@ class _RolePaper extends StatelessWidget {
           Text(
             revealed ? 'YOUR ROLE' : 'ROLE  /  $playerName',
             style: TextStyle(
-              color: revealed ? colors.accent : colors.accentSoft,
+              color: revealed
+                  ? colors.accent
+                  : colors.onInk.withValues(alpha: .72),
               fontSize: 10,
               fontWeight: FontWeight.w800,
               letterSpacing: 1.8,
@@ -1788,20 +1925,52 @@ class _RolePaper extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           if (revealed)
-            Text(
-              role,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colors.textPrimary,
-                fontSize: 24,
-                height: 1.5,
-                fontWeight: FontWeight.w800,
-              ),
-            )
+            _RoleText(role: role)
           else
             Icon(Icons.question_mark_rounded, color: colors.onInk, size: 54),
         ],
       ),
+    );
+  }
+}
+
+/// 役の文字列は「役名\n目的：…\n秘密：…」の形。役名だけ大きく、目的と秘密は
+/// 本文サイズで左寄せにする（全文を24ptの太字で中央揃えにすると10行を超えて読みづらい）。
+class _RoleText extends StatelessWidget {
+  const _RoleText({required this.role});
+  final String role;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final lines = role.split('\n');
+    final name = lines.first;
+    final details = lines.skip(1).where((line) => line.trim().isNotEmpty);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          name,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: colors.textPrimary,
+            fontSize: 24,
+            height: 1.4,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        for (final line in details) ...[
+          const SizedBox(height: 12),
+          Text(
+            line,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontSize: 15,
+              height: 1.55,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

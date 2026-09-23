@@ -22,17 +22,7 @@ class _AdBannerSlotState extends State<AdBannerSlot> {
   BannerAd? _banner;
   bool _requested = false;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // 画面幅が確定してからでないとアダプティブサイズを決められないためここで読む。
-    if (_requested) return;
-    _requested = true;
-    _load();
-  }
-
-  Future<void> _load() async {
-    final width = MediaQuery.of(context).size.width.truncate();
+  Future<void> _load(int width) async {
     final banner = await AdService().loadBanner(width: width);
     if (!mounted) {
       banner?.dispose();
@@ -49,26 +39,39 @@ class _AdBannerSlotState extends State<AdBannerSlot> {
 
   @override
   Widget build(BuildContext context) {
-    final banner = _banner;
-    if (banner == null) return const SizedBox.shrink();
+    // 画面幅ではなく、このスロットに実際に与えられた幅でアダプティブサイズを決める。
+    // 親のListViewに左右22ptの余白があるため、画面幅で要求すると右端が44pt
+    // 切れた状態で描画されていた（AdMobの視認性ポリシー上もまずい）。
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!_requested && constraints.maxWidth.isFinite) {
+          _requested = true;
+          _load(constraints.maxWidth.truncate());
+        }
+        final banner = _banner;
+        if (banner == null) return const SizedBox.shrink();
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // 広告とコンテンツの境目を明示する。誤タップ狙いの配置はしない。
-        Text(
-          '広告',
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(color: context.colors.textMuted),
-        ),
-        const SizedBox(height: 4),
-        SizedBox(
-          width: banner.size.width.toDouble(),
-          height: banner.size.height.toDouble(),
-          child: AdWidget(ad: banner),
-        ),
-      ],
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 広告とコンテンツの境目を明示する。誤タップ狙いの配置はしない。
+            Text(
+              '広告',
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: context.colors.textMuted),
+            ),
+            const SizedBox(height: 4),
+            Center(
+              child: SizedBox(
+                width: banner.size.width.toDouble(),
+                height: banner.size.height.toDouble(),
+                child: AdWidget(ad: banner),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

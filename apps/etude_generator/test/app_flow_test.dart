@@ -1,4 +1,6 @@
 import 'package:etude_generator/main.dart';
+import 'package:etude_generator/models/etude_prompt.dart';
+import 'package:etude_generator/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,9 +48,76 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('3人・ミステリー・10分'), findsOneWidget);
-    for (final label in ['関係', '場所', '状況', '役', '秘密', '制約']) {
+    for (final label in ['関係', '状況', '役', '種明かし', '制約']) {
       expect(find.text(label), findsOneWidget);
     }
+    // 2〜3人のときは「4人想定の説明」の断り書きが出る。
+    expect(find.textContaining('最大4人を想定'), findsOneWidget);
+  });
+
+  testWidgets('見出しは場所だけで、末尾の句点は落とす', (tester) async {
+    const prompt = EtudePrompt(
+      id: 'x',
+      players: 2,
+      genre: '日常',
+      durationMinutes: 3,
+      characters: ['A', 'B'],
+      relationship: 'r',
+      place: '駅前の交番。',
+      situation: '一文目。二文目。',
+      secret: 's',
+      constraint: 'c',
+    );
+    expect(prompt.title, '駅前の交番');
+  });
+
+  testWidgets('実演のタイマーは実時間で進み、終了すると振り返りへ移る', (tester) async {
+    const prompt = EtudePrompt(
+      id: 'timer',
+      players: 2,
+      genre: '日常',
+      durationMinutes: 3,
+      characters: ['A', 'B'],
+      relationship: 'r',
+      place: 'p',
+      situation: 's',
+      secret: 'この場面の真相',
+      constraint: 'c',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: const [AppColors.light]),
+        home: const PerformanceScreen(prompt: prompt),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('3:00'), findsOneWidget);
+
+    // ティックを数えるのではなく終了予定時刻から計算しているので、
+    // 1回のpumpで大きく時間が飛んでも(端末スリープ相当)追従する。
+    await tester.pump(const Duration(seconds: 90));
+    // ティックの境界で±1秒ぶれるので、幅を持たせて確認する。
+    String remaining() => (find
+                .byType(Text)
+                .evaluate()
+                .map((e) => (e.widget as Text).data)
+                .firstWhere((t) => t != null && RegExp(r'^\d+:\d\d$').hasMatch(t)))!;
+    expect(['1:30', '1:31'], contains(remaining()));
+
+    // 一時停止中は進まない。
+    await tester.tap(find.text('一時停止'));
+    await tester.pump();
+    final paused = remaining();
+    await tester.pump(const Duration(seconds: 30));
+    expect(remaining(), paused);
+    await tester.tap(find.text('再開'));
+    await tester.pump();
+
+    await tester.pump(const Duration(seconds: 95));
+    await tester.pumpAndSettle();
+    expect(find.text('振り返り'), findsOneWidget);
+    // 種明かしが振り返りで表示される。
+    expect(find.text('この場面の真相'), findsOneWidget);
   });
 
   testWidgets('生成したお題をお気に入りへ保存できる', (tester) async {
@@ -115,6 +184,8 @@ void main() {
     await tester.tap(find.text('終了する'));
     await tester.pumpAndSettle();
     expect(find.text('振り返り'), findsOneWidget);
+    expect(find.text('種明かし'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('新しいお題を作る'), 200);
     expect(find.text('同じお題でもう一度'), findsOneWidget);
     expect(find.text('新しいお題を作る'), findsOneWidget);
   });

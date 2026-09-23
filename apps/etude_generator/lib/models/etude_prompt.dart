@@ -27,7 +27,10 @@ class EtudePrompt {
   final String constraint;
   final List<String> reflectionQuestions;
 
-  String get title => '$placeで、$situation';
+  /// カードや実演画面の見出し。場所の末尾の句点は落とす。
+  /// 以前は「場所で、状況」を連結していたが、状況が2〜3文ある題材が半数を占め、
+  /// 見出しが100〜290字の太字段落になっていたため場所だけにした。
+  String get title => place.replaceFirst(RegExp(r'[。．]+$'), '');
 
   Map<String, Object> toJson() => {
     'id': id,

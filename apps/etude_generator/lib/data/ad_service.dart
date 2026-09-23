@@ -56,23 +56,30 @@ class AdService {
 
   /// GoogleのEU User Consent Policyに基づき、必要な地域でのみ同意フォームを表示する。
   /// 対象地域外や取得済みの場合は何も表示せずすぐ完了する。
-  static Future<void> _requestConsent() {
-    final completer = Completer<void>();
+  static Future<void> _requestConsent() async {
+    // タイムアウトは「同意情報の取得」だけに掛ける。フォームを読んでいる時間まで
+    // 含めて10秒で打ち切ると、ユーザーがフォームを読んでいる最中にSDK初期化が
+    // 走ってしまう（Googleの「同意後に初期化」の指針に反する）。
+    final updated = Completer<bool>();
     ConsentInformation.instance.requestConsentInfoUpdate(
       ConsentRequestParameters(),
-      () async {
-        if (await ConsentInformation.instance.isConsentFormAvailable()) {
-          await _loadAndShowConsentForm();
-        }
-        if (!completer.isCompleted) completer.complete();
+      () {
+        if (!updated.isCompleted) updated.complete(true);
       },
       (_) {
         // 同意情報の取得に失敗しても、広告なしでアプリの利用は続けられるようにする。
-        if (!completer.isCompleted) completer.complete();
+        if (!updated.isCompleted) updated.complete(false);
       },
     );
     // 通信環境などでコールバックが返らない場合に備え、無限に待たない。
-    return completer.future.timeout(const Duration(seconds: 10), onTimeout: () {});
+    final ok = await updated.future.timeout(
+      const Duration(seconds: 10),
+      onTimeout: () => false,
+    );
+    if (!ok) return;
+    if (await ConsentInformation.instance.isConsentFormAvailable()) {
+      await _loadAndShowConsentForm();
+    }
   }
 
   static Future<void> _loadAndShowConsentForm() {
