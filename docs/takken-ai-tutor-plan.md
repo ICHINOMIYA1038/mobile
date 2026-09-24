@@ -115,7 +115,16 @@ iOS (Flutter)  ──HTTPS──▶  Backend (Cloudflare Workers + D1)  ──�
 
 3章以降の教材は公開後に週1章ずつ追加（「教材が増えていく」は継続の理由になる）。
 
-## 8. 決めてもらうこと
+## 8. 決定事項（2026-09-24）
+
+- 価格モデル: **(c) 併用**（無料の第1章にターン上限 → サブスク基本枠 + トークンパック）
+- モデル: **`claude-sonnet-5`**（費用を見て Opus 5 に上げる判断は後で）
+- アカウント: **匿名ID**（Sign in with Apple は後日。RevenueCat の app_user_id にこの匿名IDを使う）
+- アプリ名: **話して受かる宅建**（ディレクトリ `apps/takken_talk`、Bundle ID `jp.pairof.takken.talk`、バックエンド `~/private/takken-talk-api`）
+
+以下は決定前の選択肢（記録）。
+
+## 8'. 決めてもらったこと
 
 1. **価格モデル**: (a) トークン制のみ／(b) サブスク＋上限／(c) 併用（推奨）
 2. **モデル**: Opus 5（品質優先・1ターン ¥2〜6）か Sonnet 5（¥1〜2.5）か。まず Opus で作って、費用を見て判断でもよい
