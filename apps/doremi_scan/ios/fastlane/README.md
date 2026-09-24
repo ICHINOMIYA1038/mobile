@@ -23,13 +23,23 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Frame captured screenshots with a device bezel + title/subtitle (see fastlane/screenshots/Framefile.json)
 
+### ios upload_screenshots
+
+```sh
+[bundle exec] fastlane ios upload_screenshots
+```
+
+Upload store metadata + framed screenshots to App Store Connect (no binary upload)
+
+Upload only the framed screenshots (metadata is set through the ASC API scripts)
+
 ### ios upload_metadata
 
 ```sh
 [bundle exec] fastlane ios upload_metadata
 ```
 
-Upload store metadata + framed screenshots to App Store Connect (no binary upload)
+
 
 ----
 
