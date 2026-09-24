@@ -23,7 +23,7 @@ class Precheck {
       if (decoded == null) return null;
       // 検出用に幅700へ縮小したグレースケールを作る
       const tw = 700;
-      final small = img.copyResize(decoded, width: tw);
+      final small = img.copyResize(decoded, width: tw, interpolation: img.Interpolation.linear);
       final gray = Uint8List(small.width * small.height);
       var i = 0;
       for (var y = 0; y < small.height; y++) {

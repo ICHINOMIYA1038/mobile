@@ -46,3 +46,9 @@ app.*.map.json
 
 # 鍵など（コミット禁止）
 secrets.json
+
+# 生成物
+/screenshots/
+/screenshots_ipad/
+ios/fastlane/screenshots/ja/*.png
+ios/fastlane/frame_assets/fonts/

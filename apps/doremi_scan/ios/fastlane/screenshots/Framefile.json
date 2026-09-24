@@ -1,0 +1,56 @@
+{
+  "default": {
+    "background": "../frame_assets/background.png",
+    "padding": "5%",
+    "stack_title": true,
+    "title_below_image": false,
+    "title": {
+      "font": "../frame_assets/fonts/HiraginoSansW6.ttc",
+      "color": "#3B2A1E",
+      "font_size": 88
+    },
+    "keyword": {
+      "font": "../frame_assets/fonts/HiraginoSansW3.ttc",
+      "color": "#E8873A",
+      "font_size": 44
+    }
+  },
+  "data": [
+    {
+      "filter": "01_clean",
+      "title": {
+        "text": "楽譜を撮るだけで\nドレミが付く"
+      },
+      "keyword": {
+        "text": "きれいな楽譜に描き直して表示"
+      }
+    },
+    {
+      "filter": "02_original",
+      "title": {
+        "text": "原本の上に\nふりがなを重ねて確認"
+      },
+      "keyword": {
+        "text": "間違いはタップで直せる"
+      }
+    },
+    {
+      "filter": "03_second",
+      "title": {
+        "text": "童謡・保育曲・\n初級ピアノ向け"
+      },
+      "keyword": {
+        "text": "読みやすい大きさで、印刷・PDFも"
+      }
+    },
+    {
+      "filter": "04_home",
+      "title": {
+        "text": "読み取った楽譜は\n履歴からすぐ開ける"
+      },
+      "keyword": {
+        "text": "登録不要・無料・広告なし"
+      }
+    }
+  ]
+}

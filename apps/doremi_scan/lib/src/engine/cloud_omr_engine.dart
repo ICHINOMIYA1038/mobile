@@ -60,12 +60,17 @@ class CloudOmrEngine implements DoremiEngine {
     List<int> bytes = raw;
     if (decoded != null) {
       final longest = decoded.width > decoded.height ? decoded.width : decoded.height;
-      final im = longest > 3000
-          ? img.copyResize(decoded,
-              width: decoded.width >= decoded.height ? 3000 : null,
-              height: decoded.height > decoded.width ? 3000 : null)
-          : decoded;
-      bytes = img.encodeJpg(im, quality: 90);
+      if (longest > 3000) {
+        // copyResize の既定は最近傍補間で、細い五線が縮小時にごっそり抜ける
+        // (iPhone の写真は 4032px なので常にここを通る)。必ず平均化する補間を使う。
+        final im = img.copyResize(decoded,
+            width: decoded.width >= decoded.height ? 3000 : null,
+            height: decoded.height > decoded.width ? 3000 : null,
+            interpolation: img.Interpolation.cubic);
+        bytes = img.encodeJpg(im, quality: 92);
+      }
+      // 縮小不要なら元のバイト列をそのまま送る。小さい PNG を JPEG に再圧縮すると、
+      // サーバー側の拡大でブロックノイズが五線に化けて段ごと落ちることがあった。
     }
 
     onProgress?.call(const RecognizeProgress(RecognizePhase.recognizing, 0.4));
