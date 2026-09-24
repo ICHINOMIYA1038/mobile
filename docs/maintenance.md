@@ -51,3 +51,18 @@ python3 scripts/asc/search_rank.py  # 主要キーワードの検索順位（KW 
 - `ITMS-90068 Deployment target too low`: 2026-09-24 に全アプリを iOS 15.0 に上げた。
   新規アプリは `scripts/create_app.sh` が設定する。古いブランチや `flutter create` 直後は要確認
 - `ITMS-91053 Missing API declaration`: `PrivacyInfo.xcprivacy` の不足。今のところ未発生
+
+## 6. 話して受かる宅建（takken_talk）だけの確認
+
+サーバー（`~/private/takken-talk-api`、Cloudflare Workers + D1 + Claude）があるので、アプリ本体に加えて月1回:
+
+- **原価**: `curl -H "Authorization: Bearer $ADMIN_TOKEN" https://<worker>/admin/stats?days=31` で日ごとのターン数・トークン・推定USD。
+  Anthropic Console の Usage と突き合わせ、月の Spend limit（Console 側で設定）を超えそうなら
+  `wrangler.toml` の `GLOBAL_DAILY_TURN_CAP` を下げる（既定 3000/日 ≒ ¥6,000/日）。
+- **課金の整合**: RevenueCat の Overview（アクティブサブスク数）と `SELECT COUNT(*) FROM users WHERE plan='pro'` が近いか。
+  ずれていれば Webhook の失敗（RevenueCat → Webhooks → 履歴）を見る。
+- **モデル**: `MODEL = "claude-sonnet-5"` が非推奨予告されていないか（Anthropic の deprecation 一覧）。
+  変えるときは `output_config.effort` / `thinking` の対応も確認（`src/chat.ts` は 400 なら thinking なしで再試行する）。
+- **法改正**: 4月・10月施行の宅建関連改正を `content/chapters/*.md` に反映して `npm run build:content` → push。
+  問題データ（`content/questions.json`）は takken_simple と共通なので、そちらを直したらコピーし直す。
+- **D1 のサイズ**: `messages` は要約で圧縮されるが、`turn_ledger` は増え続ける。年1回、13か月より古い行を削除してよい。
