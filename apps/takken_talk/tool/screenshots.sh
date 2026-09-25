@@ -43,6 +43,11 @@ xcrun simctl bootstatus "$UDID" -b
 
 mkdir -p "$OUT_DIR"
 
+# 常駐プロセスはアプリのコンテナのパスを一度だけ解決する。先に消しておかないと、
+# 古いコンテナを掴んだまま、flutter test が入れ直した新しいコンテナを見逃して1枚も撮れない。
+echo "== 前回の状態を消して新規ユーザーから撮る =="
+xcrun simctl uninstall "$UDID" "$BUNDLE_ID" 2>/dev/null || true
+
 echo "== 撮影用の常駐プロセスを起動 =="
 (
   TMP_DIR=""
@@ -77,9 +82,6 @@ cleanup() {
   flutter build ios --config-only --release >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
-
-echo "== 前回の状態を消して新規ユーザーから撮る =="
-xcrun simctl uninstall "$UDID" "$BUNDLE_ID" 2>/dev/null || true
 
 echo "== 撮影 =="
 flutter test integration_test/screenshots_test.dart -d "$UDID" --timeout 20m \

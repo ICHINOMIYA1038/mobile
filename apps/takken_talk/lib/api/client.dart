@@ -106,6 +106,12 @@ class ApiClient {
     return ((j['figures'] as List?) ?? const []).map((f) => Figure.fromJson(f as Map<String, dynamic>)).toList();
   }
 
+  /// 全章の図解。図解ライブラリが章をまたいで検索するために使う。
+  Future<List<Figure>> allFigures() async {
+    final j = await _json('GET', '/v1/figures');
+    return ((j['figures'] as List?) ?? const []).map((f) => Figure.fromJson(f as Map<String, dynamic>)).toList();
+  }
+
   Future<Entitlement> entitlement(String chapterId) async =>
       Entitlement.fromJson(await _json('GET', '/v1/chapters/$chapterId/entitlement'));
 

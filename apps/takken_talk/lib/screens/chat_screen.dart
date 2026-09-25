@@ -9,7 +9,7 @@ import '../models.dart';
 import '../state/app_state.dart';
 import '../widgets/figure_card.dart';
 import '../widgets/question_card.dart';
-import 'figures_screen.dart';
+import 'figure_library_screen.dart';
 import 'paywall_screen.dart';
 
 /// 画面上の1メッセージ。assistant はストリーム中にテキストが伸び、カードが増える。
@@ -267,7 +267,7 @@ class _ChatScreenState extends State<ChatScreen> {
             tooltip: 'この章の図解',
             icon: const Icon(Icons.image_outlined),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => FiguresScreen(chapter: chapter),
+              builder: (_) => FigureLibraryScreen(chapter: chapter),
               settings: RouteSettings(name: 'figures_${chapter.id}'),
             )),
           ),

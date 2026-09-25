@@ -133,6 +133,21 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
       await shoot(tester, '09_map_topics');
     }
+
+    // 図解ライブラリ（章をまたいで探せる）
+    await tester.tap(find.byIcon(Icons.image_outlined).first);
+    expect(await waitFor(tester, () => find.text('図解ライブラリ').evaluate().isNotEmpty, seconds: 25), isTrue, reason: 'ライブラリが開かない');
+    await tester.pump(const Duration(seconds: 2));
+    await shoot(tester, '10_library');
+
+    // 章をまたいだ検索
+    final q = find.byType(TextField);
+    if (q.evaluate().isNotEmpty) {
+      await tester.enterText(q.first, '2週間');
+      await tester.pump(const Duration(seconds: 2));
+      log('検索結果: ${_texts()}');
+      await shoot(tester, '11_library_search');
+    }
     log('done');
   });
 }

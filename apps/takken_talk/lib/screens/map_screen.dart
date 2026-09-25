@@ -4,7 +4,7 @@ import '../models.dart';
 import '../state/app_state.dart';
 import '../widgets/pass_score_ring.dart';
 import 'chat_screen.dart';
-import 'figures_screen.dart';
+import 'figure_library_screen.dart';
 import 'paywall_screen.dart';
 
 /// 学習の地図。4科目 → 11章 → 53テーマを一枚で見せる。
@@ -31,7 +31,20 @@ class _MapScreenState extends State<MapScreen> {
     final canUseLocked = me.plan.isPro || me.plan.turnBalance > 0;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('学習の地図'), backgroundColor: theme.scaffoldBackgroundColor),
+      appBar: AppBar(
+        title: const Text('学習の地図'),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        actions: [
+          IconButton(
+            tooltip: '図解ライブラリ',
+            icon: const Icon(Icons.image_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const FigureLibraryScreen(),
+              settings: const RouteSettings(name: 'figure_library'),
+            )),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: state.refresh,
         child: ListView(
@@ -66,6 +79,16 @@ class _MapScreenState extends State<MapScreen> {
               '「定着」は同じ問題に2回続けて正解した状態です。',
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline, height: 1.5),
             ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const FigureLibraryScreen(),
+                settings: const RouteSettings(name: 'figure_library'),
+              )),
+              icon: const Icon(Icons.image_outlined, size: 18),
+              label: Text('図解ライブラリ（${me.chapters.fold<int>(0, (a, c) => a + c.figureCount)}枚）を見る'),
+              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+            ),
             const SizedBox(height: 20),
             for (final s in subjects) ...[
               _SubjectBlock(subject: s, progress: p),
@@ -92,7 +115,7 @@ class _MapScreenState extends State<MapScreen> {
                       }
                     },
                     onOpenFigures: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => FiguresScreen(chapter: c),
+                      builder: (_) => FigureLibraryScreen(chapter: c),
                       settings: RouteSettings(name: 'figures_${c.id}'),
                     )),
                   ),
