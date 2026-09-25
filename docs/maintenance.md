@@ -66,3 +66,47 @@ python3 scripts/asc/search_rank.py  # 主要キーワードの検索順位（KW 
 - **法改正**: 4月・10月施行の宅建関連改正を `content/chapters/*.md` に反映して `npm run build:content` → push。
   問題データ（`content/questions.json`）は takken_simple と共通なので、そちらを直したらコピーし直す。
 - **D1 のサイズ**: `messages` は要約で圧縮されるが、`turn_ledger` は増え続ける。年1回、13か月より古い行を削除してよい。
+
+## 7. 配布用の署名（証明書がキーチェーンから消えたとき）
+
+2026-09-26 に「No signing certificate "iOS Distribution" found」でアーカイブの書き出しが止まった。
+Xcode にアカウントがサインインしておらず、配布証明書の秘密鍵も手元に無い状態だった。
+Xcode にサインインし直す代わりに、以下の手順で秘密鍵ごと作り直した（パスワード入力が要らない）。
+
+```sh
+# 1. 秘密鍵と CSR を作る
+mkdir -p ~/.secrets/apple-signing && cd ~/.secrets/apple-signing
+openssl req -new -newkey rsa:2048 -nodes -keyout dist.key -out dist.csr \
+  -subj "/emailAddress=<メール>/CN=RYOHEI ICHINOMIYA/C=JP"
+
+# 2. developer.apple.com > Certificates > + > Apple Distribution に dist.csr を上げる
+#    ブラウザのダウンロードが動かないときは ASC API から取れる:
+#    GET /v1/certificates の certificateContent を base64 デコードして dist.cer
+
+# 3. 証明書と秘密鍵を1つにまとめる（-legacy がないと security import が MAC 検証で落ちる）
+openssl x509 -inform DER -in dist.cer -out dist.pem
+openssl pkcs12 -export -legacy -inkey dist.key -in dist.pem -out dist.p12 -passout pass:"$PW"
+
+# 4. 専用キーチェーンに入れる。login キーチェーンだと codesign が GUI の許可待ちで
+#    無言のまま固まる（49分待っても進まなかった）。専用キーチェーンなら自分で
+#    パスワードを決められるので set-key-partition-list が通る。
+security create-keychain -p "$KP" takken.keychain
+security set-keychain-settings -lut 21600 takken.keychain
+security unlock-keychain -p "$KP" takken.keychain
+security import dist.p12 -k takken.keychain -P "$PW" -T /usr/bin/codesign -T /usr/bin/security -A
+security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KP" takken.keychain
+security list-keychains -d user -s takken.keychain ~/Library/Keychains/login.keychain-db
+
+# 5. プロビジョニングプロファイルは ASC API で作れる（POST /v1/profiles, IOS_APP_STORE）。
+#    profileContent を base64 デコードして ~/Library/MobileDevice/Provisioning Profiles/<uuid>.mobileprovision へ。
+
+# 6. ExportOptions.plist は signingStyle=manual にして、証明書名とプロファイル名を明記する。
+#    アーカイブは API キーで通る:
+#    xcodebuild ... archive -allowProvisioningUpdates \
+#      -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_3URMU94JK9.p8 \
+#      -authenticationKeyID 3URMU94JK9 -authenticationKeyIssuerID <issuer>
+#    ただし書き出し(-exportArchive)のクラウド署名は App Manager 権限のキーでは通らない
+#    （"Cloud signing permission error"）。だから手動署名にしている。
+```
+
+秘密鍵・p12・各パスワードは `~/.secrets/apple-signing/` に置いてある（リポジトリには入れない）。
