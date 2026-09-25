@@ -3,7 +3,7 @@ class AppConfig {
   AppConfig._();
   static const apiBase = String.fromEnvironment(
     'API_BASE',
-    defaultValue: 'https://takken-talk-api.ichinomiya.workers.dev',
+    defaultValue: 'https://takken-talk-api.ichiryo108.workers.dev',
   );
 
   /// RevenueCat の公開キー(クライアント埋め込み前提)。未設定なら課金UIは「準備中」表示になる。
