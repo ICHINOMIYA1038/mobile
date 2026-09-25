@@ -44,8 +44,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final me = AppScope.of(context).me!;
     try {
       _offerings = await PurchaseService.offerings(me.userId);
+      if (_offerings != null) _error = null;
     } catch (e) {
-      _error = 'プラン情報を取得できませんでした';
+      _error = 'プラン情報を取得できませんでした。少し待ってからもう一度お試しください。';
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -129,7 +130,25 @@ class _PaywallScreenState extends State<PaywallScreen> {
               color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text(_error ?? '購入は現在準備中です。しばらくお待ちください。'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_error ?? 'プランを読み込めませんでした。通信環境を確認してください。'),
+                    if (PurchaseService.isAvailable) ...[
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: _busy
+                            ? null
+                            : () {
+                                setState(() => _loading = true);
+                                _load();
+                              },
+                        icon: const Icon(Icons.refresh, size: 18),
+                        label: const Text('もう一度読み込む'),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ] else ...[

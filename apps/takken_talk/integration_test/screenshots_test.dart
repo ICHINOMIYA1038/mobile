@@ -134,6 +134,23 @@ void main() {
       await shoot(tester, '09_map_topics');
     }
 
+    // プラン画面（アプリ内課金の審査用。RevenueCat から実際の価格が出る）
+    // ロックされた第2章のタイルを「学ぶ」タブから叩くと購入画面が開く。
+    await tester.tap(find.text('学ぶ').last);
+    await waitFor(tester, () => find.text('カリキュラム').evaluate().isNotEmpty, seconds: 20);
+    final locked = find.textContaining('業務上の規制');
+    if (locked.evaluate().isNotEmpty) {
+      await tester.tap(locked.first);
+      final gotPaywall = await waitFor(tester, () => find.text('購入を復元').evaluate().isNotEmpty, seconds: 40);
+      log('paywall: $gotPaywall / ${_texts()}');
+      await tester.pump(const Duration(seconds: 3));
+      await shoot(tester, '12_paywall');
+      await tester.pageBack();
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.text('地図').last);
+      await tester.pump(const Duration(seconds: 1));
+    }
+
     // 図解ライブラリ（章をまたいで探せる）
     await tester.tap(find.byIcon(Icons.image_outlined).first);
     expect(await waitFor(tester, () => find.text('図解ライブラリ').evaluate().isNotEmpty, seconds: 25), isTrue, reason: 'ライブラリが開かない');

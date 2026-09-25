@@ -1,0 +1,69 @@
+{
+  "identifier" : "A1B2C3D4",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "500",
+      "familyShareable" : false,
+      "internalID" : "P1000001",
+      "localizations" : [
+        {
+          "description" : "全章で使える会話100回分。買い切りで期限はありません。",
+          "displayName" : "会話パック 100回",
+          "locale" : "ja_JP"
+        }
+      ],
+      "productID" : "jp.pairof.takken.talk.pack100",
+      "referenceName" : "会話パック 100回",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "1200",
+      "familyShareable" : false,
+      "internalID" : "P1000002",
+      "localizations" : [
+        {
+          "description" : "全章で使える会話300回分。買い切りで期限はありません。",
+          "displayName" : "会話パック 300回",
+          "locale" : "ja_JP"
+        }
+      ],
+      "productID" : "jp.pairof.takken.talk.pack300",
+      "referenceName" : "会話パック 300回",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "S1000001",
+      "localizations" : [],
+      "name" : "話して受かる宅建 Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "displayPrice" : "1500",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "S2000001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "全章で会話できます。いつでも解約できます。",
+              "displayName" : "Pro 月額",
+              "locale" : "ja_JP"
+            }
+          ],
+          "productID" : "jp.pairof.takken.talk.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Pro 月額",
+          "subscriptionGroupID" : "S1000001",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : { "major" : 4, "minor" : 0 }
+}
