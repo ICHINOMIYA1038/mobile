@@ -28,3 +28,11 @@ flutter run --dart-define=API_BASE=http://localhost:8787
 - [ ] nullstead.com に `/apps/takken-talk`（サポート）と `/apps/takken-talk/privacy` を追加（会話内容を Anthropic に送信して処理する旨、サーバ保存、削除方法を明記）。
 - [ ] Firebase コンソールで iOS アプリ `jp.pairof.takken.talk` が ichinomiya-apps に登録済みか確認（create_app.sh が登録している）。
 - [ ] ASC の App Privacy: 「ユーザーコンテンツ（その他のユーザーコンテンツ）」「使用状況データ」「診断」= アプリ機能・分析、ユーザーに紐付かない（匿名ID）。
+
+## スクリーンショット
+`./tool/screenshots.sh` で撮る（`API_BASE` 環境変数でAPIの向き先を変えられる。既定はローカル）。
+`integration_test/screenshots_test.dart` が画面を進め、シミュレータの tmp に置くマーカーを見て
+シェル側が `xcrun simctl io screenshot` で撮る（doremi_scan と同じ方式）。
+
+**掲載用は本番APIに向けて撮り直すこと。** APIキーが無いとサーバーがモックの定型文を返すので、
+会話の中身が掲載に使えない。デプロイ後に `API_BASE=https://<worker> ./tool/screenshots.sh` で撮る。
