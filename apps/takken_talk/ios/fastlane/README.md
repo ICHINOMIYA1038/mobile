@@ -1,13 +1,50 @@
-# スクリーンショットの提出
+fastlane documentation
+----
 
-1. `../tool/screenshots.sh "iPhone 16 Pro Max" build/shots` と
-   `../tool/screenshots.sh "iPad Pro 13-inch (M4)" build/shots_ipad` で素材を撮る。
-   **本番APIに向けて撮ること**（`API_BASE=https://<worker> ./tool/screenshots.sh ...`）。
-   モックのままだと会話の中身が定型文になって掲載に使えない。
-2. `./tool/stage_screenshots.sh` で `ios/fastlane/screenshots/ja/` に並べる。
-   iPad のファイル名には `_ipad` を付けること（frameit と deliver がこれでサイズを判別する）。
-3. `cd ios && bundle exec fastlane compose_screenshots` で枠と見出しを合成。
-4. `cd ios && bundle exec fastlane upload_screenshots` で App Store Connect へ。
+# Installation
 
-App Store Connect のメタデータ（名前・説明・キーワード）は `scripts/asc/` の
-スクリプトで入れる。deliver からは触らない（`skip_metadata: true`）。
+Make sure you have the latest version of the Xcode command line tools installed:
+
+```sh
+xcode-select --install
+```
+
+For _fastlane_ installation instructions, see [Installing _fastlane_](https://docs.fastlane.tools/#installing-fastlane)
+
+# Available Actions
+
+## iOS
+
+### ios compose_screenshots
+
+```sh
+[bundle exec] fastlane ios compose_screenshots
+```
+
+Frame captured screenshots with a device bezel + title/subtitle (see fastlane/screenshots/Framefile.json)
+
+### ios upload_screenshots
+
+```sh
+[bundle exec] fastlane ios upload_screenshots
+```
+
+Upload store metadata + framed screenshots to App Store Connect (no binary upload)
+
+Upload only the framed screenshots (metadata is set through the ASC API scripts)
+
+### ios upload_metadata
+
+```sh
+[bundle exec] fastlane ios upload_metadata
+```
+
+
+
+----
+
+This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
+
+More information about _fastlane_ can be found on [fastlane.tools](https://fastlane.tools).
+
+The documentation of _fastlane_ can be found on [docs.fastlane.tools](https://docs.fastlane.tools).

@@ -7,7 +7,11 @@ class AppConfig {
   );
 
   /// RevenueCat の公開キー(クライアント埋め込み前提)。未設定なら課金UIは「準備中」表示になる。
-  static const revenueCatPublicApiKey = String.fromEnvironment('RC_KEY', defaultValue: '');
+  static const revenueCatPublicApiKey = String.fromEnvironment(
+    'RC_KEY',
+    // RevenueCat の公開キー(クライアント埋め込み前提。秘密鍵ではない)
+    defaultValue: 'appl_mskTHQrDpPGrEWGhTLqIgGemdoDSep',
+  );
 
   static const proProductId = 'jp.pairof.takken.talk.pro.monthly';
   static const pack100ProductId = 'jp.pairof.takken.talk.pack100';
