@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../config.dart';
 import '../purchase_service.dart';
 import '../state/app_state.dart';
+import '../widgets/readable.dart';
 import '../widgets/exam_date.dart';
 import 'paywall_screen.dart';
 
@@ -105,7 +106,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final exam = parseDate(me.examDate);
     return Scaffold(
       appBar: AppBar(title: const Text('設定'), backgroundColor: theme.scaffoldBackgroundColor),
-      body: ListView(
+      body: Readable(
+        child: ListView(
         children: [
           const _Header('学習'),
           ListTile(
@@ -176,6 +178,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Text('ユーザーID: ${me.userId}', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline)),
           ),
         ],
+        ),
       ),
     );
   }

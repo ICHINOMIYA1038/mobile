@@ -49,3 +49,7 @@ app.*.map.json
 ios/fastlane/frame_assets/fonts/
 ios/fastlane/screenshots/*/*.png
 ios/fastlane/report.xml
+
+# 撮影した素材は再生成できるので追跡しない（枠を付けた *_framed だけ提出に使う）
+ios/fastlane/screenshots/ja/*.png
+ios/fastlane/frame_assets/fonts/

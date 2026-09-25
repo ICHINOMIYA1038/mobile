@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../config.dart';
 import '../purchase_service.dart';
 import '../state/app_state.dart';
+import '../widgets/readable.dart';
 
 /// Pro(月額)と会話パック(買い切り)の案内。RevenueCat の Offerings から価格を出す。
 class PaywallScreen extends StatefulWidget {
@@ -111,7 +112,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
     };
     return Scaffold(
       appBar: AppBar(title: const Text('プラン'), backgroundColor: theme.scaffoldBackgroundColor),
-      body: ListView(
+      body: Readable(
+        child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           Text(headline, style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
@@ -177,6 +179,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
             ],
           ),
         ],
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models.dart';
 import '../state/app_state.dart';
+import '../widgets/readable.dart';
 import '../widgets/exam_date.dart';
 import 'home_screen.dart';
 
@@ -37,7 +38,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final theme = Theme.of(context);
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: Readable(
+          child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -79,6 +81,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Text('第1章（免許・宅建士・保証制度）は無料。第2章以降はProまたは会話パックで続けられます。',
                   style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline), textAlign: TextAlign.center),
             ],
+          ),
           ),
         ),
       ),

@@ -54,6 +54,19 @@ platform :ios do
   end
 
   desc "Upload store metadata + framed screenshots to App Store Connect (no binary upload)"
+  desc "Upload only the framed screenshots (metadata is set through the ASC API scripts)"
+  lane :upload_screenshots do
+    deliver(
+      api_key: api_key,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_app_version_update: true,
+      overwrite_screenshots: true,
+      run_precheck_before_submit: false,
+      force: true,
+    )
+  end
+
   lane :upload_metadata do
     deliver(
       api_key: api_key,

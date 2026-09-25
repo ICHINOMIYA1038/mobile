@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../models.dart';
 import '../state/app_state.dart';
+import '../widgets/readable.dart';
 import '../widgets/figure_card.dart';
 import '../widgets/figure_search.dart';
 
@@ -93,7 +94,8 @@ class _FigureLibraryScreenState extends State<FigureLibraryScreen> {
                     )
                   : const CircularProgressIndicator(),
             )
-          : Column(
+          : Readable(
+              child: Column(
               children: [
                 _Filters(
                   figures: all,
@@ -128,6 +130,7 @@ class _FigureLibraryScreenState extends State<FigureLibraryScreen> {
                         ),
                 ),
               ],
+              ),
             ),
     );
   }

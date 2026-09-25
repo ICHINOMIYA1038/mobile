@@ -1,0 +1,50 @@
+{
+  "default": {
+    "background": "../frame_assets/background.png",
+    "padding": "5%",
+    "stack_title": true,
+    "title_below_image": false,
+    "title": {
+      "font": "../frame_assets/fonts/HiraginoSansW6.ttc",
+      "color": "#12332F",
+      "font_size": 88
+    },
+    "keyword": {
+      "font": "../frame_assets/fonts/HiraginoSansW3.ttc",
+      "color": "#2F5D62",
+      "font_size": 44
+    }
+  },
+  "data": [
+    {
+      "filter": "01_figure",
+      "title": { "text": "話の流れに合わせて\n図で見せてくれる" },
+      "keyword": { "text": "比較表・流れ図など77枚" }
+    },
+    {
+      "filter": "02_home",
+      "title": { "text": "配点の大きい順に\n進めばいい" },
+      "keyword": { "text": "本試験50問の内訳つき" }
+    },
+    {
+      "filter": "03_question",
+      "title": { "text": "説明を聞いたら\nすぐ○×で確かめる" },
+      "keyword": { "text": "300問を忘れる前に再出題" }
+    },
+    {
+      "filter": "04_map",
+      "title": { "text": "何を学ぶのかが\n最初から見えている" },
+      "keyword": { "text": "11章・53テーマの地図" }
+    },
+    {
+      "filter": "05_library",
+      "title": { "text": "「2週間」で引くと\n該当する図が並ぶ" },
+      "keyword": { "text": "章をまたいで探せる" }
+    },
+    {
+      "filter": "06_start",
+      "title": { "text": "第1章は無料\n登録もいらない" },
+      "keyword": { "text": "試験日を入れて始めるだけ" }
+    }
+  ]
+}

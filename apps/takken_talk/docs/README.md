@@ -9,9 +9,10 @@ AIチューターと会話しながら宅建の全11章を学ぶアプリ。企�
 - 出題はサーバのツール `get_next_question`（takken_simple の300問）。カードで答えるとサーバが採点・SM-2で次回出題日を決める。
 - 体系は「4科目 → 11章 → 53の小テーマ」。ホームは科目で束ねて本試験の配点（業法20・権利14・制限8・税8）を出し、
   チャット上部には現在地（3/7 テーマ名）を常時出す。現在地は AI の `set_topic` だけに頼らず、出題と図解からも自動で追随する。
-- 図解は `content/figures/*.json` に72枚。AI が `show_figure` で呼び、アプリがネイティブに描く（比較表・グループ分け・数字・流れ図・入れ子）。
+- 図解は `content/figures/*.json` に77枚。AI が `show_figure` で呼び、アプリがネイティブに描く（比較表・グループ分け・数字・流れ図・入れ子）。
   AI に図を生成させないのは、宅建は数字の正確さが命で、生成のたびに内容が揺れると信用を失うから。
-  図解は「地図」タブや章の図解一覧からも見られるので、会話しなくても体系をつかめる。
+  図解は「地図」タブの図解ライブラリからも見られる。章をまたいで全文検索でき（「2週間」で引くと該当する図が並ぶ）、
+  型と科目で絞り込める。会話しなくても体系をつかめる場所として置いている。
 - assistant の発話は本文とカードの**順序**を保って保存する（`meta.segments`）。AI は図を出してから「この表の急所は」と続けるため。
 - 課金: 第1章は無料（累計80ターン）。第2章以降は Pro 月額（月800ターンのフェアユース）か会話パック（100 / 300回、買い切り）。
   RevenueCat の `app_user_id` = 匿名ID。Webhook で D1 の plan / turn_balance を更新。
@@ -31,9 +32,14 @@ flutter run --dart-define=API_BASE=http://localhost:8787
 - [ ] Cloudflare（nullstead アカウント）で `wrangler d1 create takken-talk` → `database_id` を wrangler.toml に反映。API トークン（Workers Scripts:Edit, D1:Edit, Account Settings:Read）を GitHub リポジトリ Secrets `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` に登録 → push でデプロイ。
 - [ ] App Store Connect にアプリ作成（Bundle ID `jp.pairof.takken.talk`）。App 内課金: 自動更新 `jp.pairof.takken.talk.pro.monthly`（¥1,480想定）、消耗型 `…pack100`（¥480）、`…pack300`（¥1,180）。
 - [ ] RevenueCat にプロジェクト作成 → Public API key を `--dart-define=RC_KEY=appl_...` でビルド。Offering `default` に上記3商品。Webhook URL `https://<worker>/webhooks/revenuecat`、Authorization ヘッダの値を `wrangler secret put REVENUECAT_WEBHOOK_SECRET`。Entitlement `pro`。
-- [ ] nullstead.com に `/apps/takken-talk`（サポート）と `/apps/takken-talk/privacy` を追加（会話内容を Anthropic に送信して処理する旨、サーバ保存、削除方法を明記）。
+- [x] nullstead.com に `/apps/takken-talk`（サポート）と `/apps/takken-talk/privacy` を公開済み。
 - [ ] Firebase コンソールで iOS アプリ `jp.pairof.takken.talk` が ichinomiya-apps に登録済みか確認（create_app.sh が登録している）。
 - [ ] ASC の App Privacy: 「ユーザーコンテンツ（その他のユーザーコンテンツ）」「使用状況データ」「診断」= アプリ機能・分析、ユーザーに紐付かない（匿名ID）。
+
+## iPad
+`TARGETED_DEVICE_FAMILY = "1,2"` で iPad も対象。本文は `Readable`（最大680pt）で中央に寄せ、
+iPad で1行が長くなりすぎないようにしている。提出には iPad 13インチのスクリーンショットが要る
+（無いと審査提出が 409 `SCREENSHOT_REQUIRED.APP_IPAD_PRO_3GEN_129` で弾かれる）。
 
 ## スクリーンショット
 `./tool/screenshots.sh` で撮る（`API_BASE` 環境変数でAPIの向き先を変えられる。既定はローカル）。

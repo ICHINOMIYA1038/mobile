@@ -7,6 +7,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../api/client.dart';
 import '../models.dart';
 import '../state/app_state.dart';
+import '../widgets/readable.dart';
 import '../widgets/figure_card.dart';
 import '../widgets/question_card.dart';
 import 'figure_library_screen.dart';
@@ -282,7 +283,8 @@ class _ChatScreenState extends State<ChatScreen> {
             onToggle: () => setState(() => _mapOpen = !_mapOpen),
           ),
           Expanded(
-            child: _loading
+            child: Readable(
+              child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _loadError != null
                     ? Center(
@@ -307,8 +309,10 @@ class _ChatScreenState extends State<ChatScreen> {
                           onAnswer: _answerCard,
                         ),
                       ),
+            ),
           ),
-          _InputBar(
+          Readable(
+            child: _InputBar(
             controller: _controller,
             focus: _focus,
             enabled: !_streaming && !_loading,
@@ -320,6 +324,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ? const ['ヒントちょうだい', 'わからない']
                     : const ['次の問題', 'もう少し詳しく', '今どのくらい？'],
             onQuick: (s) => _send(message: s),
+            ),
           ),
         ],
       ),

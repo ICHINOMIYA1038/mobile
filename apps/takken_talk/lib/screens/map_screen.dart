@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models.dart';
 import '../state/app_state.dart';
+import '../widgets/readable.dart';
 import '../widgets/pass_score_ring.dart';
 import 'chat_screen.dart';
 import 'figure_library_screen.dart';
@@ -47,7 +48,8 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: RefreshIndicator(
         onRefresh: state.refresh,
-        child: ListView(
+        child: Readable(
+          child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
             Card(
@@ -122,6 +124,7 @@ class _MapScreenState extends State<MapScreen> {
               const SizedBox(height: 18),
             ],
           ],
+          ),
         ),
       ),
     );

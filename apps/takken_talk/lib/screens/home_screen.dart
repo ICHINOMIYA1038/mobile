@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models.dart';
 import '../state/app_state.dart';
+import '../widgets/readable.dart';
 import '../widgets/pass_score_ring.dart';
 import 'chat_screen.dart';
 import 'map_screen.dart';
@@ -64,7 +65,8 @@ class _HomeTab extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: state.refresh,
-      child: CustomScrollView(
+      child: Readable(
+        child: CustomScrollView(
         slivers: [
           SliverAppBar(
             pinned: true,
@@ -165,6 +167,7 @@ class _HomeTab extends StatelessWidget {
             ),
           ),
         ],
+        ),
       ),
     );
   }
