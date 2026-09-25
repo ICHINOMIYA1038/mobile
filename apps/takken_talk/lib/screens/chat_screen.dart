@@ -13,18 +13,32 @@ import 'figures_screen.dart';
 import 'paywall_screen.dart';
 
 /// 画面上の1メッセージ。assistant はストリーム中にテキストが伸び、カードが増える。
-/// 画面上の1メッセージ。assistant はストリーム中にテキストが伸び、
-/// カード（問題・図解）が後から差し込まれる。表示順を保つため、
-/// 本文とカードをひとまとめの並びとして持つ。
+/// 画面上の1メッセージ。assistant はストリーム中に本文が伸び、
+/// その途中でカード（問題・図解）が差し込まれる。AIは図を出してから
+/// 「この表の急所は」と続けるので、出てきた順をそのまま保つ。
 class _Item {
-  _Item({required this.role, this.text = '', List<Object>? cards}) : cards = cards ?? [];
+  _Item({required this.role, List<MessagePart>? parts}) : parts = parts ?? [];
   final String role;
-  String text;
+  final List<MessagePart> parts;
 
-  /// PublicQuestion または Figure が、AIが出した順に入る
-  final List<Object> cards;
+  String get text => parts.whereType<TextPart>().map((p) => p.text).join('\n\n');
 
-  Iterable<PublicQuestion> get questions => cards.whereType<PublicQuestion>();
+  Iterable<PublicQuestion> get questions =>
+      parts.whereType<CardPart>().map((p) => p.card).whereType<PublicQuestion>();
+
+  void appendText(String delta) {
+    final last = parts.isEmpty ? null : parts.last;
+    if (last is TextPart) {
+      last.text += delta;
+    } else {
+      parts.add(TextPart(delta));
+    }
+  }
+
+  void addCard(Object card) => parts.add(CardPart(card));
+
+  /// ツール直前に出るゴミ断片を落とす
+  void dropGarbage() => parts.removeWhere((p) => p is TextPart && isGarbageText(p.text));
 }
 
 class ChatScreen extends StatefulWidget {
@@ -78,9 +92,9 @@ class _ChatScreenState extends State<ChatScreen> {
           if (a != null) {
             _answers[a['questionId'] as String] = (answer: a['answer'] == true, correct: a['correct'] == true);
           }
-          if (h.text.isNotEmpty) _items.add(_Item(role: 'user', text: h.text));
-        } else {
-          _items.add(_Item(role: 'assistant', text: h.text, cards: [...h.questions, ...h.figures]));
+          if (h.text.isNotEmpty) _items.add(_Item(role: 'user', parts: [TextPart(h.text)]));
+        } else if (h.parts.isNotEmpty) {
+          _items.add(_Item(role: 'assistant', parts: h.parts));
         }
       }
       setState(() {
@@ -120,8 +134,10 @@ class _ChatScreenState extends State<ChatScreen> {
     final api = state.api;
     setState(() {
       _streaming = true;
-      if (message != null) _items.add(_Item(role: 'user', text: message));
-      if (answer != null && message == null) _items.add(_Item(role: 'user', text: answer.answer ? '○' : '×'));
+      if (message != null) _items.add(_Item(role: 'user', parts: [TextPart(message)]));
+      if (answer != null && message == null) {
+        _items.add(_Item(role: 'user', parts: [TextPart(answer.answer ? '○' : '×')]));
+      }
       _items.add(_Item(role: 'assistant'));
     });
     _jumpToEnd();
@@ -132,13 +148,19 @@ class _ChatScreenState extends State<ChatScreen> {
         if (!mounted) return;
         switch (ev) {
           case TextDelta(:final delta):
-            setState(() => target.text += delta);
+            setState(() => target.appendText(delta));
             _jumpToEnd(animated: false);
           case QuestionEvent(:final question):
-            setState(() => target.cards.add(question));
+            setState(() {
+              target.dropGarbage();
+              target.addCard(question);
+            });
             _jumpToEnd();
           case FigureEvent(:final figure):
-            setState(() => target.cards.add(figure));
+            setState(() {
+              target.dropGarbage();
+              target.addCard(figure);
+            });
             _jumpToEnd();
           case TopicEvent():
             setState(() {
@@ -156,7 +178,7 @@ class _ChatScreenState extends State<ChatScreen> {
               _toast('無料枠は残り10回です。Proにすると全章を話せます。');
             }
           case ErrorEvent(:final message):
-            setState(() => target.text = target.text.isEmpty ? message : '${target.text}\n\n$message');
+            setState(() => target.appendText(target.parts.isEmpty ? message : '\n\n$message'));
         }
       }
       if (answer != null && !_answers.containsKey(answer.questionId)) {
@@ -182,7 +204,9 @@ class _ChatScreenState extends State<ChatScreen> {
         _toast('送信できませんでした（${e.code}）');
       }
     } catch (e) {
-      setState(() => target.text = target.text.isEmpty ? '通信が途切れました。もう一度送ってください。' : target.text);
+      setState(() {
+        if (target.parts.isEmpty) target.appendText('通信が途切れました。もう一度送ってください。');
+      });
     } finally {
       if (mounted) setState(() => _streaming = false);
     }
@@ -468,28 +492,32 @@ class _Bubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (item.text.isEmpty && streaming)
-            const Padding(padding: EdgeInsets.all(8), child: _TypingDots())
-          else if (item.text.isNotEmpty)
-            MarkdownBody(
-              data: item.text,
-              selectable: false,
-              styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
-                p: theme.textTheme.bodyLarge?.copyWith(height: 1.55),
-                listBullet: theme.textTheme.bodyLarge,
-              ),
-            ),
-          for (final card in item.cards)
-            if (card is PublicQuestion)
-              QuestionCard(
-                question: card,
-                answered: answers[card.id]?.answer,
-                correct: answers[card.id]?.correct,
-                enabled: canAnswer,
-                onAnswer: (a) => onAnswer(card, a),
-              )
-            else if (card is Figure)
-              FigureCard(figure: card),
+          if (item.parts.isEmpty && streaming)
+            const Padding(padding: EdgeInsets.all(8), child: _TypingDots()),
+          for (final part in item.parts)
+            switch (part) {
+              TextPart() => Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: MarkdownBody(
+                    data: part.text.trim(),
+                    selectable: false,
+                    styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+                      p: theme.textTheme.bodyLarge?.copyWith(height: 1.55),
+                      listBullet: theme.textTheme.bodyLarge,
+                      tableColumnWidth: const IntrinsicColumnWidth(),
+                    ),
+                  ),
+                ),
+              CardPart(card: final PublicQuestion q) => QuestionCard(
+                  question: q,
+                  answered: answers[q.id]?.answer,
+                  correct: answers[q.id]?.correct,
+                  enabled: canAnswer,
+                  onAnswer: (a) => onAnswer(q, a),
+                ),
+              CardPart(card: final Figure f) => FigureCard(figure: f),
+              CardPart() => const SizedBox.shrink(),
+            },
         ],
       ),
     );

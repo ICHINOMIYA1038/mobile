@@ -536,22 +536,44 @@ class ErrorEvent extends TutorEvent {
   final String? code;
 }
 
-/// 画面復元用の履歴1件。assistant のときは meta.events に出題カードが入っている。
+/// 本文とカードが出てきた順に並んだ1かたまり。
+sealed class MessagePart {
+  const MessagePart();
+}
+class TextPart extends MessagePart {
+  TextPart(this.text);
+  String text;
+}
+class CardPart extends MessagePart {
+  const CardPart(this.card);
+
+  /// PublicQuestion または Figure
+  final Object card;
+}
+
+/// 日本語を含まない短い断片は、ツール呼び出し直前にモデルが吐くゴミなので出さない。
+final _jaPattern = RegExp(r'[ぁ-んァ-ヶ一-龯０-９、。]');
+bool isGarbageText(String t) {
+  final s = t.trim();
+  return s.isNotEmpty && s.length < 12 && !_jaPattern.hasMatch(s);
+}
+
+/// 画面復元用の履歴1件。assistant のときは meta.segments に本文とカードが順番に入る。
 class HistoryMessage {
   const HistoryMessage({
     required this.id,
     required this.role,
     required this.text,
-    required this.questions,
-    required this.figures,
+    required this.parts,
     required this.topic,
     required this.answer,
   });
   final String id;
   final String role;
   final String text;
-  final List<PublicQuestion> questions;
-  final List<Figure> figures;
+
+  /// 本文とカードが出てきた順の並び
+  final List<MessagePart> parts;
 
   /// assistant のターンで宣言された小テーマ（あれば）
   final TopicEvent? topic;
@@ -561,25 +583,45 @@ class HistoryMessage {
 
   factory HistoryMessage.fromJson(Map<String, dynamic> j) {
     final meta = j['meta'] as Map<String, dynamic>?;
-    final qs = <PublicQuestion>[];
-    final figs = <Figure>[];
+    final parts = <MessagePart>[];
     TopicEvent? topic;
-    for (final e in (meta?['events'] as List?) ?? const []) {
+
+    void addCard(Map<String, dynamic> e) {
       switch (e['type']) {
         case 'question':
-          qs.add(PublicQuestion.fromJson(e['question'] as Map<String, dynamic>));
+          parts.add(CardPart(PublicQuestion.fromJson(e['question'] as Map<String, dynamic>)));
         case 'figure':
-          figs.add(Figure.fromJson(e['figure'] as Map<String, dynamic>));
-        case 'topic':
-          topic = TutorEvent.fromJson(e as Map<String, dynamic>) as TopicEvent;
+          parts.add(CardPart(Figure.fromJson(e['figure'] as Map<String, dynamic>)));
       }
     }
+
+    final segs = meta?['segments'] as List?;
+    if (segs != null) {
+      for (final e in segs) {
+        final m = e as Map<String, dynamic>;
+        if (m['type'] == 'text') {
+          final t = (m['text'] as String? ?? '').trim();
+          if (t.isNotEmpty && !isGarbageText(t)) parts.add(TextPart(t));
+        } else {
+          addCard(m);
+        }
+      }
+    } else {
+      // 旧形式（本文が先、カードが後）。順序の情報がないので本文を先頭に置く。
+      final text = (j['text'] as String? ?? '').trim();
+      if (text.isNotEmpty) parts.add(TextPart(text));
+      for (final e in (meta?['events'] as List?) ?? const []) {
+        addCard(e as Map<String, dynamic>);
+      }
+    }
+    final t = meta?['topic'] as Map<String, dynamic>?;
+    if (t != null) topic = TutorEvent.fromJson(t) as TopicEvent?;
+
     return HistoryMessage(
       id: j['id'] as String,
       role: j['role'] as String,
       text: j['text'] as String? ?? '',
-      questions: qs,
-      figures: figs,
+      parts: parts,
       topic: topic,
       answer: meta?['answer'] as Map<String, dynamic>?,
     );

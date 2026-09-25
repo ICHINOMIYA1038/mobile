@@ -81,15 +81,21 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     await shoot(tester, '03_chapter_map');
 
-    // 最初の出題まで待つ
-    expect(await waitFor(tester, () => find.text('○ 正しい').evaluate().isNotEmpty, seconds: 120), isTrue, reason: 'カードが出ない');
+    // 最初の返答が終わるまで待つ（返答中はクイック返信が消える）
+    expect(await waitFor(tester, () => find.text('次の問題').evaluate().isNotEmpty, seconds: 150), isTrue, reason: '最初の返答が終わらない');
+    await tester.pump(const Duration(seconds: 1));
+
+    // 出題を頼む（最初の一言は会話で問いかけるだけで、カードは出ない作り）
+    await tester.tap(find.text('次の問題').first);
+    expect(await waitFor(tester, () => find.text('○ 正しい').evaluate().isNotEmpty, seconds: 150), isTrue, reason: 'カードが出ない');
     await tester.pump(const Duration(seconds: 2));
     await shoot(tester, '04_chat_question');
 
     // ○ を押して採点
     await tester.tap(find.text('○ 正しい').first);
-    await waitFor(tester, () => find.textContaining('と回答').evaluate().isNotEmpty, seconds: 90);
-    await tester.pump(const Duration(seconds: 3));
+    await waitFor(tester, () => find.textContaining('と回答').evaluate().isNotEmpty, seconds: 120);
+    await waitFor(tester, () => find.text('次の問題').evaluate().isNotEmpty || find.text('ヒントちょうだい').evaluate().isNotEmpty, seconds: 120);
+    await tester.pump(const Duration(seconds: 2));
     await shoot(tester, '05_chat_graded');
 
     // 図解を引き出す
@@ -97,11 +103,10 @@ void main() {
     if (field.evaluate().isNotEmpty) {
       await tester.enterText(field, '営業保証金と保証協会の金額がごちゃごちゃです。整理して');
       await tester.testTextInput.receiveAction(TextInputAction.send);
-      final gotFigure = await waitFor(tester, () => find.byType(FigureCard).evaluate().isNotEmpty, seconds: 150);
+      final gotFigure = await waitFor(tester, () => find.byType(FigureCard).evaluate().isNotEmpty, seconds: 180);
       log('figure shown: $gotFigure');
-      await tester.pump(const Duration(seconds: 3));
-      await tester.dragUntilVisible(find.byType(FigureCard).first, find.byType(ListView).first, const Offset(0, -120)).catchError((_) {});
-      await tester.pump(const Duration(seconds: 1));
+      await waitFor(tester, () => find.text('次の問題').evaluate().isNotEmpty || find.text('ヒントちょうだい').evaluate().isNotEmpty, seconds: 120);
+      await tester.pump(const Duration(seconds: 2));
       await shoot(tester, '06_chat_figure');
     }
 

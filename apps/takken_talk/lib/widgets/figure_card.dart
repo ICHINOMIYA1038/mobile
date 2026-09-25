@@ -120,13 +120,15 @@ class _Compare extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              cell('', labelStyle, labelWidth, header: true),
-              for (final c in figure.columns)
-                cell(c, labelStyle?.copyWith(color: theme.colorScheme.primary), colWidth, header: true),
-            ],
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                cell('', labelStyle, labelWidth, header: true),
+                for (final c in figure.columns)
+                  cell(c, labelStyle?.copyWith(color: theme.colorScheme.primary), colWidth, header: true),
+              ],
+            ),
           ),
           for (final r in figure.rows)
             IntrinsicHeight(
