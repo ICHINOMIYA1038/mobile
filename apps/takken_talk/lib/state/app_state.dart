@@ -37,33 +37,51 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 会話中に届いた進捗を、サーバに聞き直さずに反映する。
-  void applyProgress(ProgressSummary p) {
+  /// サーバに聞き直さずに一部だけ差し替える。
+  void _patch({
+    PlanInfo? plan,
+    Map<String, int>? turnCounts,
+    Map<String, String>? currentTopics,
+    Set<String>? visitedTopics,
+    String? lastChapterId,
+    ProgressSummary? progress,
+  }) {
     final m = me;
     if (m == null) return;
     me = Me(
       userId: m.userId,
       nickname: m.nickname,
       examDate: m.examDate,
-      plan: m.plan,
+      plan: plan ?? m.plan,
+      subjects: m.subjects,
       chapters: m.chapters,
-      turnCounts: m.turnCounts,
-      lastChapterId: m.lastChapterId,
-      progress: p,
+      turnCounts: turnCounts ?? m.turnCounts,
+      currentTopics: currentTopics ?? m.currentTopics,
+      visitedTopics: visitedTopics ?? m.visitedTopics,
+      lastChapterId: lastChapterId ?? m.lastChapterId,
+      progress: progress ?? m.progress,
       live: m.live,
     );
     notifyListeners();
   }
 
+  /// 会話中に届いた進捗を反映する。
+  void applyProgress(ProgressSummary p) => _patch(progress: p);
+
+  /// AIが宣言した小テーマを、地図やホームにも即座に映す。
+  void applyTopic(TopicEvent t) {
+    final m = me;
+    if (m == null) return;
+    _patch(
+      currentTopics: {...m.currentTopics, t.chapterId: t.topicKey},
+      visitedTopics: {...m.visitedTopics, '${t.chapterId}/${t.topicKey}'},
+    );
+  }
+
   void applyTurn(TurnInfo t, String chapterId) {
     final m = me;
     if (m == null) return;
-    final counts = Map<String, int>.from(m.turnCounts);
-    counts[chapterId] = (counts[chapterId] ?? 0) + 1;
-    me = Me(
-      userId: m.userId,
-      nickname: m.nickname,
-      examDate: m.examDate,
+    _patch(
       plan: PlanInfo(
         isPro: t.isPro,
         proUntil: m.plan.proUntil,
@@ -71,13 +89,9 @@ class AppState extends ChangeNotifier {
         freeUsed: t.freeUsed,
         freeCap: t.freeCap,
       ),
-      chapters: m.chapters,
-      turnCounts: counts,
+      turnCounts: {...m.turnCounts, chapterId: (m.turnCounts[chapterId] ?? 0) + 1},
       lastChapterId: chapterId,
-      progress: m.progress,
-      live: m.live,
     );
-    notifyListeners();
   }
 }
 

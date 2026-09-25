@@ -90,11 +90,20 @@ class ApiClient {
     await forgetUser();
   }
 
-  Future<List<HistoryMessage>> messages(String chapterId) async {
+  Future<({List<HistoryMessage> messages, String? currentTopic})> messages(String chapterId) async {
     final j = await _json('GET', '/v1/chapters/$chapterId/messages');
-    return ((j['messages'] as List?) ?? const [])
-        .map((m) => HistoryMessage.fromJson(m as Map<String, dynamic>))
-        .toList();
+    return (
+      messages: ((j['messages'] as List?) ?? const [])
+          .map((m) => HistoryMessage.fromJson(m as Map<String, dynamic>))
+          .toList(),
+      currentTopic: j['currentTopic'] as String?,
+    );
+  }
+
+  /// 章の図解をまとめて取る。会話の外から体系を眺めるための画面で使う。
+  Future<List<Figure>> figures(String chapterId) async {
+    final j = await _json('GET', '/v1/chapters/$chapterId/figures');
+    return ((j['figures'] as List?) ?? const []).map((f) => Figure.fromJson(f as Map<String, dynamic>)).toList();
   }
 
   Future<Entitlement> entitlement(String chapterId) async =>

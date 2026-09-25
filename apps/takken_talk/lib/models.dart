@@ -1,7 +1,45 @@
 class ChapterTopic {
-  const ChapterTopic({required this.key, required this.title});
+  const ChapterTopic({
+    required this.key,
+    required this.title,
+    required this.questionCount,
+    required this.figureCount,
+  });
   final String key;
   final String title;
+  final int questionCount;
+  final int figureCount;
+
+  factory ChapterTopic.fromJson(Map<String, dynamic> j) => ChapterTopic(
+        key: j['key'] as String,
+        title: j['title'] as String,
+        questionCount: (j['questionCount'] as num?)?.toInt() ?? 0,
+        figureCount: (j['figureCount'] as num?)?.toInt() ?? 0,
+      );
+}
+
+/// 本試験の科目。配点(50問中の出題数)が学習順の根拠になる。
+class Subject {
+  const Subject({
+    required this.key,
+    required this.name,
+    required this.examQuestions,
+    required this.summary,
+    required this.chapterIds,
+  });
+  final String key;
+  final String name;
+  final int examQuestions;
+  final String summary;
+  final List<String> chapterIds;
+
+  factory Subject.fromJson(Map<String, dynamic> j) => Subject(
+        key: j['key'] as String,
+        name: j['name'] as String,
+        examQuestions: (j['examQuestions'] as num).toInt(),
+        summary: j['summary'] as String? ?? '',
+        chapterIds: ((j['chapterIds'] as List?) ?? const []).cast<String>(),
+      );
 }
 
 class Chapter {
@@ -15,6 +53,7 @@ class Chapter {
     required this.goal,
     required this.examWeight,
     required this.questionCount,
+    required this.figureCount,
     required this.topics,
   });
   final String id;
@@ -26,6 +65,7 @@ class Chapter {
   final String goal;
   final String examWeight;
   final int questionCount;
+  final int figureCount;
   final List<ChapterTopic> topics;
 
   factory Chapter.fromJson(Map<String, dynamic> j) => Chapter(
@@ -38,9 +78,35 @@ class Chapter {
         goal: j['goal'] as String? ?? '',
         examWeight: j['examWeight'] as String? ?? '',
         questionCount: (j['questionCount'] as num?)?.toInt() ?? 0,
+        figureCount: (j['figureCount'] as num?)?.toInt() ?? 0,
         topics: ((j['topics'] as List?) ?? const [])
-            .map((t) => ChapterTopic(key: t['key'] as String, title: t['title'] as String))
+            .map((t) => ChapterTopic.fromJson(t as Map<String, dynamic>))
             .toList(),
+      );
+}
+
+class TopicProgress {
+  const TopicProgress({
+    required this.key,
+    required this.title,
+    required this.total,
+    required this.seen,
+    required this.mastered,
+  });
+  final String key;
+  final String title;
+  final int total;
+  final int seen;
+  final int mastered;
+
+  double get masteryRatio => total == 0 ? 0 : mastered / total;
+
+  factory TopicProgress.fromJson(Map<String, dynamic> j) => TopicProgress(
+        key: j['key'] as String,
+        title: j['title'] as String,
+        total: (j['total'] as num).toInt(),
+        seen: (j['seen'] as num).toInt(),
+        mastered: (j['mastered'] as num).toInt(),
       );
 }
 
@@ -48,25 +114,42 @@ class ChapterProgress {
   const ChapterProgress({
     required this.chapterId,
     required this.title,
+    required this.subject,
     required this.total,
     required this.seen,
     required this.mastered,
     required this.accuracy,
+    required this.topics,
   });
   final String chapterId;
   final String title;
+  final String subject;
   final int total;
   final int seen;
   final int mastered;
   final double? accuracy;
+  final List<TopicProgress> topics;
+
+  double get masteryRatio => total == 0 ? 0 : mastered / total;
+
+  TopicProgress? topic(String key) {
+    for (final t in topics) {
+      if (t.key == key) return t;
+    }
+    return null;
+  }
 
   factory ChapterProgress.fromJson(Map<String, dynamic> j) => ChapterProgress(
         chapterId: j['chapterId'] as String,
         title: j['title'] as String,
+        subject: j['subject'] as String? ?? '',
         total: (j['total'] as num).toInt(),
         seen: (j['seen'] as num).toInt(),
         mastered: (j['mastered'] as num).toInt(),
         accuracy: (j['accuracy'] as num?)?.toDouble(),
+        topics: ((j['topics'] as List?) ?? const [])
+            .map((t) => TopicProgress.fromJson(t as Map<String, dynamic>))
+            .toList(),
       );
 }
 
@@ -149,8 +232,11 @@ class Me {
     required this.nickname,
     required this.examDate,
     required this.plan,
+    required this.subjects,
     required this.chapters,
     required this.turnCounts,
+    required this.currentTopics,
+    required this.visitedTopics,
     required this.lastChapterId,
     required this.progress,
     required this.live,
@@ -159,8 +245,15 @@ class Me {
   final String? nickname;
   final String? examDate;
   final PlanInfo plan;
+  final List<Subject> subjects;
   final List<Chapter> chapters;
   final Map<String, int> turnCounts;
+
+  /// 章ID → 最後に話していた小テーマの key
+  final Map<String, String> currentTopics;
+
+  /// 「章ID/テーマkey」の集合。一度でも話したテーマ。
+  final Set<String> visitedTopics;
   final String? lastChapterId;
   final ProgressSummary progress;
   final bool live;
@@ -172,12 +265,20 @@ class Me {
       nickname: j['nickname'] as String?,
       examDate: j['examDate'] as String?,
       plan: PlanInfo.fromJson(j['plan'] as Map<String, dynamic>),
+      subjects: ((j['subjects'] as List?) ?? const [])
+          .map((s) => Subject.fromJson(s as Map<String, dynamic>))
+          .toList(),
       chapters: ((j['chapters'] as List?) ?? const [])
           .map((c) => Chapter.fromJson(c as Map<String, dynamic>))
           .toList(),
       turnCounts: {
         for (final c in convs) c['chapter_id'] as String: (c['turn_count'] as num).toInt(),
       },
+      currentTopics: {
+        for (final c in convs)
+          if (c['current_topic'] != null) c['chapter_id'] as String: c['current_topic'] as String,
+      },
+      visitedTopics: ((j['visitedTopics'] as List?) ?? const []).cast<String>().toSet(),
       lastChapterId: convs.isEmpty ? null : convs.first['chapter_id'] as String,
       progress: ProgressSummary.fromJson(j['progress'] as Map<String, dynamic>),
       live: j['live'] == true,
@@ -190,6 +291,104 @@ class Me {
     }
     return null;
   }
+}
+
+/// 図解カード。サーバーで検証済みの内容が来るので、そのまま描けばよい。
+class Figure {
+  const Figure({
+    required this.id,
+    required this.chapterId,
+    required this.topicKey,
+    required this.title,
+    required this.kind,
+    required this.hint,
+    required this.note,
+    required this.columns,
+    required this.rows,
+    required this.groups,
+    required this.items,
+    required this.steps,
+    required this.nodes,
+  });
+  final String id;
+  final String chapterId;
+  final String topicKey;
+  final String title;
+  final String kind; // compare | buckets | numbers | flow | nest
+  final String hint;
+  final String? note;
+
+  final List<String> columns;
+  final List<FigureRow> rows;
+  final List<FigureGroup> groups;
+  final List<FigureItem> items;
+  final List<FigureStep> steps;
+  final List<FigureNode> nodes;
+
+  factory Figure.fromJson(Map<String, dynamic> j) => Figure(
+        id: j['id'] as String,
+        chapterId: j['chapterId'] as String? ?? '',
+        topicKey: j['topicKey'] as String? ?? '',
+        title: j['title'] as String,
+        kind: j['kind'] as String,
+        hint: j['hint'] as String? ?? '',
+        note: j['note'] as String?,
+        columns: ((j['columns'] as List?) ?? const []).cast<String>(),
+        rows: ((j['rows'] as List?) ?? const []).map((r) => FigureRow.fromJson(r as Map<String, dynamic>)).toList(),
+        groups: ((j['groups'] as List?) ?? const []).map((g) => FigureGroup.fromJson(g as Map<String, dynamic>)).toList(),
+        items: ((j['items'] as List?) ?? const []).map((i) => FigureItem.fromJson(i as Map<String, dynamic>)).toList(),
+        steps: ((j['steps'] as List?) ?? const []).map((s) => FigureStep.fromJson(s as Map<String, dynamic>)).toList(),
+        nodes: ((j['nodes'] as List?) ?? const []).map((n) => FigureNode.fromJson(n as Map<String, dynamic>)).toList(),
+      );
+}
+
+class FigureRow {
+  const FigureRow({required this.label, required this.cells});
+  final String label;
+  final List<String> cells;
+  factory FigureRow.fromJson(Map<String, dynamic> j) =>
+      FigureRow(label: j['label'] as String, cells: ((j['cells'] as List?) ?? const []).cast<String>());
+}
+
+class FigureGroup {
+  const FigureGroup({required this.title, required this.tone, required this.items});
+  final String title;
+  final String? tone; // yes | no | warn | info
+  final List<String> items;
+  factory FigureGroup.fromJson(Map<String, dynamic> j) => FigureGroup(
+        title: j['title'] as String,
+        tone: j['tone'] as String?,
+        items: ((j['items'] as List?) ?? const []).cast<String>(),
+      );
+}
+
+class FigureItem {
+  const FigureItem({required this.value, required this.label, required this.note});
+  final String value;
+  final String label;
+  final String? note;
+  factory FigureItem.fromJson(Map<String, dynamic> j) =>
+      FigureItem(value: j['value'] as String, label: j['label'] as String, note: j['note'] as String?);
+}
+
+class FigureStep {
+  const FigureStep({required this.title, required this.detail});
+  final String title;
+  final String? detail;
+  factory FigureStep.fromJson(Map<String, dynamic> j) =>
+      FigureStep(title: j['title'] as String, detail: (j['detail'] as String?)?.trim().isEmpty ?? true ? null : j['detail'] as String);
+}
+
+class FigureNode {
+  const FigureNode({required this.title, required this.note, required this.children});
+  final String title;
+  final String? note;
+  final List<FigureNode> children;
+  factory FigureNode.fromJson(Map<String, dynamic> j) => FigureNode(
+        title: j['title'] as String,
+        note: j['note'] as String?,
+        children: ((j['children'] as List?) ?? const []).map((c) => FigureNode.fromJson(c as Map<String, dynamic>)).toList(),
+      );
 }
 
 class PublicQuestion {
@@ -257,6 +456,16 @@ sealed class TutorEvent {
         );
       case 'progress':
         return ProgressEvent(ProgressSummary.fromJson(j['progress'] as Map<String, dynamic>));
+      case 'figure':
+        return FigureEvent(Figure.fromJson(j['figure'] as Map<String, dynamic>));
+      case 'topic':
+        return TopicEvent(
+          chapterId: j['chapterId'] as String,
+          topicKey: j['topicKey'] as String,
+          title: j['title'] as String,
+          index: (j['index'] as num).toInt(),
+          total: (j['total'] as num).toInt(),
+        );
       case 'done':
         return DoneEvent(TurnInfo.fromJson(j['turn'] as Map<String, dynamic>));
       case 'error':
@@ -291,6 +500,26 @@ class GradedEvent extends TutorEvent {
   final String reference;
 }
 
+class FigureEvent extends TutorEvent {
+  const FigureEvent(this.figure);
+  final Figure figure;
+}
+
+class TopicEvent extends TutorEvent {
+  const TopicEvent({
+    required this.chapterId,
+    required this.topicKey,
+    required this.title,
+    required this.index,
+    required this.total,
+  });
+  final String chapterId;
+  final String topicKey;
+  final String title;
+  final int index;
+  final int total;
+}
+
 class ProgressEvent extends TutorEvent {
   const ProgressEvent(this.progress);
   final ProgressSummary progress;
@@ -314,12 +543,18 @@ class HistoryMessage {
     required this.role,
     required this.text,
     required this.questions,
+    required this.figures,
+    required this.topic,
     required this.answer,
   });
   final String id;
   final String role;
   final String text;
   final List<PublicQuestion> questions;
+  final List<Figure> figures;
+
+  /// assistant のターンで宣言された小テーマ（あれば）
+  final TopicEvent? topic;
 
   /// user 側: カード回答の内容 {questionId, answer, correct}
   final Map<String, dynamic>? answer;
@@ -327,14 +562,25 @@ class HistoryMessage {
   factory HistoryMessage.fromJson(Map<String, dynamic> j) {
     final meta = j['meta'] as Map<String, dynamic>?;
     final qs = <PublicQuestion>[];
+    final figs = <Figure>[];
+    TopicEvent? topic;
     for (final e in (meta?['events'] as List?) ?? const []) {
-      if (e['type'] == 'question') qs.add(PublicQuestion.fromJson(e['question'] as Map<String, dynamic>));
+      switch (e['type']) {
+        case 'question':
+          qs.add(PublicQuestion.fromJson(e['question'] as Map<String, dynamic>));
+        case 'figure':
+          figs.add(Figure.fromJson(e['figure'] as Map<String, dynamic>));
+        case 'topic':
+          topic = TutorEvent.fromJson(e as Map<String, dynamic>) as TopicEvent;
+      }
     }
     return HistoryMessage(
       id: j['id'] as String,
       role: j['role'] as String,
       text: j['text'] as String? ?? '',
       questions: qs,
+      figures: figs,
+      topic: topic,
       answer: meta?['answer'] as Map<String, dynamic>?,
     );
   }

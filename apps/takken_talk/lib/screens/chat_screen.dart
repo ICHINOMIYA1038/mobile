@@ -7,16 +7,24 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../api/client.dart';
 import '../models.dart';
 import '../state/app_state.dart';
+import '../widgets/figure_card.dart';
 import '../widgets/question_card.dart';
+import 'figures_screen.dart';
 import 'paywall_screen.dart';
 
 /// 画面上の1メッセージ。assistant はストリーム中にテキストが伸び、カードが増える。
+/// 画面上の1メッセージ。assistant はストリーム中にテキストが伸び、
+/// カード（問題・図解）が後から差し込まれる。表示順を保つため、
+/// 本文とカードをひとまとめの並びとして持つ。
 class _Item {
-  _Item({required this.role, this.text = '', List<PublicQuestion>? questions})
-      : questions = questions ?? [];
+  _Item({required this.role, this.text = '', List<Object>? cards}) : cards = cards ?? [];
   final String role;
   String text;
-  final List<PublicQuestion> questions;
+
+  /// PublicQuestion または Figure が、AIが出した順に入る
+  final List<Object> cards;
+
+  Iterable<PublicQuestion> get questions => cards.whereType<PublicQuestion>();
 }
 
 class ChatScreen extends StatefulWidget {
@@ -30,6 +38,8 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _items = <_Item>[];
   final _answers = <String, ({bool answer, bool correct})>{}; // questionId → 回答
+  String? _currentTopicKey;
+  bool _mapOpen = false;
   final _controller = TextEditingController();
   final _scroll = ScrollController();
   final _focus = FocusNode();
@@ -58,7 +68,9 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _load() async {
     final api = AppScope.of(context).api;
     try {
-      final history = await api.messages(widget.chapterId);
+      final loaded = await api.messages(widget.chapterId);
+      final history = loaded.messages;
+      _currentTopicKey = loaded.currentTopic;
       _items.clear();
       for (final h in history) {
         if (h.role == 'user') {
@@ -68,12 +80,13 @@ class _ChatScreenState extends State<ChatScreen> {
           }
           if (h.text.isNotEmpty) _items.add(_Item(role: 'user', text: h.text));
         } else {
-          _items.add(_Item(role: 'assistant', text: h.text, questions: h.questions));
+          _items.add(_Item(role: 'assistant', text: h.text, cards: [...h.questions, ...h.figures]));
         }
       }
       setState(() {
         _loading = false;
         _loadError = null;
+        _mapOpen = history.isEmpty;
       });
       _jumpToEnd();
       if (history.isEmpty) {
@@ -89,12 +102,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
   PublicQuestion? get _pendingQuestion {
     for (final it in _items.reversed) {
-      for (final q in it.questions.reversed) {
+      for (final q in it.questions.toList().reversed) {
         if (!_answers.containsKey(q.id)) return q;
       }
     }
     return null;
   }
+
+  Chapter get _chapterOrThrow => _chapter;
+
+  int get _topicIndex =>
+      _currentTopicKey == null ? -1 : _chapterOrThrow.topics.indexWhere((t) => t.key == _currentTopicKey);
 
   Future<void> _send({String? message, ({String questionId, bool answer})? answer, bool start = false}) async {
     if (_streaming) return;
@@ -117,8 +135,17 @@ class _ChatScreenState extends State<ChatScreen> {
             setState(() => target.text += delta);
             _jumpToEnd(animated: false);
           case QuestionEvent(:final question):
-            setState(() => target.questions.add(question));
+            setState(() => target.cards.add(question));
             _jumpToEnd();
+          case FigureEvent(:final figure):
+            setState(() => target.cards.add(figure));
+            _jumpToEnd();
+          case TopicEvent():
+            setState(() {
+              _currentTopicKey = ev.topicKey;
+              _mapOpen = false;
+            });
+            state.applyTopic(ev);
           case GradedEvent(:final questionId, :final answer, :final correct):
             setState(() => _answers[questionId] = (answer: answer, correct: correct));
           case ProgressEvent(:final progress):
@@ -213,14 +240,23 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'この章について',
-            icon: const Icon(Icons.info_outline),
-            onPressed: () => _showChapterInfo(context, chapter),
+            tooltip: 'この章の図解',
+            icon: const Icon(Icons.image_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => FiguresScreen(chapter: chapter),
+              settings: RouteSettings(name: 'figures_${chapter.id}'),
+            )),
           ),
         ],
       ),
       body: Column(
         children: [
+          _TopicStrip(
+            chapter: chapter,
+            currentIndex: _topicIndex,
+            open: _mapOpen,
+            onToggle: () => setState(() => _mapOpen = !_mapOpen),
+          ),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -266,25 +302,125 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void _showChapterInfo(BuildContext context, Chapter c) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(c.title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Text(c.examWeight, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 12),
-            Text(c.goal),
-            const SizedBox(height: 12),
-            for (final t in c.topics) Text('・${t.title}'),
-          ],
-        ),
+}
+
+/// チャットの上に出す現在地。たたむと1行、開くとこの章のテーマ全部が見える。
+/// 「いま何の話をしているか」と「この先に何があるか」を同じ場所で示す。
+class _TopicStrip extends StatelessWidget {
+  const _TopicStrip({
+    required this.chapter,
+    required this.currentIndex,
+    required this.open,
+    required this.onToggle,
+  });
+  final Chapter chapter;
+  final int currentIndex;
+  final bool open;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final total = chapter.topics.length;
+    final label = currentIndex >= 0
+        ? '${currentIndex + 1}/$total  ${chapter.topics[currentIndex].title}'
+        : 'この章のテーマ（$total）';
+    return Material(
+      color: theme.colorScheme.primary.withValues(alpha: 0.06),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: onToggle,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 9, 10, 9),
+              child: Row(
+                children: [
+                  Icon(Icons.explore_outlined, size: 16, color: theme.colorScheme.primary),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  Icon(open ? Icons.expand_less : Icons.expand_more, size: 20, color: theme.colorScheme.primary),
+                ],
+              ),
+            ),
+          ),
+          if (!open && currentIndex >= 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(
+                children: [
+                  for (var i = 0; i < total; i++)
+                    Expanded(
+                      child: Container(
+                        height: 3,
+                        margin: EdgeInsets.only(right: i == total - 1 ? 0 : 3),
+                        decoration: BoxDecoration(
+                          color: i <= currentIndex ? theme.colorScheme.primary : theme.colorScheme.primary.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          if (open)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(chapter.goal, style: theme.textTheme.bodySmall?.copyWith(height: 1.5)),
+                  const SizedBox(height: 10),
+                  for (final (i, t) in chapter.topics.indexed)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 5),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 18,
+                            height: 18,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: i == currentIndex
+                                  ? theme.colorScheme.primary
+                                  : i < currentIndex
+                                      ? theme.colorScheme.primary.withValues(alpha: 0.45)
+                                      : theme.colorScheme.outlineVariant,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text('${i + 1}',
+                                style: theme.textTheme.labelSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              t.title,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                height: 1.4,
+                                fontWeight: i == currentIndex ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          Text('${t.questionCount}問・図解${t.figureCount}',
+                              style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline)),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  Text('テーマは会話の流れで前後します。聞きたいところがあれば、そのまま言ってください。',
+                      style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline, height: 1.4)),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -343,14 +479,17 @@ class _Bubble extends StatelessWidget {
                 listBullet: theme.textTheme.bodyLarge,
               ),
             ),
-          for (final q in item.questions)
-            QuestionCard(
-              question: q,
-              answered: answers[q.id]?.answer,
-              correct: answers[q.id]?.correct,
-              enabled: canAnswer,
-              onAnswer: (a) => onAnswer(q, a),
-            ),
+          for (final card in item.cards)
+            if (card is PublicQuestion)
+              QuestionCard(
+                question: card,
+                answered: answers[card.id]?.answer,
+                correct: answers[card.id]?.correct,
+                enabled: canAnswer,
+                onAnswer: (a) => onAnswer(card, a),
+              )
+            else if (card is Figure)
+              FigureCard(figure: card),
         ],
       ),
     );

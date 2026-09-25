@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models.dart';
 import '../state/app_state.dart';
 import '../widgets/exam_date.dart';
 import 'home_screen.dart';
@@ -48,8 +49,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   style: theme.textTheme.bodyLarge),
               const SizedBox(height: 28),
               const _Bullet(icon: Icons.chat_bubble_outline, text: '先生が短く説明 → あなたが説明し返す → ○×で確認'),
+              const _Bullet(icon: Icons.image_outlined, text: '比較表や流れ図を、その場で図解カードで見せます'),
               const _Bullet(icon: Icons.replay, text: '間違えた問題は忘れた頃にもう一度出ます'),
               const _Bullet(icon: Icons.trending_up, text: '合格見込みスコアが会話するたびに動きます'),
+              const SizedBox(height: 22),
+              const _Curriculum(),
               const Spacer(),
               Text('試験日', style: theme.textTheme.labelLarge),
               const SizedBox(height: 6),
@@ -77,6 +81,64 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// 何を学ぶのかを最初に1枚で示す。配点の大きい順に並べていることが伝わればよい。
+class _Curriculum extends StatelessWidget {
+  const _Curriculum();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final me = AppScope.of(context).me;
+    final subjects = me?.subjects ?? const <Subject>[];
+    if (subjects.isEmpty) return const SizedBox.shrink();
+    final chapters = me!.chapters.length;
+    final topics = me.chapters.fold<int>(0, (a, c) => a + c.topics.length);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('学ぶ範囲（本試験50問）', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          for (final s in subjects)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 5),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 42,
+                    child: Text('${s.examQuestions}問',
+                        style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: theme.colorScheme.primary)),
+                  ),
+                  Expanded(child: Text(s.name, style: theme.textTheme.bodySmall)),
+                  Expanded(
+                    flex: 3,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: s.examQuestions / 20,
+                        minHeight: 5,
+                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 4),
+          Text('全$chapters章・$topicsテーマ。配点の大きい宅建業法から始めます。',
+              style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline)),
+        ],
       ),
     );
   }
