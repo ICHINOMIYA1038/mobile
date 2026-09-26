@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -43,8 +45,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Future<void> _load() async {
     final me = AppScope.of(context).me!;
     try {
-      _offerings = await PurchaseService.offerings(me.userId);
+      // App Store に繋がらないと RevenueCat の初期化が返ってこないことがある。
+      // 待ち続けるとスピナーのまま固まるので、打ち切ってプランの内容だけ見せる。
+      _offerings = await PurchaseService.offerings(me.userId).timeout(const Duration(seconds: 12));
       if (_offerings != null) _error = null;
+    } on TimeoutException {
+      _error = '価格の取得に時間がかかっています。通信環境を確認して、もう一度お試しください。';
     } catch (e) {
       _error = 'プラン情報を取得できませんでした。少し待ってからもう一度お試しください。';
     }
@@ -126,6 +132,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
           if (_loading)
             const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
           else if (!PurchaseService.isAvailable || _offerings == null) ...[
+            // 価格が取れなくても、何が買えるのかは伝える。
+            // 通信が細いときやサインインしていないときにここへ来る。
+            const _PlanOutline(title: 'Pro（月額）', subtitle: '全章・毎月800回まで会話し放題。いつでも解約できます。'),
+            const _PlanOutline(title: '会話パック 100回', subtitle: '買い切り。期限なし。全章で使えます。'),
+            const _PlanOutline(title: '会話パック 300回', subtitle: '買い切り。期限なし。まとめてお得。'),
+            const SizedBox(height: 4),
             Card(
               color: Colors.white,
               child: Padding(
@@ -133,7 +145,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_error ?? 'プランを読み込めませんでした。通信環境を確認してください。'),
+                    Text(_error ?? '価格を読み込めませんでした。通信環境を確認して、もう一度お試しください。'),
                     if (PurchaseService.isAvailable) ...[
                       const SizedBox(height: 10),
                       OutlinedButton.icon(
@@ -204,6 +216,33 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   String _proCapText() => '800';
+}
+
+/// 価格が取れないときに出す、プランの見出しだけのカード。
+class _PlanOutline extends StatelessWidget {
+  const _PlanOutline({required this.title, required this.subtitle});
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      color: Colors.white,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(subtitle, style: theme.textTheme.bodySmall),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _Line extends StatelessWidget {

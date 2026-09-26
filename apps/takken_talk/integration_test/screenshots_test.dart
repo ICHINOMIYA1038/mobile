@@ -48,6 +48,26 @@ void main() {
     return false;
   }
 
+  /// 前の画面へ戻る。プラン画面は fullscreenDialog なので「×」しかなく、
+  /// pageBack() は戻るボタンを探して失敗する。出ているものを叩く。
+  Future<void> goBack(WidgetTester tester) async {
+    for (final f in [
+      find.byType(BackButton),
+      find.byType(CloseButton),
+      find.byIcon(Icons.arrow_back),
+      find.byIcon(Icons.arrow_back_ios),
+      find.byIcon(Icons.close),
+    ]) {
+      if (f.evaluate().isNotEmpty) {
+        await tester.tap(f.first);
+        await tester.pump(const Duration(milliseconds: 900));
+        return;
+      }
+    }
+    await tester.pageBack();
+    await tester.pump(const Duration(milliseconds: 900));
+  }
+
   testWidgets('ストア用スクリーンショット', (tester) async {
     final originalOnError = FlutterError.onError;
     addTearDown(() => FlutterError.onError = originalOnError);
@@ -115,12 +135,10 @@ void main() {
     await waitFor(tester, () => find.textContaining('の図解').evaluate().isNotEmpty, seconds: 20);
     await tester.pump(const Duration(seconds: 2));
     await shoot(tester, '07_figures');
-    await tester.pageBack();
-    await tester.pump(const Duration(seconds: 1));
+    await goBack(tester);
 
     // 学習の地図
-    await tester.pageBack();
-    await tester.pump(const Duration(seconds: 1));
+    await goBack(tester);
     await tester.tap(find.text('地図').last);
     await waitFor(tester, () => find.text('学習の地図').evaluate().isNotEmpty, seconds: 20);
     await tester.pump(const Duration(seconds: 1));
@@ -145,8 +163,7 @@ void main() {
       log('paywall: $gotPaywall / ${_texts()}');
       await tester.pump(const Duration(seconds: 3));
       await shoot(tester, '12_paywall');
-      await tester.pageBack();
-      await tester.pump(const Duration(seconds: 1));
+      await goBack(tester);
       await tester.tap(find.text('地図').last);
       await tester.pump(const Duration(seconds: 1));
     }
