@@ -79,7 +79,23 @@ python3 scripts/asc/search_rank.py  # 主要キーワードの検索順位（KW 
   「価格を読み込めませんでした」が写っている。シミュレータは StoreKit に繋がらないので、
   実機＋Sandbox アカウントで撮り直して差し替えること。
 
-## 7. 配布用の署名（証明書がキーチェーンから消えたとき）
+## 7. 広告を出すアプリの SKAdNetwork
+
+AdMob を入れたアプリは `ios/Runner/Info.plist` の `SKAdNetworkItems` に、Google の需要パートナー
+50件をすべて入れる。Google 本体の `cstr6suwn9.skadnetwork` だけだと、パートナー経由のインストールが
+計測されず eCPM が落ちる。2026-09-26 に「シンプルに学ぶ宅建」だけ1件しか無いのを見つけて揃えた。
+
+```sh
+# 広告アプリの件数を並べて見る（全部 50 のはず）
+for a in apps/*/; do
+  [ "$(grep -cE '^  google_mobile_ads' "$a/pubspec.yaml" 2>/dev/null)" = "1" ] || continue
+  printf '%-18s %s\n' "$(basename $a)" "$(grep -c SKAdNetworkIdentifier "$a/ios/Runner/Info.plist")"
+done
+```
+
+足りないアプリがあれば、揃っているアプリの `SKAdNetworkItems` ブロックをそのまま移せばよい。
+
+## 8. 配布用の署名（証明書がキーチェーンから消えたとき）
 
 2026-09-26 に「No signing certificate "iOS Distribution" found」でアーカイブの書き出しが止まった。
 Xcode にアカウントがサインインしておらず、配布証明書の秘密鍵も手元に無い状態だった。
