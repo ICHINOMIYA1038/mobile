@@ -56,7 +56,13 @@ python3 scripts/asc/search_rank.py  # 主要キーワードの検索順位（KW 
 
 サーバー（`~/private/takken-talk-api`、Cloudflare Workers + D1 + Claude）があるので、アプリ本体に加えて月1回:
 
-- **原価**: `curl -H "Authorization: Bearer $ADMIN_TOKEN" https://<worker>/admin/stats?days=31` で日ごとのターン数・トークン・推定USD。
+- **原価**: 次の1行で日ごとのターン数・推定USD・ユーザー数が出る。
+  ```sh
+  curl -s -H "Authorization: Bearer $(cat ~/.secrets/takken-talk/admin_token.txt)" \
+    "https://takken-talk-api.ichiryo108.workers.dev/admin/stats?days=31" | python3 -m json.tool | head -40
+  ```
+  見るところ: `est_usd` の合計が月の見込みを超えていないか、`turns` が急に跳ねていないか
+  （跳ねていたら1人が延々と回している可能性。`users` と突き合わせる）。
   Anthropic Console の Usage と突き合わせ、月の Spend limit（Console 側で設定）を超えそうなら
   `wrangler.toml` の `GLOBAL_DAILY_TURN_CAP` を下げる（既定 3000/日 ≒ ¥6,000/日）。
 - **課金の整合**: RevenueCat の Overview（アクティブサブスク数）と `SELECT COUNT(*) FROM users WHERE plan='pro'` が近いか。
@@ -66,6 +72,12 @@ python3 scripts/asc/search_rank.py  # 主要キーワードの検索順位（KW 
 - **法改正**: 4月・10月施行の宅建関連改正を `content/chapters/*.md` に反映して `npm run build:content` → push。
   問題データ（`content/questions.json`）は takken_simple と共通なので、そちらを直したらコピーし直す。
 - **D1 のサイズ**: `messages` は要約で圧縮されるが、`turn_ledger` は増え続ける。年1回、13か月より古い行を削除してよい。
+- **死活**: `curl -s https://takken-talk-api.ichiryo108.workers.dev/health` が
+  `{"ok":true,...,"live":true}` を返すこと。`live:false` なら ANTHROPIC_API_KEY が外れていて、
+  アプリは定型文のモック応答になっている（気づきにくいので必ず見る）。
+- **課金の審査用スクリーンショット**: 初回提出時のものは、商品がまだ未完成で価格が取れず
+  「価格を読み込めませんでした」が写っている。シミュレータは StoreKit に繋がらないので、
+  実機＋Sandbox アカウントで撮り直して差し替えること。
 
 ## 7. 配布用の署名（証明書がキーチェーンから消えたとき）
 
