@@ -197,7 +197,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
             '「1回」= あなたの1発言（○×ボタンの回答も1回）に対するAIの返答です。'
             '${me.plan.isPro ? '' : '第1章の無料枠は残り${me.plan.freeLeft}回。'}'
             'Proは月額の自動更新サブスクリプションで、期間終了の24時間前までに解約しない限り自動で更新されます。'
-            '管理と解約はApp StoreのアカウントSettingsから行えます。',
+            '管理と解約は「設定」アプリの「サブスクリプション」から行えます。',
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
           ),
           const SizedBox(height: 8),

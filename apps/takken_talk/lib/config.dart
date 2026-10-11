@@ -10,7 +10,7 @@ class AppConfig {
   static const revenueCatPublicApiKey = String.fromEnvironment(
     'RC_KEY',
     // RevenueCat の公開キー(クライアント埋め込み前提。秘密鍵ではない)
-    defaultValue: 'appl_mskTHQrDpPGrEWGhTLqIgGemdoDSep',
+    defaultValue: 'appl_mskTHQrDpPGrEWGhTLqIgGemdoD',
   );
 
   static const proProductId = 'jp.pairof.takken.talk.pro.monthly';

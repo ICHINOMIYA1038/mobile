@@ -40,11 +40,6 @@
       "filter": "05_library",
       "title": { "text": "「2週間」で引くと\n該当する図が並ぶ" },
       "keyword": { "text": "章をまたいで探せる" }
-    },
-    {
-      "filter": "06_start",
-      "title": { "text": "第1章は無料\n登録もいらない" },
-      "keyword": { "text": "試験日を入れて始めるだけ" }
     }
   ]
 }
