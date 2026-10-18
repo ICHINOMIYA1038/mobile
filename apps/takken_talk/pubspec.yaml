@@ -42,8 +42,8 @@ dependencies:
   http: ^1.6.0
   shared_preferences: ^2.5.5
   purchases_flutter: ^10.9.1
-  flutter_markdown_plus: ^1.0.12
   url_launcher: ^6.3.2
+  webview_flutter: ^4.14.1
 
 dev_dependencies:
   flutter_test:

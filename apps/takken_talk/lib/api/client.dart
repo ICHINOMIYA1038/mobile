@@ -4,54 +4,73 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../models.dart';
+import '../config.dart';
 
 class ApiException implements Exception {
-  ApiException(this.status, this.code, [this.body]);
+  ApiException(this.status, this.code, [this.message]);
   final int status;
-  final String code;
-  final Map<String, dynamic>? body;
 
-  bool get isPaymentRequired => status == 402;
-  bool get isOverCapacity => status == 503;
+  /// サーバーの error（例: user_cap / global_cap）。無ければ `http_<status>`
+  final String code;
+
+  /// 学習者に見せてよい文（サーバーの message）。無ければ null
+  final String? message;
+
+  /// 1日の回数の上限（429）・全体の上限（503）
+  bool get isOverCap => status == 429 || status == 503;
 
   @override
   String toString() => 'ApiException($status, $code)';
 }
 
-/// バックエンドとの通信。トークンは SharedPreferences に保存する匿名IDなので、
-/// アプリを消すと別人になる(復元は「購入を復元」で RevenueCat 側から行う)。
+/// サイト（shikaku.pairof.jp）の /api/v1 との通信。仕様はサイトのリポジトリの docs/app-api.md。
+/// トークンは匿名の学習者（またはログインしたアカウント）のもの。SharedPreferences に保存し、Authorization: Bearer で送る。
 class ApiClient {
-  ApiClient(this.baseUrl, {http.Client? client}) : _http = client ?? http.Client();
+  ApiClient({String? baseUrl, http.Client? client})
+      : baseUrl = baseUrl ?? AppConfig.apiBase,
+        _http = client ?? http.Client();
 
   final String baseUrl;
   final http.Client _http;
   String? _token;
   String? userId;
 
-  static const _prefToken = 'tt_token';
-  static const _prefUserId = 'tt_user_id';
+  static const _prefToken = 'ps_token';
+  static const _prefUserId = 'ps_user_id';
+
+  String get _examPath => '/api/v1/${AppConfig.exam}';
 
   Map<String, String> get _headers => {
         'content-type': 'application/json',
+        'accept': 'application/json',
         if (_token != null) 'authorization': 'Bearer $_token',
       };
 
-  /// 保存済みトークンを読むか、無ければ匿名ユーザーを作る。
+  /// 保存済みのトークンを読むか、無ければ匿名の学習者を作る。
   Future<void> ensureUser() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString(_prefToken);
     userId = prefs.getString(_prefUserId);
     if (_token != null && userId != null) return;
-    final res = await _http.post(Uri.parse('$baseUrl/v1/users'), headers: _headers);
-    if (res.statusCode != 201) throw ApiException(res.statusCode, 'create_user_failed');
-    final j = jsonDecode(res.body) as Map<String, dynamic>;
-    _token = j['token'] as String;
-    userId = j['userId'] as String;
-    await prefs.setString(_prefToken, _token!);
-    await prefs.setString(_prefUserId, userId!);
+    await _createUser();
   }
 
+  Future<void> _createUser() async {
+    final res = await _http.post(Uri.parse('$baseUrl/api/v1/users'), headers: {'content-type': 'application/json'});
+    if (res.statusCode != 201) throw ApiException(res.statusCode, 'create_user_failed');
+    final j = jsonDecode(res.body) as Map<String, dynamic>;
+    await _saveToken(j['token'] as String, j['userId'] as String);
+  }
+
+  Future<void> _saveToken(String token, String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    _token = token;
+    userId = id;
+    await prefs.setString(_prefToken, token);
+    await prefs.setString(_prefUserId, id);
+  }
+
+  /// トークンを捨てる（ログアウト・学習データの削除のあと）。次の通信の前に ensureUser で作り直す。
   Future<void> forgetUser() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefToken);
@@ -60,85 +79,127 @@ class ApiClient {
     userId = null;
   }
 
-  Future<Map<String, dynamic>> _json(String method, String path, {Object? body}) async {
-    final uri = Uri.parse('$baseUrl$path');
-    final req = http.Request(method, uri)..headers.addAll(_headers);
+  /// JSON の通信。401（知らないトークン）なら学習者を作り直して1回だけやり直す。
+  Future<Map<String, dynamic>> _json(String method, String path, {Object? body, bool retried = false}) async {
+    if (_token == null) await ensureUser();
+    final req = http.Request(method, Uri.parse('$baseUrl$path'))..headers.addAll(_headers);
     if (body != null) req.body = jsonEncode(body);
-    final streamed = await _http.send(req).timeout(const Duration(seconds: 20));
+    final streamed = await _http.send(req).timeout(const Duration(seconds: 30));
     final res = await http.Response.fromStream(streamed);
+    if (res.statusCode == 401 && !retried) {
+      await forgetUser();
+      await _createUser();
+      return _json(method, path, body: body, retried: true);
+    }
     Map<String, dynamic>? parsed;
     try {
       parsed = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
     } catch (_) {}
     if (res.statusCode >= 400) {
-      throw ApiException(res.statusCode, parsed?['error']?.toString() ?? 'http_${res.statusCode}', parsed);
+      throw ApiException(res.statusCode, parsed?['error']?.toString() ?? 'http_${res.statusCode}', parsed?['message']?.toString() ?? parsed?['error']?.toString());
     }
     return parsed ?? const {};
   }
 
-  Future<Me> me() async => Me.fromJson(await _json('GET', '/v1/me'));
+  // ---------- 試験の画面のデータ（GET /api/v1/takken/…） ----------
 
-  Future<void> patchMe({String? examDate, String? nickname, bool clearExamDate = false}) async {
-    await _json('PATCH', '/v1/me', body: {
-      if (examDate != null || clearExamDate) 'examDate': examDate,
-      'nickname': ?nickname,
-    });
-  }
+  Future<Map<String, dynamic>> home() => _json('GET', '$_examPath/home');
+  Future<Map<String, dynamic>> map() => _json('GET', '$_examPath/map');
+  Future<Map<String, dynamic>> learn(String chapterId) => _json('GET', '$_examPath/learn/$chapterId');
+  Future<Map<String, dynamic>> kakomonIndex() => _json('GET', '$_examPath/kakomon');
 
+  /// mode: all / wrong / new
+  Future<Map<String, dynamic>> kakomonSet(String set, {String mode = 'all'}) => _json('GET', '$_examPath/kakomon/$set?mode=$mode');
+  Future<Map<String, dynamic>> review() => _json('GET', '$_examPath/review');
+  Future<Map<String, dynamic>> figures() => _json('GET', '$_examPath/figures');
+  Future<Map<String, dynamic>> settings() => _json('GET', '$_examPath/settings');
+
+  Future<List<String>> figureBookmarks() async => ((await _json('GET', '$_examPath/figure-bookmarks'))['ids'] as List? ?? const []).cast<String>();
+
+  /// その問題の「AIに聞く」の会話（{ messages: [{ id, role, text }] }）
+  Future<Map<String, dynamic>> explainHistory(String questionId) => _json('GET', '$_examPath/explain?questionId=${Uri.encodeQueryComponent(questionId)}');
+
+  // ---------- 書く ----------
+
+  /// AI を使わない採点 → { correct, explanation, reference, mastered }
+  Future<Map<String, dynamic>> answer(String questionId, bool answer) => _json('POST', '$_examPath/answer', body: {'questionId': questionId, 'answer': answer});
+
+  Future<void> setBookmark(String questionId, bool on) => _json('POST', '$_examPath/bookmarks', body: {'questionId': questionId, 'on': on});
+  Future<void> setFigureBookmark(String figureId, bool on) => _json('POST', '$_examPath/figure-bookmarks', body: {'figureId': figureId, 'on': on});
+
+  /// kind: answer / explain / text / other
+  Future<void> reportQuestion({required String questionId, required String kind, String? note, bool? myAnswer, required String shownOn}) =>
+      _json('POST', '$_examPath/question-report', body: {'questionId': questionId, 'kind': kind, 'note': ?note, 'myAnswer': myAnswer, 'shownOn': shownOn});
+
+  /// rating: clear / unclear / wrong / idea
+  Future<void> figureFeedback({required String figureId, required String rating, String? note, required String shownOn}) =>
+      _json('POST', '$_examPath/figure-feedback', body: {'figureId': figureId, 'rating': rating, 'note': ?note, 'shownOn': shownOn});
+
+  /// 先生の返答の報告。kind: wrong / confusing / off_topic / no_choice / other
+  Future<void> reportMessage({required String messageId, required String kind, String? note}) =>
+      _json('POST', '$_examPath/feedback', body: {'messageId': messageId, 'kind': kind, 'note': ?note});
+
+  /// 試験日（YYYY-MM-DD か null）・呼び名・進め方（drill / standard / fast）。渡したものだけ変える
+  Future<void> patchSettings(Map<String, Object?> changes) => _json('PATCH', '$_examPath/settings', body: changes);
+
+  // ---------- 自分・ログイン ----------
+
+  Future<Map<String, dynamic>> me() => _json('GET', '/api/v1/me');
+
+  /// 学習データを全部消して、新しい匿名の学習者になる
   Future<void> deleteMe() async {
-    await _json('DELETE', '/v1/me');
+    await _json('DELETE', '/api/v1/me');
     await forgetUser();
+    await _createUser();
   }
 
-  Future<({List<HistoryMessage> messages, String? currentTopic})> messages(String chapterId) async {
-    final j = await _json('GET', '/v1/chapters/$chapterId/messages');
-    return (
-      messages: ((j['messages'] as List?) ?? const [])
-          .map((m) => HistoryMessage.fromJson(m as Map<String, dynamic>))
-          .toList(),
-      currentTopic: j['currentTopic'] as String?,
-    );
+  /// Web で作ったアカウントにログインする。失敗は ApiException（message に理由）
+  Future<void> login(String email, String password) async {
+    final j = await _json('POST', '/api/v1/login', body: {'email': email, 'password': password});
+    await _saveToken(j['token'] as String, j['userId'] as String);
   }
 
-  /// 章の図解をまとめて取る。会話の外から体系を眺めるための画面で使う。
-  Future<List<Figure>> figures(String chapterId) async {
-    final j = await _json('GET', '/v1/chapters/$chapterId/figures');
-    return ((j['figures'] as List?) ?? const []).map((f) => Figure.fromJson(f as Map<String, dynamic>)).toList();
+  Future<void> logout() async {
+    try {
+      await _json('POST', '/api/v1/logout');
+    } finally {
+      await forgetUser();
+      await _createUser();
+    }
   }
 
-  /// 全章の図解。図解ライブラリが章をまたいで検索するために使う。
-  Future<List<Figure>> allFigures() async {
-    final j = await _json('GET', '/v1/figures');
-    return ((j['figures'] as List?) ?? const []).map((f) => Figure.fromJson(f as Map<String, dynamic>)).toList();
-  }
+  // ---------- SSE（会話・AIに聞く） ----------
 
-  Future<Entitlement> entitlement(String chapterId) async =>
-      Entitlement.fromJson(await _json('GET', '/v1/chapters/$chapterId/entitlement'));
+  /// 章の会話を1ターン送る。body: { chapterId, message?, answer?: {questionId, answer}, start?, pointId? }
+  /// イベントはサイトの TutorEvent（type: text / question / graded / progress / figure / topic / point / choices / navigate / done / error）
+  Stream<Map<String, dynamic>> chat(Map<String, Object?> body) => _sse('$_examPath/chat', body);
 
-  /// 1ターン送って、SSE をイベントの Stream にして返す。
-  /// 402(要課金)/503(混雑) はストリームが始まる前に [ApiException] で投げる。
-  Stream<TutorEvent> chat({
-    required String chapterId,
-    String? message,
-    ({String questionId, bool answer})? answer,
-    bool start = false,
-  }) async* {
-    final req = http.Request('POST', Uri.parse('$baseUrl/v1/chat'))
+  /// 過去問の「AIに聞く」。answer は画面で答えた○×（無ければヒントだけ）。イベントは text / done / error
+  Stream<Map<String, dynamic>> explain({required String questionId, String? message, bool? answer}) =>
+      _sse('$_examPath/explain', {'questionId': questionId, 'message': ?message, 'answer': ?answer});
+
+  /// 上限（429/503）などはストリームが始まる前に ApiException で投げる。
+  Stream<Map<String, dynamic>> _sse(String path, Map<String, Object?> body, {bool retried = false}) async* {
+    if (_token == null) await ensureUser();
+    final req = http.Request('POST', Uri.parse('$baseUrl$path'))
       ..headers.addAll(_headers)
-      ..body = jsonEncode({
-        'chapterId': chapterId,
-        'message': ?message,
-        if (answer != null) 'answer': {'questionId': answer.questionId, 'answer': answer.answer},
-        if (start) 'start': true,
-      });
-    final res = await _http.send(req).timeout(const Duration(seconds: 30));
+      ..headers['accept'] = 'text/event-stream'
+      ..body = jsonEncode(body);
+    final res = await _http.send(req).timeout(const Duration(seconds: 60));
+    if (res.statusCode == 401 && !retried) {
+      await res.stream.drain<void>();
+      await forgetUser();
+      await _createUser();
+      yield* _sse(path, body, retried: true);
+      return;
+    }
     if (res.statusCode >= 400) {
       final text = await res.stream.bytesToString();
       Map<String, dynamic>? parsed;
       try {
         parsed = jsonDecode(text) as Map<String, dynamic>;
       } catch (_) {}
-      throw ApiException(res.statusCode, parsed?['error']?.toString() ?? 'http_${res.statusCode}', parsed);
+      throw ApiException(res.statusCode, parsed?['error']?.toString() ?? 'http_${res.statusCode}', parsed?['message']?.toString());
     }
     var buffer = '';
     await for (final chunk in res.stream.transform(utf8.decoder)) {
@@ -153,8 +214,7 @@ class ApiClient {
           final data = line.substring(5).trim();
           if (data.isEmpty) continue;
           try {
-            final ev = TutorEvent.fromJson(jsonDecode(data) as Map<String, dynamic>);
-            if (ev != null) yield ev;
+            yield jsonDecode(data) as Map<String, dynamic>;
           } catch (_) {
             // 壊れたフレームは読み飛ばす
           }
