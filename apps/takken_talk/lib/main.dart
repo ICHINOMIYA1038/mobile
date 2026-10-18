@@ -37,13 +37,22 @@ class App extends StatelessWidget {
   }
 }
 
-class _Root extends StatelessWidget {
+class _Root extends StatefulWidget {
   const _Root();
+
+  @override
+  State<_Root> createState() => _RootState();
+}
+
+class _RootState extends State<_Root> {
+  /// 一度ホームを読めたら、ログイン・削除などで取り直しているあいだもタブを出したままにする（知らせが消えないように）
+  bool _ready = false;
 
   @override
   Widget build(BuildContext context) {
     final state = AppScope.of(context);
-    if (state.home == null) {
+    if (state.home != null) _ready = true;
+    if (!_ready) {
       return Scaffold(
         body: Center(
           child: state.error != null && !state.loading
