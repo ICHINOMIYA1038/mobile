@@ -109,7 +109,9 @@ class ApiClient {
   Future<Map<String, dynamic>> kakomonIndex() => _json('GET', '$_examPath/kakomon');
 
   /// mode: all / wrong / new
-  Future<Map<String, dynamic>> kakomonSet(String set, {String mode = 'all'}) => _json('GET', '$_examPath/kakomon/$set?mode=$mode');
+  /// point: 章のセット（ch01 など）のうち、その論点の問題だけ
+  Future<Map<String, dynamic>> kakomonSet(String set, {String mode = 'all', String? point}) =>
+      _json('GET', '$_examPath/kakomon/$set?mode=$mode${point == null ? '' : '&point=${Uri.encodeQueryComponent(point)}'}');
   Future<Map<String, dynamic>> review() => _json('GET', '$_examPath/review');
   Future<Map<String, dynamic>> figures() => _json('GET', '$_examPath/figures');
   Future<Map<String, dynamic>> settings() => _json('GET', '$_examPath/settings');

@@ -2,13 +2,24 @@ import 'package:flutter/material.dart';
 
 import '../../api/client.dart';
 import '../../theme.dart';
+import '../kakomon/set_screen.dart';
 import '../learn_screen.dart';
 
-/// 章の会話を開く（ホーム・地図・復習から）。screen_view に残すためルート名を付ける。戻ると完了する
-Future<void> openChapter(BuildContext context, String chapterId) => Navigator.of(context).push<void>(
+/// 章の会話を開く（ホーム・地図・復習・過去問から）。screen_view に残すためルート名を付ける。戻ると完了する。
+/// pointId を渡すと、開いたらその論点の説明を頼む（過去問の「この論点を先生と学ぶ」）
+Future<void> openChapter(BuildContext context, String chapterId, {String? pointId}) => Navigator.of(context).push<void>(
   MaterialPageRoute(
-    builder: (_) => LearnScreen(chapterId: chapterId),
+    builder: (_) => LearnScreen(chapterId: chapterId, startPointId: pointId),
     settings: RouteSettings(name: 'learn_$chapterId'),
+  ),
+);
+
+/// 過去問を解く画面を開く。set は回（2024）・科目（gyo）・章（ch01）・all。
+/// fromChapter: 章の会話から開いたときのその章。同じ章の「先生に聞く」は会話に戻り、戻り値の問題について先生に聞く
+Future<KakomonAsk?> openKakomon(BuildContext context, {required String set, required String label, String mode = 'all', String? point, String? pointTitle, String? fromChapter}) => Navigator.of(context).push<KakomonAsk>(
+  MaterialPageRoute(
+    settings: RouteSettings(name: 'kakomon_$set'),
+    builder: (_) => KakomonSetScreen(set: set, label: label, mode: mode, point: point, pointTitle: pointTitle, fromChapter: fromChapter),
   ),
 );
 

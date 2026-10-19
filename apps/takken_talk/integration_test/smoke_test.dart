@@ -41,6 +41,8 @@ void main() {
     // 過去問: 令和7年度で1問答えて、AIに聞く
     await tester.tap(find.text('過去問').last);
     await settle(tester, 3);
+    await tester.tap(find.text('回ごと'));
+    await settle(tester, 1);
     await tester.tap(find.text('令和7年度').first);
     await settle(tester, 8);
     if (find.text('○ 正しい').evaluate().isEmpty) {

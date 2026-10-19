@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/readable.dart';
-import 'kakomon/set_screen.dart';
+import 'common/parts.dart';
 
 /// 過去問演習の一覧（サイトの /[exam]/kakomon と同じ並び）。回ごと・科目ごとに、解いた数と正解の数を出す。
 /// 解く画面から戻ったら数え直す（下のタブで残り続ける画面なので、開いたときの数のままにしない）。
@@ -17,6 +17,9 @@ class KakomonScreen extends StatefulWidget {
 class _KakomonScreenState extends State<KakomonScreen> {
   Map<String, dynamic>? _data;
   Object? _error;
+
+  /// 章ごと（「学ぶ」のカリキュラムの順）・回ごと・科目ごと
+  String _by = 'chapter';
 
   @override
   void initState() {
@@ -39,10 +42,7 @@ class _KakomonScreenState extends State<KakomonScreen> {
   }
 
   Future<void> _open(_SetRow s, {String mode = 'all'}) async {
-    await Navigator.of(context).push(MaterialPageRoute<void>(
-      settings: RouteSettings(name: 'kakomon_${s.key}'),
-      builder: (_) => KakomonSetScreen(set: s.key, label: s.label, mode: mode),
-    ));
+    await openKakomon(context, set: s.key, label: s.label, mode: mode);
     if (mounted) _load();
   }
 
@@ -69,6 +69,9 @@ class _KakomonScreenState extends State<KakomonScreen> {
     final all = _SetRow.from(d['all']);
     final exams = ((d['exams'] as List?) ?? const []).map(_SetRow.from).toList();
     final subjects = ((d['subjects'] as List?) ?? const []).map(_SetRow.from).toList();
+    final chapters = ((d['chapters'] as List?) ?? const []).cast<Map>();
+    // 古いサーバー（chapters が無い）では章ごとを出さない
+    final by = chapters.isEmpty && _by == 'chapter' ? 'exam' : _by;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 48),
       children: [
@@ -88,15 +91,34 @@ class _KakomonScreenState extends State<KakomonScreen> {
                   child: const Text('過去問の問題を準備しています。もうしばらくお待ちください。', style: TextStyle(color: Palette.inkSoft)),
                 )
               else ...[
-                const _Heading('回ごとに解く'),
-                for (final s in exams) _Row(s, onOpen: _open),
-                const _Heading('科目ごとに解く'),
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: Text('同じ論点が何年も出ているものは1問にまとめています。', style: TextStyle(fontSize: 13, color: Palette.inkSoft)),
+                const SizedBox(height: 16),
+                SegmentedButton<String>(
+                  showSelectedIcon: false,
+                  segments: [
+                    if (chapters.isNotEmpty) const ButtonSegment(value: 'chapter', label: Text('章ごと')),
+                    const ButtonSegment(value: 'exam', label: Text('回ごと')),
+                    const ButtonSegment(value: 'subject', label: Text('科目ごと')),
+                  ],
+                  selected: {by},
+                  onSelectionChanged: (v) => setState(() => _by = v.first),
                 ),
-                for (final s in subjects) _Row(s, onOpen: _open),
-                _Row(all, onOpen: _open),
+                const SizedBox(height: 12),
+                if (by == 'chapter') ...[
+                  const Text('「学ぶ」の章と同じ分け方です。会話で学んだ章の過去問を、論点の順に解けます。', style: TextStyle(fontSize: 13, height: 1.6, color: Palette.inkSoft)),
+                  for (final (i, c) in chapters.indexed) ...[
+                    if (i == 0 || chapters[i - 1]['subject'] != c['subject']) _Heading(c['subject'] as String? ?? '', top: i == 0 ? 12 : 20),
+                    _Row(_SetRow.from(c), onOpen: _open),
+                  ],
+                ] else if (by == 'exam') ...[
+                  for (final s in exams) _Row(s, onOpen: _open),
+                ] else ...[
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Text('同じ論点が何年も出ているものは1問にまとめています。', style: TextStyle(fontSize: 13, color: Palette.inkSoft)),
+                  ),
+                  for (final s in subjects) _Row(s, onOpen: _open),
+                  _Row(all, onOpen: _open),
+                ],
               ],
             ],
           ),
@@ -122,12 +144,13 @@ class _SetRow {
 }
 
 class _Heading extends StatelessWidget {
-  const _Heading(this.text);
+  const _Heading(this.text, {this.top = 24});
   final String text;
+  final double top;
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 24, bottom: 8),
+        padding: EdgeInsets.only(top: top, bottom: 8),
         child: Text(text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Palette.ink)),
       );
 }

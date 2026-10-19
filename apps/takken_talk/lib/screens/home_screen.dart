@@ -64,7 +64,7 @@ class HomeScreen extends StatelessWidget {
                       if (state.chapter(id) case final c?)
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
-                          child: _ChapterTile(chapter: c, progress: byId[id]),
+                          child: _ChapterTile(chapter: c, progress: byId[id], kakomon: ((home['kakomonByChapter'] as Map?)?[id] as num?)?.toInt() ?? 0),
                         ),
                   ],
                 ],
@@ -268,9 +268,12 @@ class _BigButton extends StatelessWidget {
 
 /// 章の行。進み具合は「説明を聞いた論点」と「解いた問題」の2つ（棒は論点の説明）
 class _ChapterTile extends StatelessWidget {
-  const _ChapterTile({required this.chapter, required this.progress});
+  const _ChapterTile({required this.chapter, required this.progress, this.kakomon = 0});
   final ChapterSummary chapter;
   final Map<String, dynamic>? progress;
+
+  /// この章の過去問の数（0 なら入口を出さない）
+  final int kakomon;
 
   @override
   Widget build(BuildContext context) {
@@ -282,43 +285,69 @@ class _ChapterTile extends StatelessWidget {
     final total = (p?['total'] as num?)?.toInt() ?? c.questionCount;
     final started = taught > 0 || seen > 0;
     return Card(
-      child: InkWell(
-        onTap: () => _open(context, c.id),
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: () => _open(context, c.id),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '第${c.order}章',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Palette.primary),
+                        ),
+                        Text(
+                          c.title,
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, height: 1.5, color: Palette.ink),
+                        ),
+                        const SizedBox(height: 2),
+                        Text('${c.topics.length}テーマ・論点${c.pointCount}・${c.questionCount}問・図解${c.figureCount}枚', style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
+                        const SizedBox(height: 8),
+                        ProgressBar(value: points == 0 ? 0 : taught / points),
+                        if (started) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            '説明済み $taught/$points・解いた問題 $seen/$total',
+                            style: const TextStyle(fontSize: 12, color: Palette.primary, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, color: Palette.inkFaint),
+                ],
+              ),
+            ),
+          ),
+          // 会話で学んだ章の過去問へ（過去問のタブの「章ごと」と同じ）
+          if (kakomon > 0)
+            InkWell(
+              onTap: () {
+                final state = AppScope.read(context);
+                openKakomon(context, set: c.id, label: '第${c.order}章', pointTitle: c.short.isNotEmpty ? c.short : c.title).then((_) => state.refresh());
+              },
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 44),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: const BoxDecoration(border: Border(top: BorderSide(color: Palette.line))),
+                child: Row(
                   children: [
-                    Text(
-                      '第${c.order}章',
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Palette.primary),
-                    ),
-                    Text(
-                      c.title,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, height: 1.5, color: Palette.ink),
-                    ),
-                    const SizedBox(height: 2),
-                    Text('${c.topics.length}テーマ・論点${c.pointCount}・${c.questionCount}問・図解${c.figureCount}枚', style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
-                    const SizedBox(height: 8),
-                    ProgressBar(value: points == 0 ? 0 : taught / points),
-                    if (started) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        '説明済み $taught/$points・解いた問題 $seen/$total',
-                        style: const TextStyle(fontSize: 12, color: Palette.primary, fontWeight: FontWeight.w600),
-                      ),
-                    ],
+                    const Icon(Icons.edit_note, size: 20, color: Palette.primary),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text('この章の過去問を解く（$kakomon問）', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.primary))),
+                    const Icon(Icons.chevron_right, size: 20, color: Palette.primary),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Palette.inkFaint),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }

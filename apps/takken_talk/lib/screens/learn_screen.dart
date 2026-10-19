@@ -11,6 +11,7 @@ import '../widgets/figure/figure_view.dart';
 import '../widgets/question_card.dart';
 import '../widgets/readable.dart';
 import '../widgets/rich_text.dart';
+import 'common/parts.dart';
 import 'pro_screen.dart';
 import 'learn/chapter_sheet.dart';
 import 'learn/learn_models.dart';
@@ -19,8 +20,11 @@ import 'learn/message_report.dart';
 /// 章ごとに AI の先生と話して学ぶ画面（サイトの /takken/learn/[chapter]）。
 /// 先生の返答は、本文・○×カード・図・選択肢が届いた順に並ぶ。カードはその場で答えられる。
 class LearnScreen extends StatefulWidget {
-  const LearnScreen({super.key, required this.chapterId});
+  const LearnScreen({super.key, required this.chapterId, this.startPointId});
   final String chapterId;
+
+  /// 開いたらこの論点の説明を頼む（過去問の「この論点を先生と学ぶ」から）
+  final String? startPointId;
 
   @override
   State<LearnScreen> createState() => _LearnScreenState();
@@ -28,11 +32,14 @@ class LearnScreen extends StatefulWidget {
 
 /// 入力欄の上の返答の候補（サイトの quickReplies と同じ決まり）
 class _Quick {
-  const _Quick(this.label, {this.message, this.point, this.chapter});
+  const _Quick(this.label, {this.message, this.point, this.chapter, this.kakomon});
   final String label;
   final String? message;
   final OutlinePoint? point;
   final String? chapter;
+
+  /// この論点の過去問を解く画面を開く
+  final OutlinePoint? kakomon;
 }
 
 class _LearnScreenState extends State<LearnScreen> {
@@ -44,6 +51,10 @@ class _LearnScreenState extends State<LearnScreen> {
   Neighbor? _prev;
   Neighbor? _next;
   String _pace = 'standard';
+
+  /// 過去問の数（この章ぜんぶ・論点ごと）。古いサーバーでは 0
+  int _kakomonTotal = 0;
+  Map<String, int> _kakomonByPoint = const {};
   bool _loading = true;
   String? _loadError;
 
@@ -137,9 +148,17 @@ class _LearnScreenState extends State<LearnScreen> {
         _prev = Neighbor.fromJson(nb['prev']);
         _next = Neighbor.fromJson(nb['next']);
         _pace = d['pace'] as String? ?? 'standard';
+        final k = d['kakomon'] as Map?;
+        _kakomonTotal = (k?['total'] as num?)?.toInt() ?? 0;
+        _kakomonByPoint = {for (final e in ((k?['byPoint'] as Map?) ?? const {}).entries) e.key as String: (e.value as num).toInt()};
         _loading = false;
       });
-      if (_items.isEmpty) {
+      final start = chapter.point(widget.startPointId);
+      if (start != null) {
+        // 過去問から来たときは、その論点の説明から（それまでの会話の続きに足す）
+        if (_items.isNotEmpty) _jumpToEnd();
+        unawaited(_teach(start));
+      } else if (_items.isEmpty) {
         unawaited(_send({'start': true}));
       } else {
         _jumpToEnd();
@@ -185,11 +204,14 @@ class _LearnScreenState extends State<LearnScreen> {
     final next = nextPoint == null ? const <_Quick>[] : [_Quick('次は「${nextPoint.title.length > 14 ? '${nextPoint.title.substring(0, 14)}…' : nextPoint.title}」へ', point: nextPoint)];
     const more = _Quick('この論点をもっと解く', message: 'この論点の○×をもっと解きたい');
     const drill = _Quick('このテーマをまとめて解く', message: 'このテーマの○×をまとめて解きたい（間違えた問題とまだ解いていない問題を中心に）');
+    // 説明を聞いた論点に過去問があれば、その論点の過去問を解く入口。候補の数に数えず、いつも最後に足す
+    final here = chapter.point(_currentPoint);
+    final kakomon = here != null && _taught.contains(here.id) && (_kakomonByPoint[here.id] ?? 0) > 0 ? [_Quick('過去問 ${_kakomonByPoint[here.id]}問', kakomon: here)] : const <_Quick>[];
     // 選択肢が出ているときは、それに答えてもらうのが先
     if (_openChoices != null) {
       if (_lastGrade == 'wrong') return const [_Quick('どこが違ったか教えて'), _Quick('もう一度説明して')];
-      if (_lastGrade == 'right') return (_pace == 'drill' ? [more, ...next] : [...next, more]).take(2).toList();
-      return const [_Quick('もう少しかみくだいて')];
+      if (_lastGrade == 'right') return [...(_pace == 'drill' ? [more, ...next] : [...next, more]).take(2), ...kakomon];
+      return [const _Quick('もう少しかみくだいて'), ...kakomon];
     }
     final chapterDone = all.isNotEmpty && all.every((p) => _taught.contains(p.id) && p.questionIds.every(_answered.contains));
     final done = chapterDone && _next != null ? [_Quick('次の章へ進む', chapter: _next!.id)] : const <_Quick>[];
@@ -210,7 +232,7 @@ class _LearnScreenState extends State<LearnScreen> {
     } else {
       out = [...next, const _Quick('○×を出して'), const _Quick('今どのくらい？')];
     }
-    return [...done, ...out].take(3).toList();
+    return [...[...done, ...out].take(3), ...kakomon];
   }
 
   // ---------- 送る ----------
@@ -317,10 +339,29 @@ class _LearnScreenState extends State<LearnScreen> {
     'answer': {'questionId': s.question.id, 'answer': a},
   }, pinTo: s);
 
-  void _teach(OutlinePoint p) => _send({'pointId': p.id}, shown: '「${p.title}」を教えて');
+  /// 論点の名前が「」で始まるときは、さらに「」で囲まない
+  Future<void> _teach(OutlinePoint p) => _send({'pointId': p.id}, shown: p.title.startsWith('「') ? '${p.title}を教えて' : '「${p.title}」を教えて');
+
+  /// この章（point を渡すとその論点だけ）の過去問を解く。解く画面で「先生に聞く」を押したら、戻って答えた問題を先生に聞く
+  /// （まだ説明を聞いていない論点なら、その論点の説明から）
+  Future<void> _openKakomon({OutlinePoint? point}) async {
+    final chapter = _chapter;
+    if (chapter == null) return;
+    final ask = await openKakomon(context, set: chapter.id, label: '第${chapter.order}章', point: point?.id, pointTitle: point?.title ?? chapter.short, fromChapter: chapter.id);
+    if (!mounted || ask == null || !_canSend) return;
+    final p = chapter.point(ask.pointId);
+    if (p == null) return;
+    if (!_taught.contains(p.id)) return _teach(p);
+    final mark = ask.answer ? '○' : '×';
+    await _send({
+      'message': '過去問（${ask.where}）の「${ask.statement}」に$markと答えて、${ask.correct ? '正解' : 'まちがえ'}ました。${ask.correct ? '考え方が合っているか確かめたい。' : 'どこを取り違えたか教えて。'}',
+    }, shown: '過去問（${ask.where}）を${ask.correct ? '解きました' : 'まちがえました'}。${ask.correct ? '考え方を確かめたい' : 'どこが違ったか教えて'}');
+  }
 
   void _quick(_Quick q) {
-    if (q.chapter != null) {
+    if (q.kakomon != null) {
+      _openKakomon(point: q.kakomon);
+    } else if (q.chapter != null) {
       _openChapter(q.chapter!);
     } else if (q.point != null) {
       _teach(q.point!);
@@ -451,6 +492,13 @@ class _LearnScreenState extends State<LearnScreen> {
                 ],
               ),
         actions: [
+          if (_chapter != null && _kakomonTotal > 0)
+            TextButton.icon(
+              onPressed: _openKakomon,
+              icon: const Icon(Icons.edit_note, size: 22),
+              label: const Text('過去問'),
+              style: TextButton.styleFrom(minimumSize: const Size(44, 44), padding: const EdgeInsets.symmetric(horizontal: 8)),
+            ),
           if (_chapter != null)
             IconButton(
               tooltip: 'テキスト',
@@ -658,6 +706,7 @@ class _LearnScreenState extends State<LearnScreen> {
                         itemCount: quick.length,
                         separatorBuilder: (_, _) => const SizedBox(width: 8),
                         itemBuilder: (_, i) => ActionChip(
+                          avatar: quick[i].kakomon != null ? const Icon(Icons.edit_note, size: 18, color: Palette.primary) : null,
                           label: Text(quick[i].label),
                           onPressed: _canSend ? () => _quick(quick[i]) : null,
                           backgroundColor: Palette.paper,

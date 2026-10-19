@@ -8,21 +8,41 @@ import '../../state/app_state.dart';
 import '../../theme.dart';
 import '../../widgets/question_card.dart';
 import '../../widgets/readable.dart';
+import '../common/parts.dart';
 import 'explain_sheet.dart';
 
 /// 過去問を1問ずつ解く（サイトの /[exam]/kakomon/[set] のスマホの形）。答えたらその場で採点と解説、「次の問題」で進む。
 /// 並びは本試験の順（問・肢）。「ランダム」で混ぜられる。最後まで行ったら、この回でまちがえた問題だけをもう一度解ける。
 /// 「AIに聞く」は下からのシート。閉じれば同じ問題の同じ位置に戻る。
 class KakomonSetScreen extends StatefulWidget {
-  const KakomonSetScreen({super.key, required this.set, required this.label, this.mode = 'all'});
+  const KakomonSetScreen({super.key, required this.set, required this.label, this.mode = 'all', this.point, this.pointTitle, this.fromChapter});
   final String set;
   final String label;
 
   /// all / new / wrong
   final String mode;
 
+  /// 章のセットのうち、この論点の問題だけ（会話の「この論点の過去問」から）
+  final String? point;
+
+  /// 見出しの2行目（論点の名前、章の名前）
+  final String? pointTitle;
+
+  /// 章の会話から開いたときのその章。同じ章の「先生と学ぶ」は会話に戻る（答えた問題を返す）
+  final String? fromChapter;
+
   @override
   State<KakomonSetScreen> createState() => _KakomonSetScreenState();
+}
+
+/// 過去問から章の会話に戻って先生に聞くこと（答えた問題とその結果）
+class KakomonAsk {
+  const KakomonAsk({required this.pointId, required this.where, required this.statement, required this.answer, required this.correct});
+  final String pointId;
+  final String where;
+  final String statement;
+  final bool answer;
+  final bool correct;
 }
 
 class _Item {
@@ -30,11 +50,21 @@ class _Item {
       : question = PublicQuestion.fromJson((j['question'] as Map).cast<String, dynamic>()),
         where = j['where'] as String? ?? '',
         answeredBefore = (j['state'] as Map?)?['answered'] == true,
-        lastCorrect = (j['state'] as Map?)?['lastCorrect'] as bool?;
+        lastCorrect = (j['state'] as Map?)?['lastCorrect'] as bool?,
+        pointId = (j['point'] as Map?)?['id'] as String?,
+        pointTitle = (j['point'] as Map?)?['title'] as String?,
+        chapterId = (j['chapter'] as Map?)?['id'] as String?,
+        chapterName = j['chapter'] is Map ? '第${(j['chapter'] as Map)['order']}章 ${(j['chapter'] as Map)['short']}' : null;
   final PublicQuestion question;
   final String where;
   final bool answeredBefore;
   final bool? lastCorrect;
+
+  /// この問題の論点と章（古いサーバーでは無い）
+  final String? pointId;
+  final String? pointTitle;
+  final String? chapterId;
+  final String? chapterName;
 }
 
 const _modes = [('all', 'すべて'), ('new', 'まだ解いていない'), ('wrong', 'まちがえた')];
@@ -77,7 +107,7 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
       _error = null;
     });
     try {
-      final d = await _api.kakomonSet(widget.set, mode: _mode);
+      final d = await _api.kakomonSet(widget.set, mode: _mode, point: widget.point);
       if (!mounted) return;
       final items = ((d['items'] as List?) ?? const []).map((j) => _Item((j as Map).cast<String, dynamic>())).toList();
       setState(() {
@@ -167,12 +197,28 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
     );
   }
 
+  /// この問題の論点を先生と学ぶ。同じ章の会話から来たときは、会話に戻ってそこで説明を頼む
+  void _learn(_Item it) {
+    if (it.chapterId == null || it.pointId == null) return;
+    final g = _graded[it.question.id];
+    if (it.chapterId == widget.fromChapter && g != null) {
+      Navigator.of(context).pop(KakomonAsk(pointId: it.pointId!, where: it.where, statement: it.question.statement, answer: g.answer, correct: g.correct));
+    } else {
+      openChapter(context, it.chapterId!, pointId: it.pointId);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final items = _items;
     return Scaffold(
       appBar: AppBar(
-        title: Text('過去問 ${widget.label}'),
+        title: widget.pointTitle == null
+            ? Text('過去問 ${widget.label}')
+            : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('過去問 ${widget.label}', style: const TextStyle(fontSize: 13, color: Palette.inkSoft)),
+                Text(widget.pointTitle!, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+              ]),
         actions: [
           // 混ぜるのは、いまの問題から先だけ（解いた分の並びは変えない）
           if (items != null)
@@ -255,7 +301,7 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
 
   Widget _body() {
     if (_order.isEmpty) {
-      final msg = _mode == 'wrong' ? 'まちがえた問題はありません。' : _mode == 'new' ? 'この回の問題は全部解きました。' : 'この回の問題はまだありません。';
+      final msg = _mode == 'wrong' ? 'まちがえた問題はありません。' : _mode == 'new' ? 'ここの問題は全部解きました。' : 'ここの問題はまだありません。';
       return ListView(padding: const EdgeInsets.all(16), children: [
         Readable(
           child: Container(
@@ -307,7 +353,11 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
               glossary: _glossary,
             ),
             const SizedBox(height: 10),
-            const Text('わからないときは「AIに聞く」で、この問題を AI が解説します（答える前はヒントだけ）。', style: TextStyle(fontSize: 12, color: Palette.inkFaint)),
+            // 答えたら、この問題の論点を会話で学ぶ入口（答える前は AI のヒントの案内）
+            if (g != null && cur.pointId != null && cur.chapterId != null)
+              _LearnLink(item: cur, back: cur.chapterId == widget.fromChapter, onTap: () => _learn(cur))
+            else
+              const Text('わからないときは「AIに聞く」で、この問題を AI が解説します（答える前はヒントだけ）。', style: TextStyle(fontSize: 12, color: Palette.inkFaint)),
           ],
         ),
       ),
@@ -341,7 +391,7 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
             ],
             OutlinedButton(onPressed: _restart, child: const Text('最初から')),
             const SizedBox(height: 10),
-            OutlinedButton(onPressed: () => Navigator.of(context).maybePop(), child: const Text('ほかの回を選ぶ')),
+            OutlinedButton(onPressed: () => Navigator.of(context).maybePop(), child: Text(widget.fromChapter != null ? '会話に戻る' : 'ほかの問題を選ぶ')),
           ]),
         ),
       ],
@@ -464,5 +514,40 @@ class _Before extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
         decoration: BoxDecoration(color: ok ? Palette.successSoft : Palette.dangerSoft, borderRadius: BorderRadius.circular(999)),
         child: Text(ok ? '前回 正解' : '前回 まちがえた', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: ok ? Palette.success : Palette.danger)),
+      );
+}
+
+/// 答えたあとの「この論点を先生と学ぶ」。論点の名前と章を見せ、押すと会話でその論点の説明を頼む
+class _LearnLink extends StatelessWidget {
+  const _LearnLink({required this.item, required this.back, required this.onTap});
+  final _Item item;
+
+  /// 同じ章の会話から来たとき（会話に戻る）
+  final bool back;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+        color: Palette.paper,
+        shape: RoundedRectangleBorder(side: const BorderSide(color: Palette.primary, width: 1.5), borderRadius: BorderRadius.circular(10)),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+            child: Row(children: [
+              const Icon(Icons.forum_outlined, color: Palette.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(back ? '会話に戻って、この問題を先生に聞く' : 'この論点を先生と学ぶ', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.primaryStrong)),
+                  const SizedBox(height: 2),
+                  Text('${item.chapterName} › ${item.pointTitle}', style: const TextStyle(fontSize: 13, height: 1.5, color: Palette.inkSoft)),
+                ]),
+              ),
+              const Icon(Icons.chevron_right, color: Palette.primary),
+            ]),
+          ),
+        ),
       );
 }
