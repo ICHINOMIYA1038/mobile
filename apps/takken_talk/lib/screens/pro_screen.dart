@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -70,12 +71,38 @@ class _ProScreenState extends State<ProScreen> {
   /// 購入の通知（Webhook）がサーバーに届くまで数秒かかるので、Pro になるまで少し待って取り直す
   Future<bool> _waitForPro() async {
     final state = AppScope.read(context);
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 8; i++) {
       await Future<void>.delayed(const Duration(seconds: 2));
       await state.refresh();
       if (state.me?['pro'] == true) return true;
     }
     return false;
+  }
+
+  /// 購入・復元の結果は必ずダイアログで見せる（何も出ないと、買えたのかどうか分からない）
+  Future<void> _tell(String title, String body) => showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+          content: Text(body, style: const TextStyle(height: 1.6)),
+          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+        ),
+      );
+
+  /// 買えなかった理由を、利用者に分かる言葉で（コードは問い合わせのときのために添える）
+  String _why(Object e) {
+    if (e is PlatformException) {
+      final code = PurchasesErrorHelper.getErrorCode(e);
+      final reason = switch (code) {
+        PurchasesErrorCode.networkError => '通信できませんでした。電波のよい所でもう一度お試しください。',
+        PurchasesErrorCode.paymentPendingError => '支払いの承認を待っています。承認されると Pro になります。',
+        PurchasesErrorCode.purchaseNotAllowedError => 'この端末では購入が許可されていません（スクリーンタイムの設定などを確かめてください）。',
+        PurchasesErrorCode.storeProblemError => 'App Store で問題が起きました。少し待ってからもう一度お試しください。',
+        _ => '購入を完了できませんでした。少し待ってからもう一度お試しください。',
+      };
+      return '$reason\n（エラー: ${code.name}）';
+    }
+    return '購入を完了できませんでした。少し待ってからもう一度お試しください。';
   }
 
   Future<void> _buy(Package pkg) async {
@@ -85,12 +112,18 @@ class _ProScreenState extends State<ProScreen> {
       AppInsights.logEvent('purchase', parameters: {'product': pkg.storeProduct.identifier});
       final ok = await _waitForPro();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok ? 'ありがとうございます。Pro になりました。' : '購入を受け付けました。反映まで少し時間がかかることがあります。')));
-      Navigator.of(context).pop();
+      if (ok) {
+        await _tell('Pro になりました', 'ありがとうございます。今日から1日に AI と話せる回数が増えました。');
+        if (mounted) Navigator.of(context).pop();
+      } else {
+        AppInsights.logEvent('purchase_pending');
+        await _tell('購入を受け付けました', 'Pro への切り替えをまだ確認できていません。数分たってから、この画面の下の「購入を復元」を押してください。');
+      }
     } on PurchaseCancelledException {
-      // 何もしない
-    } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('購入できませんでした。もう一度お試しください。')));
+      // 自分でやめたので何も出さない
+    } catch (e, st) {
+      AppInsights.recordError(e, st, reason: 'purchase');
+      if (mounted) await _tell('購入できませんでした', _why(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -102,9 +135,10 @@ class _ProScreenState extends State<ProScreen> {
       await PurchaseService.restore(_userId);
       final ok = await _waitForPro();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ok ? 'Pro を復元しました' : '復元できる購入が見つかりませんでした')));
-    } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('復元できませんでした。もう一度お試しください。')));
+      await _tell(ok ? 'Pro を復元しました' : '復元できる購入が見つかりませんでした', ok ? '1日に AI と話せる回数が増えました。' : 'この Apple ID で購入した Pro が見つかりませんでした。購入した Apple ID でサインインしているか確かめてください。');
+    } catch (e, st) {
+      AppInsights.recordError(e, st, reason: 'restore');
+      if (mounted) await _tell('復元できませんでした', _why(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -153,7 +187,11 @@ class _ProScreenState extends State<ProScreen> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    FilledButton(onPressed: _busy ? null : () => _buy(pro), child: Text(pro.storeProduct.priceString)),
+                    FilledButton(
+                      onPressed: _busy ? null : () => _buy(pro),
+                      // 確認のあいだ（最大 16 秒）押したことが分かるように
+                      child: _busy ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)) : Text(pro.storeProduct.priceString),
+                    ),
                   ],
                 ),
               )
