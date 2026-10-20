@@ -28,21 +28,11 @@ class KakomonSetScreen extends StatefulWidget {
   /// 見出しの2行目（論点の名前、章の名前）
   final String? pointTitle;
 
-  /// 章の会話から開いたときのその章。同じ章の「先生と学ぶ」は会話に戻る（答えた問題を返す）
+  /// 章の会話から開いたときのその章。その章の問題には「先生と学ぶ」を出さない（戻れば同じ会話なので）
   final String? fromChapter;
 
   @override
   State<KakomonSetScreen> createState() => _KakomonSetScreenState();
-}
-
-/// 過去問から章の会話に戻って先生に聞くこと（答えた問題とその結果）
-class KakomonAsk {
-  const KakomonAsk({required this.pointId, required this.where, required this.statement, required this.answer, required this.correct});
-  final String pointId;
-  final String where;
-  final String statement;
-  final bool answer;
-  final bool correct;
 }
 
 class _Item {
@@ -197,15 +187,10 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
     );
   }
 
-  /// この問題の論点を先生と学ぶ。同じ章の会話から来たときは、会話に戻ってそこで説明を頼む
+  /// この問題の論点を先生と学ぶ（その章の会話を開いて、論点の説明から）
   void _learn(_Item it) {
     if (it.chapterId == null || it.pointId == null) return;
-    final g = _graded[it.question.id];
-    if (it.chapterId == widget.fromChapter && g != null) {
-      Navigator.of(context).pop(KakomonAsk(pointId: it.pointId!, where: it.where, statement: it.question.statement, answer: g.answer, correct: g.correct));
-    } else {
-      openChapter(context, it.chapterId!, pointId: it.pointId);
-    }
+    openChapter(context, it.chapterId!, pointId: it.pointId);
   }
 
   @override
@@ -353,9 +338,9 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
               glossary: _glossary,
             ),
             const SizedBox(height: 10),
-            // 答えたら、この問題の論点を会話で学ぶ入口（答える前は AI のヒントの案内）
+            // 答えたら、この問題の論点を会話で学ぶ入口（答える前は AI のヒントの案内）。その章の会話から来たときは出さない
             if (g != null && cur.pointId != null && cur.chapterId != null)
-              _LearnLink(item: cur, back: cur.chapterId == widget.fromChapter, onTap: () => _learn(cur))
+              cur.chapterId == widget.fromChapter ? const SizedBox.shrink() : _LearnLink(item: cur, onTap: () => _learn(cur))
             else
               const Text('わからないときは「AIに聞く」で、この問題を AI が解説します（答える前はヒントだけ）。', style: TextStyle(fontSize: 12, color: Palette.inkFaint)),
           ],
@@ -519,11 +504,8 @@ class _Before extends StatelessWidget {
 
 /// 答えたあとの「この論点を先生と学ぶ」。論点の名前と章を見せ、押すと会話でその論点の説明を頼む
 class _LearnLink extends StatelessWidget {
-  const _LearnLink({required this.item, required this.back, required this.onTap});
+  const _LearnLink({required this.item, required this.onTap});
   final _Item item;
-
-  /// 同じ章の会話から来たとき（会話に戻る）
-  final bool back;
   final VoidCallback onTap;
 
   @override
@@ -540,7 +522,7 @@ class _LearnLink extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(back ? '会話に戻って、この問題を先生に聞く' : 'この論点を先生と学ぶ', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.primaryStrong)),
+                  Text('この論点を先生と学ぶ', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.primaryStrong)),
                   const SizedBox(height: 2),
                   Text('${item.chapterName} › ${item.pointTitle}', style: const TextStyle(fontSize: 13, height: 1.5, color: Palette.inkSoft)),
                 ]),

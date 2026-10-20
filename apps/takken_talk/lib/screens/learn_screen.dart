@@ -332,6 +332,8 @@ class _LearnScreenState extends State<LearnScreen> {
     final text = _input.text.trim();
     if (text.isEmpty || !_canSend) return;
     _input.clear();
+    // 送ったらキーボードを閉じて、返答を広く見せる
+    FocusScope.of(context).unfocus();
     _send({'message': text}, shown: text);
   }
 
@@ -342,20 +344,11 @@ class _LearnScreenState extends State<LearnScreen> {
   /// 論点の名前が「」で始まるときは、さらに「」で囲まない
   Future<void> _teach(OutlinePoint p) => _send({'pointId': p.id}, shown: p.title.startsWith('「') ? '${p.title}を教えて' : '「${p.title}」を教えて');
 
-  /// この章（point を渡すとその論点だけ）の過去問を解く。解く画面で「先生に聞く」を押したら、戻って答えた問題を先生に聞く
-  /// （まだ説明を聞いていない論点なら、その論点の説明から）
+  /// この章（point を渡すとその論点だけ）の過去問を解く。解き終えたら戻るボタンでこの会話に戻る
   Future<void> _openKakomon({OutlinePoint? point}) async {
     final chapter = _chapter;
     if (chapter == null) return;
-    final ask = await openKakomon(context, set: chapter.id, label: '第${chapter.order}章', point: point?.id, pointTitle: point?.title ?? chapter.short, fromChapter: chapter.id);
-    if (!mounted || ask == null || !_canSend) return;
-    final p = chapter.point(ask.pointId);
-    if (p == null) return;
-    if (!_taught.contains(p.id)) return _teach(p);
-    final mark = ask.answer ? '○' : '×';
-    await _send({
-      'message': '過去問（${ask.where}）の「${ask.statement}」に$markと答えて、${ask.correct ? '正解' : 'まちがえ'}ました。${ask.correct ? '考え方が合っているか確かめたい。' : 'どこを取り違えたか教えて。'}',
-    }, shown: '過去問（${ask.where}）を${ask.correct ? '解きました' : 'まちがえました'}。${ask.correct ? '考え方を確かめたい' : 'どこが違ったか教えて'}');
+    await openKakomon(context, set: chapter.id, label: '第${chapter.order}章', point: point?.id, pointTitle: point?.title ?? chapter.short, fromChapter: chapter.id);
   }
 
   void _quick(_Quick q) {
@@ -560,6 +553,8 @@ class _LearnScreenState extends State<LearnScreen> {
     final extra = (_limitMessage != null ? 1 : 0) + (_moveTo != null && !_busy ? 1 : 0);
     return ListView.builder(
       controller: _scroll,
+      // 会話を動かしたらキーボードを閉じる（開いたままだと返答が半分しか見えない）
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       itemCount: _items.length + extra,
       itemBuilder: (context, i) {
@@ -728,6 +723,8 @@ class _LearnScreenState extends State<LearnScreen> {
                           maxLines: 5,
                           maxLength: 2000,
                           textInputAction: TextInputAction.newline,
+                          // 欄の外（会話・候補・送る）を押したらキーボードを閉じる
+                          onTapOutside: (_) => FocusScope.of(context).unfocus(),
                           onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
                             hintText: hint,

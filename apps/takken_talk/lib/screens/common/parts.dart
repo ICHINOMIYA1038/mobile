@@ -15,8 +15,8 @@ Future<void> openChapter(BuildContext context, String chapterId, {String? pointI
 );
 
 /// 過去問を解く画面を開く。set は回（2024）・科目（gyo）・章（ch01）・all。
-/// fromChapter: 章の会話から開いたときのその章。同じ章の「先生に聞く」は会話に戻り、戻り値の問題について先生に聞く
-Future<KakomonAsk?> openKakomon(BuildContext context, {required String set, required String label, String mode = 'all', String? point, String? pointTitle, String? fromChapter}) => Navigator.of(context).push<KakomonAsk>(
+/// fromChapter: 章の会話から開いたときのその章（その章の問題には「先生と学ぶ」を出さない）
+Future<void> openKakomon(BuildContext context, {required String set, required String label, String mode = 'all', String? point, String? pointTitle, String? fromChapter}) => Navigator.of(context).push<void>(
   MaterialPageRoute(
     settings: RouteSettings(name: 'kakomon_$set'),
     builder: (_) => KakomonSetScreen(set: set, label: label, mode: mode, point: point, pointTitle: pointTitle, fromChapter: fromChapter),

@@ -307,6 +307,7 @@ class _ExplainPanelState extends State<_ExplainPanel> {
             },
             child: SingleChildScrollView(
               controller: widget.scroll,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -422,6 +423,8 @@ class _ExplainPanelState extends State<_ExplainPanel> {
                     minLines: 1,
                     maxLines: 4,
                     maxLength: 1000,
+                    // 欄の外（解説・候補・送る）を押したらキーボードを閉じる
+                    onTapOutside: (_) => FocusScope.of(context).unfocus(),
                     onChanged: (_) => setState(() {}),
                     style: const TextStyle(fontSize: 16, height: 1.5),
                     decoration: InputDecoration(

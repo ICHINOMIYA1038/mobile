@@ -6,7 +6,7 @@ import 'package:takken_talk/main.dart';
 import 'package:takken_talk/state/app_state.dart';
 
 /// 会話と過去問の行き来: ホームの「この章の過去問」→ 答えて「この論点を先生と学ぶ」→ 会話でその論点の説明
-/// → 「この論点の過去問」→ 答えて「会話に戻って…」→ 会話に戻って説明。過去問のタブの「章ごと」。
+/// → 「この論点の過去問」→ 答えて戻るボタンで会話に戻る。過去問のタブの「章ごと」。
 /// 手元のサイトに向けて動かす（AI はモック）:
 ///   flutter test integration_test/links_test.dart -d <シミュレーター> --dart-define=API_BASE=http://localhost:3140
 /// 「SHOT 名前」を出したところで数秒止まる（外から画面を撮るため）
@@ -57,16 +57,14 @@ void main() {
     await tester.tap(chip);
     await settle(tester, 4);
 
-    // 論点だけの過去問。答えたら「会話に戻って…」で会話に戻る
+    // 論点だけの過去問。同じ章の会話から来たので「先生と学ぶ」は出さず、戻るボタンで会話に戻る
     await tester.tap(find.text('○ 正しい').first);
     await settle(tester, 3);
-    final back = find.text('会話に戻って、この問題を先生に聞く');
-    expect(back, findsOneWidget);
+    expect(find.text('この論点を先生と学ぶ'), findsNothing);
     await shot(tester, 'l04_point_set');
-    await tester.tap(back);
-    await settle(tester, 8);
+    await tester.pageBack();
+    await settle(tester, 3);
     expect(find.byType(TextField), findsOneWidget, reason: '会話に戻った');
-    expect(find.textContaining('どこが違ったか教えて'), findsWidgets, reason: '答えた問題を先生に聞く');
     await shot(tester, 'l05_back_in_chat');
 
     // 会話 → 学ぶ → 過去問のタブ（章ごと）
