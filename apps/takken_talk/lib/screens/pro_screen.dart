@@ -132,7 +132,6 @@ class _ProScreenState extends State<ProScreen> {
             _Line('1日に AI と話せる回数が $freeCap回 から $proCap回 に増えます。'),
             const _Line('会話・過去問の「AIに聞く」のどちらにも使えます。'),
             const _Line('教材・過去問・図解・復習は、Pro でなくてもすべて使えます。'),
-            const _Line('同じアカウントでログインすれば、ほかの端末でも Pro が使えます。'),
             const SizedBox(height: 20),
             if (isPro)
               const _Box(child: Text('いまは Pro です。ありがとうございます。', style: TextStyle(fontWeight: FontWeight.w700, color: Palette.success)))

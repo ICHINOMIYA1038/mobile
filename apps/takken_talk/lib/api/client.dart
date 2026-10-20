@@ -24,7 +24,7 @@ class ApiException implements Exception {
 }
 
 /// サイト（shikaku.pairof.jp）の /api/v1 との通信。仕様はサイトのリポジトリの docs/app-api.md。
-/// トークンは匿名の学習者（またはログインしたアカウント）のもの。SharedPreferences に保存し、Authorization: Bearer で送る。
+/// トークンは匿名の学習者のもの。SharedPreferences に保存し、Authorization: Bearer で送る。
 class ApiClient {
   ApiClient({String? baseUrl, http.Client? client})
       : baseUrl = baseUrl ?? AppConfig.apiBase,
@@ -70,7 +70,7 @@ class ApiClient {
     await prefs.setString(_prefUserId, id);
   }
 
-  /// トークンを捨てる（ログアウト・学習データの削除のあと）。次の通信の前に ensureUser で作り直す。
+  /// トークンを捨てる（学習データの削除のあと）。次の通信の前に ensureUser で作り直す。
   Future<void> forgetUser() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefToken);
@@ -144,7 +144,7 @@ class ApiClient {
   /// 試験日（YYYY-MM-DD か null）・呼び名・進め方（drill / standard / fast）。渡したものだけ変える
   Future<void> patchSettings(Map<String, Object?> changes) => _json('PATCH', '$_examPath/settings', body: changes);
 
-  // ---------- 自分・ログイン ----------
+  // ---------- 自分 ----------
 
   Future<Map<String, dynamic>> me() => _json('GET', '/api/v1/me');
 
@@ -153,21 +153,6 @@ class ApiClient {
     await _json('DELETE', '/api/v1/me');
     await forgetUser();
     await _createUser();
-  }
-
-  /// Web で作ったアカウントにログインする。失敗は ApiException（message に理由）
-  Future<void> login(String email, String password) async {
-    final j = await _json('POST', '/api/v1/login', body: {'email': email, 'password': password});
-    await _saveToken(j['token'] as String, j['userId'] as String);
-  }
-
-  Future<void> logout() async {
-    try {
-      await _json('POST', '/api/v1/logout');
-    } finally {
-      await forgetUser();
-      await _createUser();
-    }
   }
 
   // ---------- SSE（会話・AIに聞く） ----------

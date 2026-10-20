@@ -27,7 +27,6 @@ class AppState extends ChangeNotifier {
   List<ChapterSummary> get chapters => ((home?['chapters'] as List?) ?? const []).map((c) => ChapterSummary.fromJson(c as Map<String, dynamic>)).toList();
   ChapterSummary? chapter(String id) => chapters.where((c) => c.id == id).firstOrNull;
 
-  bool get loggedIn => me?['loggedIn'] == true;
   int get usedToday => (home?['usedToday'] as num?)?.toInt() ?? 0;
   int get capToday => (home?['capToday'] as num?)?.toInt() ?? 40;
   bool get unlimited => home?['unlimited'] == true || me?['unlimited'] == true;
@@ -99,7 +98,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  /// ログイン・ログアウト・学習データの削除のあとは全部取り直す
+  /// 学習データの削除のあとは全部取り直す
   Future<void> afterAccountChange() async {
     me = null;
     home = null;

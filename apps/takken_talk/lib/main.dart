@@ -26,7 +26,7 @@ class App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '話して受かる宅建',
+      title: 'pAIrOf 宅建',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
       // 画面遷移を screen_view として記録する。RouteSettings.name を付けたルートだけが
@@ -45,7 +45,7 @@ class _Root extends StatefulWidget {
 }
 
 class _RootState extends State<_Root> {
-  /// 一度ホームを読めたら、ログイン・削除などで取り直しているあいだもタブを出したままにする（知らせが消えないように）
+  /// 一度ホームを読めたら、学習データの削除などで取り直しているあいだもタブを出したままにする（知らせが消えないように）
   bool _ready = false;
 
   @override

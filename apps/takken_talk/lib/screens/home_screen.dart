@@ -22,7 +22,7 @@ class HomeScreen extends StatelessWidget {
     final chapters = state.chapters;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('話して受かる宅建', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('pAIrOf 宅建', style: TextStyle(fontWeight: FontWeight.w700)),
         actions: [
           TextButton.icon(
             onPressed: () => _openMap(context),

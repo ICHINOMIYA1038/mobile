@@ -9,7 +9,6 @@ import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/readable.dart';
 import 'common/parts.dart';
-import 'login_screen.dart';
 import 'pro_screen.dart';
 
 /// 設定（サイトの /takken/settings）: 試験日・呼び名・進め方・アカウント・学習データ。
@@ -134,20 +133,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await _patch({'nickname': v.isEmpty ? null : v});
   }
 
-  Future<void> _logout() async {
-    final state = AppScope.read(context);
-    setState(() => _busy = true);
-    try {
-      await state.api.logout();
-    } catch (_) {
-      // サーバーに届かなくても、この端末のトークンは捨てて新しい匿名の学習者になっている
-    }
-    await state.afterAccountChange();
-    await _load();
-    if (mounted) setState(() => _busy = false);
-    _toast('ログアウトしました');
-  }
-
   Future<void> _wipe() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -179,19 +164,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _openLogin() async {
-    final done = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => const LoginScreen(),
-        settings: const RouteSettings(name: 'login'),
-      ),
-    );
-    if (done == true) {
-      await _load();
-      _toast('ログインしました');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final d = _data;
@@ -211,7 +183,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final state = AppScope.of(context);
     final small = Theme.of(context).textTheme.bodySmall;
     final examDate = d['examDate'] as String?;
-    final email = state.me?['email'] as String?;
     final pace = _paces.firstWhere((p) => p.$1 == _pace, orElse: () => _paces[1]);
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
@@ -299,33 +270,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => ProScreen.show(context, reason: 'settings'),
-                ),
-              ),
-
-              const _Heading('アカウント'),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(14),
-                  child: state.loggedIn
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text('ログイン中', style: small),
-                            Text(email ?? '', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 10),
-                            OutlinedButton(onPressed: _logout, child: const Text('ログアウト')),
-                            const SizedBox(height: 6),
-                            Text('ログアウトすると、この端末は新しい学習者として始まります。記録はアカウントに残ります。', style: small),
-                          ],
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Text('登録はなく、この端末に保存した目印で学習の続きを覚えています。Web のアカウントでログインすると、別の端末でも学習の続きから話せます。', style: TextStyle(fontSize: 14, height: 1.7)),
-                            const SizedBox(height: 10),
-                            OutlinedButton.icon(onPressed: _openLogin, icon: const Icon(Icons.login), label: const Text('Web のアカウントでログイン')),
-                          ],
-                        ),
                 ),
               ),
 
