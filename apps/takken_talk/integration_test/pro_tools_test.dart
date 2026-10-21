@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:takken_talk/ads/ad_banner.dart';
 import 'package:takken_talk/api/client.dart';
 import 'package:takken_talk/main.dart';
+import 'package:takken_talk/screens/pro/plan_tasks.dart';
 import 'package:takken_talk/state/app_state.dart';
 
 // 広告と Pro の学習ツール:
@@ -124,6 +125,40 @@ void main() {
     expect(find.text('いまの予測点（本試験50問）'), findsOneWidget);
     expect(find.text('簡易版'), findsOneWidget);
     await shot(tester, 'a01_forecast');
+
+    // 7日の予定: 今日の過去問のタスクを押して3問解き、戻ると「3/n問」に進む
+    await scrollTo(tester, find.text('7日の予定'));
+    await shot(tester, 'w01_week');
+    final task = find.textContaining(RegExp(r'の過去問を\d+問$')).first;
+    final taskText = (tester.widget<Text>(task)).data!;
+    final goal = RegExp(r'(\d+)問$').firstMatch(taskText)!.group(1);
+    final before = find.text('0/$goal問').evaluate().length;
+    expect(before, greaterThan(0), reason: '今日の過去問のタスクはまだ0問');
+    await tester.ensureVisible(task);
+    await settle(tester, 1);
+    await tester.tap(task);
+    expect(await waitFor(tester, find.text('○ 正しい')), isTrue);
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.text('○ 正しい').first);
+      await settle(tester, 2);
+      await tester.tap(find.textContaining(RegExp('次の問題|結果を見る')).first);
+      await settle(tester, 2);
+    }
+    await tester.pageBack();
+    expect(await waitFor(tester, find.text('3/$goal問'), 15), isTrue, reason: '戻ったら進み具合が増える');
+    await scrollTo(tester, find.text('7日の予定'));
+    await shot(tester, 'w02_progress');
+
+    // 丸で済みにする → 今日がぜんぶ済む → 外す
+    final circles = find.byType(CheckCircle);
+    final undone = circles.evaluate().toList().indexWhere((e) => !(e.widget as CheckCircle).done);
+    await tester.tap(circles.at(undone));
+    await settle(tester, 2);
+    if (find.text('今日の予定、ぜんぶできました').evaluate().isNotEmpty) await shot(tester, 'w03_all_done');
+    expect((tester.widget<CheckCircle>(circles.at(undone))).done, isTrue);
+    await tester.tap(circles.at(undone));
+    await settle(tester, 2);
+    expect((tester.widget<CheckCircle>(circles.at(undone))).done, isFalse);
     for (final (title, name) in const [
       ('AI の学習プラン', 'a02_plan'),
       ('7日の予定', 'a02b_plan_week'),
@@ -146,7 +181,23 @@ void main() {
     }
     expect(find.textContaining('プランを作り直す'), findsOneWidget);
     await tester.pageBack();
-    await settle(tester, 2);
+    await settle(tester, 3);
+
+    // ホームの「今日の予定」
+    expect(await waitFor(tester, find.byKey(const ValueKey('today_card'))), isTrue);
+    await tester.scrollUntilVisible(find.byKey(const ValueKey('today_card')), 200, scrollable: find.byType(Scrollable).first);
+    await settle(tester, 1);
+    expect(find.text('3/$goal問'), findsOneWidget);
+    await shot(tester, 'h01_today');
+    final homeCircles = find.descendant(of: find.byKey(const ValueKey('today_card')), matching: find.byType(CheckCircle));
+    final homeUndone = homeCircles.evaluate().toList().indexWhere((e) => !(e.widget as CheckCircle).done);
+    if (homeUndone >= 0) {
+      await tester.tap(homeCircles.at(homeUndone));
+      await settle(tester, 3);
+      if (find.text('今日の予定、ぜんぶできました').evaluate().isNotEmpty) await shot(tester, 'h02_today_all_done');
+      await tester.tap(homeCircles.at(homeUndone));
+      await settle(tester, 3);
+    }
 
     // 模擬試験
     await tapTool(tester, '模擬試験（本番の比率で50問）');

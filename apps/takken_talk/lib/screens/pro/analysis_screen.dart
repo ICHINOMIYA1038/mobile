@@ -6,6 +6,7 @@ import '../../widgets/readable.dart';
 import '../common/parts.dart';
 import '../pro_screen.dart';
 import 'analysis_logic.dart';
+import 'plan_tasks.dart';
 
 /// 苦手分析と学習プラン（GET /pro/analysis → { pro, report, plan, plansLeft }。形はサイトの src/lib/server/analysis.ts の Report と
 /// pro.ts の Plan、考え方は docs/pro-analysis.md）。Pro の目玉なので、文の壁にせず「数字を大きく・カードで区切る」。
@@ -13,7 +14,10 @@ import 'analysis_logic.dart';
 /// Pro でない人（pro: false）: 予測点と科目だけ見せ、Pro で何が見られるかを伝えて Pro の案内へ。
 /// 広告は出さない（Pro の機能の画面なので）。
 class AnalysisScreen extends StatefulWidget {
-  const AnalysisScreen({super.key});
+  const AnalysisScreen({super.key, this.scrollToToday = false});
+
+  /// 開いたら「7日の予定」の今日まで動かす（ホームの「今日の予定」から開いたとき）
+  final bool scrollToToday;
 
   @override
   State<AnalysisScreen> createState() => _AnalysisScreenState();
@@ -25,6 +29,8 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
   /// プランを作り直しているあいだ（AI が書くので 10〜20 秒）
   bool _remaking = false;
+  final _todayKey = GlobalKey();
+  bool _scrolled = false;
 
   @override
   void initState() {
@@ -42,8 +48,32 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     try {
       final d = await AppScope.read(context).api.proAnalysis();
       if (mounted) setState(() => _data = d);
+      if (widget.scrollToToday && !_scrolled) {
+        _scrolled = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final ctx = _todayKey.currentContext;
+          if (ctx != null && ctx.mounted) Scrollable.ensureVisible(ctx, alignment: 0.1, duration: const Duration(milliseconds: 300));
+        });
+      }
     } catch (e) {
       if (mounted && !quiet) setState(() => _error = e);
+    }
+  }
+
+  /// 予定のタスクの済みを付け外しする。先に画面を変え、失敗したら戻す
+  Future<void> _toggle(String taskId, bool done) async {
+    final d = _data;
+    final plan = (d?['plan'] as Map?)?.cast<String, dynamic>();
+    if (d == null || plan == null) return;
+    setState(() => _data = {...d, 'plan': checkedPlan(plan, taskId, done)});
+    try {
+      final r = await AppScope.read(context).api.checkPlanTask(planAt: plan['createdAt'] as num, taskId: taskId, done: done);
+      final fresh = r['plan'];
+      if (mounted && fresh is Map && _data != null) setState(() => _data = {..._data!, 'plan': fresh.cast<String, dynamic>()});
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _data = {...?_data, 'plan': plan});
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorText(e))));
     }
   }
 
@@ -107,7 +137,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
       if (!pro)
         _Locked(onPro: _toPro)
       else ...[
-        _PlanCard(plan: plan, left: (d['plansLeft'] as num?)?.toInt() ?? 0, remaking: _remaking, onRemake: _remake, onLearn: _learn, onKakomon: (c, p, t) => _kakomon(c, pointId: p, title: t)),
+        _PlanCard(plan: plan, left: (d['plansLeft'] as num?)?.toInt() ?? 0, remaking: _remaking, onRemake: _remake, onLearn: _learn, onKakomon: (c, p, t) => _kakomon(c, pointId: p, title: t), onToggle: _toggle, onStart: (t) => _then(startTask(context, t)), todayKey: _todayKey),
         if (priorities.isNotEmpty)
           _Section(
             title: '優先したい論点',
@@ -421,8 +451,13 @@ class _Locked extends StatelessWidget {
 
 /// AI の学習プラン: 方針 → 読み取れること → 先にやること → 7日の予定 → 作り直す
 class _PlanCard extends StatelessWidget {
-  const _PlanCard({required this.plan, required this.left, required this.remaking, required this.onRemake, required this.onLearn, required this.onKakomon});
+  const _PlanCard({required this.plan, required this.left, required this.remaking, required this.onRemake, required this.onLearn, required this.onKakomon, required this.onToggle, required this.onStart, this.todayKey});
   final Map<String, dynamic>? plan;
+  final void Function(String taskId, bool done) onToggle;
+  final void Function(Map<String, dynamic> task) onStart;
+
+  /// 今日の見出し（ホームから開いたとき、そこまで動かす）
+  final Key? todayKey;
   final int left;
   final bool remaking;
   final VoidCallback onRemake;
@@ -450,7 +485,7 @@ class _PlanCard extends StatelessWidget {
           ]),
           if (p == null) ...[
             const SizedBox(height: 6),
-            const Text('今日のプランはまだありません。', style: TextStyle(fontSize: 14, color: Palette.inkSoft)),
+            const Text('プランはまだありません。', style: TextStyle(fontSize: 14, color: Palette.inkSoft)),
           ] else ...[
             const SizedBox(height: 6),
             Text(p['headline'] as String? ?? '', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, height: 1.6, color: Palette.ink)),
@@ -491,19 +526,9 @@ class _PlanCard extends StatelessWidget {
             if (week.isNotEmpty) ...[
               const SizedBox(height: 14),
               const Text('7日の予定', style: h),
-              const SizedBox(height: 4),
-              for (final w in week)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3),
-                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    SizedBox(width: 56, child: Text('${w['day'] ?? ''}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, height: 1.6, color: Palette.ai))),
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        for (final t in ((w['tasks'] as List?) ?? const [])) Text('・$t', style: const TextStyle(fontSize: 14, height: 1.6, color: Palette.ink)),
-                      ]),
-                    ),
-                  ]),
-                ),
+              const Text('押すとその練習が始まります。その日に解けば自動で済みに。丸を押して自分で付け外しもできます。', style: TextStyle(fontSize: 12, height: 1.5, color: Palette.inkSoft)),
+              const SizedBox(height: 6),
+              _WeekList(week: week, todayKey: todayKey, onToggle: onToggle, onStart: onStart),
             ],
           ],
           const SizedBox(height: 12),
@@ -862,4 +887,79 @@ class _UntouchedRow extends StatelessWidget {
       ]),
     ),
   );
+}
+
+/// 7日の予定。日ごとに見出し（「10/22（水）」・今日・できた数）と、タスクの行。今日は開き、過ぎた日は閉じておく
+class _WeekList extends StatefulWidget {
+  const _WeekList({required this.week, required this.onToggle, required this.onStart, this.todayKey});
+  final List<Map<String, dynamic>> week;
+  final void Function(String taskId, bool done) onToggle;
+  final void Function(Map<String, dynamic> task) onStart;
+  final Key? todayKey;
+
+  @override
+  State<_WeekList> createState() => _WeekListState();
+}
+
+class _WeekListState extends State<_WeekList> {
+  /// 開け閉めを自分で変えた日（index → 開いているか）。変えていない日は、過ぎた日だけ閉じる
+  final Map<int, bool> _open = {};
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (final (i, d) in widget.week.indexed) ...[
+        if (i > 0) const SizedBox(height: 6),
+        _day(i, d),
+      ],
+    ],
+  );
+
+  Widget _day(int i, Map<String, dynamic> d) {
+    final tasks = taskList(d);
+    final today = d['isToday'] == true;
+    final past = d['isPast'] == true;
+    final doneCount = (d['doneCount'] as num?)?.toInt() ?? tasks.where((t) => t['done'] == true).length;
+    final all = tasks.isNotEmpty && doneCount == tasks.length;
+    final open = _open[i] ?? !past;
+    final date = d['date'] as String?;
+    return Container(
+      key: today ? widget.todayKey : null,
+      decoration: BoxDecoration(
+        color: past ? Palette.paper.withValues(alpha: 0.6) : Palette.paper,
+        border: Border.all(color: today ? Palette.ai : Palette.line, width: today ? 1.5 : 1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: () => setState(() => _open[i] = !open),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+              child: Row(children: [
+                Text(date == null ? '${d['day'] ?? ''}' : dateLabel(date), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: past ? Palette.inkSoft : Palette.ink)),
+                const SizedBox(width: 6),
+                if (today) const _Tag('今日', color: Colors.white, bg: Palette.ai),
+                const Spacer(),
+                Text(all ? 'ぜんぶできた' : '$doneCount/${tasks.length} できた', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: all ? Palette.success : Palette.inkSoft)),
+                Icon(open ? Icons.expand_less : Icons.expand_more, size: 20, color: Palette.inkFaint),
+              ]),
+            ),
+          ),
+          if (open) ...[
+            for (final t in tasks)
+              Padding(
+                padding: const EdgeInsets.only(left: 4, right: 4),
+                child: PlanTaskRow(task: t, dim: past, onToggle: (v) => widget.onToggle(t['id'] as String, v), onStart: () => widget.onStart(t)),
+              ),
+            if (today && all) const Padding(padding: EdgeInsets.fromLTRB(8, 2, 8, 8), child: AllDoneBanner()),
+            const SizedBox(height: 4),
+          ],
+        ],
+      ),
+    );
+  }
 }

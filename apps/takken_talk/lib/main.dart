@@ -87,6 +87,14 @@ class Shell extends StatefulWidget {
   /// ほかの画面からタブを切り替える（例: 復習の「過去問を解く」）
   static void select(BuildContext context, int index) => context.findAncestorStateOfType<_ShellState>()?.select(index);
 
+  /// 上に重ねた画面（苦手分析など、タブの外）からタブを切り替える。重ねた画面は閉じる（例: 予定の「復習」）
+  static void show(BuildContext context, int index) {
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    _live?.select(index);
+  }
+
+  static _ShellState? _live;
+
   @override
   State<Shell> createState() => _ShellState();
 }
@@ -94,6 +102,18 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   int _tab = 0;
   static const _names = ['home', 'kakomon', 'review', 'figures', 'settings'];
+
+  @override
+  void initState() {
+    super.initState();
+    Shell._live = this;
+  }
+
+  @override
+  void dispose() {
+    if (Shell._live == this) Shell._live = null;
+    super.dispose();
+  }
 
   void select(int i) {
     setState(() => _tab = i);

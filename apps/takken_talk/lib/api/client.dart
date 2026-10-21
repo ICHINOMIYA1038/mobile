@@ -154,6 +154,13 @@ class ApiClient {
       ? _json('POST', '$_examPath/pro/analysis', body: {'refresh': true}, timeout: const Duration(seconds: 60))
       : _json('GET', '$_examPath/pro/analysis', timeout: const Duration(seconds: 60));
 
+  /// 7日の予定のタスクを自分で済み・未済みにする（自動で済みになったものも外せる）→ { plan }（進み具合つき）
+  Future<Map<String, dynamic>> checkPlanTask({required num planAt, required String taskId, required bool done}) =>
+      _json('POST', '$_examPath/pro/plan/check', body: {'planAt': planAt, 'taskId': taskId, 'done': done});
+
+  /// ホームの「今日の予定」→ { pro, today: { planAt, headline, date, tasks, doneCount, streak, expired? } | null }（プランがまだ無ければ null）
+  Future<Map<String, dynamic>> proToday() => _json('GET', '$_examPath/pro/today');
+
   /// 模擬試験を始める → { id, seconds, passLine, questions[{ …PublicQuestion, subject, origin }] }
   Future<Map<String, dynamic>> startMock() => _json('POST', '$_examPath/pro/mock');
 
