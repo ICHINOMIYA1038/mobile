@@ -183,22 +183,6 @@ void main() {
     await tester.pageBack();
     await settle(tester, 3);
 
-    // ホームの「今日の予定」
-    expect(await waitFor(tester, find.byKey(const ValueKey('today_card'))), isTrue);
-    await tester.scrollUntilVisible(find.byKey(const ValueKey('today_card')), 200, scrollable: find.byType(Scrollable).first);
-    await settle(tester, 1);
-    expect(find.text('3/$goal問'), findsOneWidget);
-    await shot(tester, 'h01_today');
-    final homeCircles = find.descendant(of: find.byKey(const ValueKey('today_card')), matching: find.byType(CheckCircle));
-    final homeUndone = homeCircles.evaluate().toList().indexWhere((e) => !(e.widget as CheckCircle).done);
-    if (homeUndone >= 0) {
-      await tester.tap(homeCircles.at(homeUndone));
-      await settle(tester, 3);
-      if (find.text('今日の予定、ぜんぶできました').evaluate().isNotEmpty) await shot(tester, 'h02_today_all_done');
-      await tester.tap(homeCircles.at(homeUndone));
-      await settle(tester, 3);
-    }
-
     // 模擬試験
     await tapTool(tester, '模擬試験（本番の比率で50問）');
     await settle(tester, 3);

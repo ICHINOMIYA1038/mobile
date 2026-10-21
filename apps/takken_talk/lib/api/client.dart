@@ -158,9 +158,6 @@ class ApiClient {
   Future<Map<String, dynamic>> checkPlanTask({required num planAt, required String taskId, required bool done}) =>
       _json('POST', '$_examPath/pro/plan/check', body: {'planAt': planAt, 'taskId': taskId, 'done': done});
 
-  /// ホームの「今日の予定」→ { pro, today: { planAt, headline, date, tasks, doneCount, streak, expired? } | null }（プランがまだ無ければ null）
-  Future<Map<String, dynamic>> proToday() => _json('GET', '$_examPath/pro/today');
-
   /// 模擬試験を始める → { id, seconds, passLine, questions[{ …PublicQuestion, subject, origin }] }
   Future<Map<String, dynamic>> startMock() => _json('POST', '$_examPath/pro/mock');
 
