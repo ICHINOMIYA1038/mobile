@@ -1,0 +1,41 @@
+{
+  "identifier": "A1B2C3D4",
+  "nonRenewingSubscriptions": [],
+  "products": [],
+  "settings": {
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [
+    {
+      "id": "S1000001",
+      "localizations": [],
+      "name": "AIとチャットしながら学ぶFP1級 Pro",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "displayPrice": "3000",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "S2000001",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "会話の上限が広がり、苦手分析と模擬試験が使えます。いつでも解約できます。",
+              "displayName": "Pro 月額",
+              "locale": "ja_JP"
+            }
+          ],
+          "productID": "jp.pairof.fp1.talk.pro.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Pro 月額",
+          "subscriptionGroupID": "S1000001",
+          "type": "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}
