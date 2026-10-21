@@ -50,6 +50,16 @@ void main() {
     await tester.tap(find.text(title));
   }
 
+  /// 一覧の中のその見出しを、画面の上のほうまで動かす
+  Future<void> scrollTo(WidgetTester tester, Finder f) async {
+    await tester.scrollUntilVisible(f, 300, scrollable: find.byType(Scrollable).first);
+    await tester.pump();
+    final ctx = tester.element(f);
+    // ignore: use_build_context_synchronously
+    Scrollable.ensureVisible(ctx, alignment: 0.05);
+    await settle(tester, 1);
+  }
+
   Future<AppState> launch(WidgetTester tester) async {
     final state = AppState(ApiClient());
     await tester.pumpWidget(AppScope(state: state, child: const App()));
@@ -84,11 +94,15 @@ void main() {
     await tester.tap(find.byType(CloseButton));
     await settle(tester, 2);
 
-    // 苦手分析は Pro でなくても開ける（科目ごとの正答率と、Pro で見られるもの）
+    // 苦手分析は Pro でなくても開ける（予測点と科目、Pro で見られるもの）。まだ答えていないので案内も
     await tapTool(tester, '苦手分析と学習プラン');
     expect(await waitFor(tester, find.text('Pro で見られるもの')), isTrue);
-    expect(find.text('科目ごとの正答率'), findsOneWidget);
+    expect(find.text('いまの予測点（本試験50問）'), findsOneWidget);
+    expect(find.text('過去問を解くと、ここに分析が出ます'), findsOneWidget);
+    expect(find.text('AI の学習プラン'), findsNothing);
     await shot(tester, 'p03_analysis_free');
+    await scrollTo(tester, find.text('Pro で見られるもの'));
+    await shot(tester, 'p03b_analysis_free_locked');
     await tester.pageBack();
     await settle(tester, 2);
     expect(tester.takeException(), isNull);
@@ -104,12 +118,33 @@ void main() {
     await settle(tester, 4);
     expect(find.byType(AdWidget), findsNothing, reason: 'Pro の人に広告は出さない');
 
-    // 苦手分析と学習プラン（プランは AI が書く。モックでは記録から作るプラン）
+    // 苦手分析と学習プラン（プランは AI が書く。モックでは記録から作る簡易版）。記録は analysis.fixtures の「業法は得意、権利が苦手」
     await tapTool(tester, '苦手分析と学習プラン');
-    expect(await waitFor(tester, find.text('今週の学習プラン'), 40), isTrue);
-    expect(find.textContaining('7日の目安'), findsOneWidget);
+    expect(await waitFor(tester, find.text('AI の学習プラン'), 40), isTrue);
+    expect(find.text('いまの予測点（本試験50問）'), findsOneWidget);
+    expect(find.text('簡易版'), findsOneWidget);
+    await shot(tester, 'a01_forecast');
+    for (final (title, name) in const [
+      ('AI の学習プラン', 'a02_plan'),
+      ('7日の予定', 'a02b_plan_week'),
+      ('優先したい論点', 'a03_priorities'),
+      ('章ごとの出来', 'a04_chapters'),
+      ('まちがい方の癖', 'a05_habits'),
+      ('学習量とペース', 'a06_pace'),
+      ('まだ解いていない頻出論点', 'a07_untouched'),
+    ]) {
+      await scrollTo(tester, find.text(title));
+      expect(find.text(title), findsOneWidget, reason: title);
+      await shot(tester, name);
+      if (name == 'a03_priorities') {
+        // まちがえた問題を開く
+        await tester.tap(find.textContaining('まちがえた問題 ').first);
+        await settle(tester, 2);
+        expect(find.textContaining('あなたの答え'), findsWidgets);
+        await shot(tester, 'a03b_priority_missed');
+      }
+    }
     expect(find.textContaining('プランを作り直す'), findsOneWidget);
-    await shot(tester, 'p04_analysis_pro');
     await tester.pageBack();
     await settle(tester, 2);
 
@@ -150,14 +185,43 @@ void main() {
     expect(find.text('問題ごとの答え'), findsOneWidget);
     await shot(tester, 'p08_mock_result');
 
-    // 問題を開くと解説と「この論点を先生と学ぶ」
-    final first = find.textContaining('問1 ');
-    await tester.scrollUntilVisible(first, 300, scrollable: find.byType(Scrollable).first);
+    // 一覧（すべて・まちがえた・未回答）
+    await scrollTo(tester, find.text('問題ごとの答え'));
+    await shot(tester, 'p09_mock_result_list');
+    await tester.tap(find.byKey(const ValueKey('mock_filter_blank')));
+    await settle(tester, 1);
+    expect(find.textContaining('あなたの答え 未回答'), findsWidgets);
+    await shot(tester, 'p09b_mock_result_blank');
+    await tester.tap(find.byKey(const ValueKey('mock_filter_all')));
+    await settle(tester, 1);
+
+    // 1問ずつ: 問題文・○/×（自分の答えと正しい答え）・解説・根拠・出典、前へ・次へ
+    final first = find.textContaining(RegExp(r'^問1  '));
+    await tester.ensureVisible(first);
     await settle(tester, 1);
     await tester.tap(first);
     await settle(tester, 2);
-    expect(find.text('この論点を先生と学ぶ'), findsWidgets);
-    await shot(tester, 'p09_mock_result_item');
+    expect(find.text('問1（1/50）'), findsOneWidget);
+    expect(find.text('解説'), findsOneWidget);
+    expect(find.text('この論点を先生と学ぶ'), findsOneWidget);
+    expect(find.textContaining('あなたの答え'), findsWidgets);
+    await shot(tester, 'p10_mock_item');
+    await tester.tap(find.byKey(const ValueKey('mock_item_next')));
+    await settle(tester, 1);
+    expect(find.text('問2（2/50）'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('mock_item_next')));
+    await tester.tap(find.byKey(const ValueKey('mock_item_next')));
+    await tester.tap(find.byKey(const ValueKey('mock_item_next')));
+    await tester.tap(find.byKey(const ValueKey('mock_item_next')));
+    await settle(tester, 1);
+    expect(find.text('問6（6/50）'), findsOneWidget);
+    expect(find.text('この問題は未回答でした。'), findsOneWidget);
+    await shot(tester, 'p11_mock_item_blank');
+    await tester.tap(find.byKey(const ValueKey('mock_item_prev')));
+    await settle(tester, 1);
+    expect(find.text('問5（5/50）'), findsOneWidget);
+    await tester.pageBack();
+    await settle(tester, 2);
     await tester.pageBack();
     await settle(tester, 2);
 

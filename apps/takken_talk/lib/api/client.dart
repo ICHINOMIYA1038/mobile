@@ -125,7 +125,8 @@ class ApiClient {
   // ---------- 書く ----------
 
   /// AI を使わない採点 → { correct, explanation, reference, mastered }
-  Future<Map<String, dynamic>> answer(String questionId, bool answer) => _json('POST', '$_examPath/answer', body: {'questionId': questionId, 'answer': answer});
+  /// via: 答えた画面（kakomon = 過去問演習 / review = 復習）。サーバーは苦手分析（まちがい方の癖・学習量）に使う
+  Future<Map<String, dynamic>> answer(String questionId, bool answer, {String? via}) => _json('POST', '$_examPath/answer', body: {'questionId': questionId, 'answer': answer, 'via': ?via});
 
   Future<void> setBookmark(String questionId, bool on) => _json('POST', '$_examPath/bookmarks', body: {'questionId': questionId, 'on': on});
   Future<void> setFigureBookmark(String figureId, bool on) => _json('POST', '$_examPath/figure-bookmarks', body: {'figureId': figureId, 'on': on});
@@ -147,7 +148,8 @@ class ApiClient {
 
   // ---------- Pro だけの機能（/pro/…。Pro でなければ模擬試験は 403 pro_required、分析は pro: false で科目ごとの数字だけ） ----------
 
-  /// 苦手分析と学習プラン。プランはその日の最初の GET で AI が作る（10秒ほどかかる）。refresh で作り直す（1日3回まで。plansLeft）
+  /// 苦手分析と学習プラン → { pro, report, plan, plansLeft }（形はサイトの src/lib/server/analysis.ts の Report と pro.ts の Plan。docs/pro-analysis.md）。
+  /// プランはその日の最初の GET で AI が作る（10〜20秒かかる）。refresh で作り直す（1日3回まで。plansLeft）。Pro でない人は report の予測点と科目だけ
   Future<Map<String, dynamic>> proAnalysis({bool refresh = false}) => refresh
       ? _json('POST', '$_examPath/pro/analysis', body: {'refresh': true}, timeout: const Duration(seconds: 60))
       : _json('GET', '$_examPath/pro/analysis', timeout: const Duration(seconds: 60));

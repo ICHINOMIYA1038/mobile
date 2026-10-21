@@ -82,7 +82,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Future<void> _answer(String id, bool a) async {
     setState(() => _sending.add(id));
     try {
-      final j = await AppScope.read(context).api.answer(id, a);
+      final j = await AppScope.read(context).api.answer(id, a, via: 'review');
       if (mounted) setState(() => _graded[id] = Graded.fromJson(j, answer: a));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorText(e))));

@@ -144,7 +144,7 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
     final id = cur.question.id;
     setState(() => _sending = true);
     try {
-      final j = await _api.answer(id, a);
+      final j = await _api.answer(id, a, via: 'kakomon');
       AdService.instance.onKakomonAnswered();
       if (mounted) setState(() => _graded[id] = Graded.fromJson(j, answer: a));
     } catch (_) {
