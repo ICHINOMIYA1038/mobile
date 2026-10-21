@@ -46,8 +46,10 @@ class ProgressBar extends StatelessWidget {
         alignment: Alignment.centerLeft,
         children: [
           const Positioned.fill(child: ColoredBox(color: Palette.fillStrong)),
+          // heightFactor が無いと Stack の中で高さ 0 になり、塗りが見えない
           FractionallySizedBox(
             widthFactor: value.isNaN ? 0 : value.clamp(0.0, 1.0),
+            heightFactor: 1,
             child: ColoredBox(color: color),
           ),
         ],
@@ -96,6 +98,25 @@ class LoadError extends StatelessWidget {
         Text(errorText(error), textAlign: TextAlign.center),
         const SizedBox(height: 16),
         FilledButton(onPressed: onRetry, child: const Text('再試行')),
+      ],
+    ),
+  );
+}
+
+/// Pro でない人に見せる「Pro」の印（鍵つき）
+class ProBadge extends StatelessWidget {
+  const ProBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+    decoration: BoxDecoration(color: Palette.highlightSoft, border: Border.all(color: Palette.highlight), borderRadius: BorderRadius.circular(999)),
+    child: const Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.lock, size: 12, color: Palette.warning),
+        SizedBox(width: 3),
+        Text('Pro', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.warning)),
       ],
     ),
   );

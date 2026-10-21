@@ -13,12 +13,13 @@ import '../theme.dart';
 import '../widgets/readable.dart';
 
 /// Pro（月額の自動更新サブスクリプション）の案内。価格は RevenueCat の Offerings から出す。
-/// 無料でも全章・過去問・図解・復習を使えるので、Pro で変わるのは「1日に AI と話せる回数」だけ。
+/// Pro でなくても全章・過去問・図解・復習を使える。Pro で変わるのは、広告が出なくなること・1日に AI と話せる回数・
+/// Pro だけの学習ツール（苦手分析と学習プラン・模擬試験）。
 /// App Review 3.1.1: アプリの外の買い方・値段には触れない。3.1.2: 自動更新・解約の方法・規約を購入の近くに出す。
 class ProScreen extends StatefulWidget {
   const ProScreen({super.key, required this.reason});
 
-  /// どこから開いたか（cap = 今日の上限に達した / settings = 設定から）
+  /// どこから開いたか（cap = 今日の上限に達した / settings = 設定から / analysis・mock = 学ぶの「Pro の学習ツール」から）
   final String reason;
 
   static Future<void> show(BuildContext context, {required String reason}) {
@@ -113,7 +114,7 @@ class _ProScreenState extends State<ProScreen> {
       final ok = await _waitForPro();
       if (!mounted) return;
       if (ok) {
-        await _tell('Pro になりました', 'ありがとうございます。今日から1日に AI と話せる回数が増えました。');
+        await _tell('Pro になりました', 'ありがとうございます。広告が出なくなり、1日に AI と話せる回数が増えました。苦手分析と模擬試験も使えます。');
         if (mounted) Navigator.of(context).pop();
       } else {
         AppInsights.logEvent('purchase_pending');
@@ -135,7 +136,7 @@ class _ProScreenState extends State<ProScreen> {
       await PurchaseService.restore(_userId);
       final ok = await _waitForPro();
       if (!mounted) return;
-      await _tell(ok ? 'Pro を復元しました' : '復元できる購入が見つかりませんでした', ok ? '1日に AI と話せる回数が増えました。' : 'この Apple ID で購入した Pro が見つかりませんでした。購入した Apple ID でサインインしているか確かめてください。');
+      await _tell(ok ? 'Pro を復元しました' : '復元できる購入が見つかりませんでした', ok ? '広告が出なくなり、1日に AI と話せる回数が増えました。苦手分析と模擬試験も使えます。' : 'この Apple ID で購入した Pro が見つかりませんでした。購入した Apple ID でサインインしているか確かめてください。');
     } catch (e, st) {
       AppInsights.recordError(e, st, reason: 'restore');
       if (mounted) await _tell('復元できませんでした', _why(e));
@@ -159,12 +160,19 @@ class _ProScreenState extends State<ProScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             Text(
-              widget.reason == 'cap' ? '今日の AI の回数を使い切りました' : 'AI の先生と、もっと話す',
+              switch (widget.reason) {
+                'cap' => '今日の AI の回数を使い切りました',
+                'analysis' => '苦手分析と学習プランは Pro の機能です',
+                'mock' => '模擬試験は Pro の機能です',
+                _ => '広告なしで、AI の先生ともっと話す',
+              },
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Palette.ink),
             ),
             const SizedBox(height: 12),
-            _Line('1日に AI と話せる回数が $freeCap回 から $proCap回 に増えます。'),
-            const _Line('会話・過去問の「AIに聞く」のどちらにも使えます。'),
+            const _Line('広告が出なくなります。'),
+            _Line('1日に AI と話せる回数が $freeCap回 から $proCap回 に増えます（会話・過去問の「AIに聞く」のどちらにも使えます）。'),
+            const _Line('苦手分析と AI の学習プラン（答えた記録から苦手な論点を出し、AI が今週やることを決めます）。'),
+            const _Line('模擬試験（本番の比率で50問・30分。AI の講評つき）。'),
             const _Line('教材・過去問・図解・復習は、Pro でなくてもすべて使えます。'),
             const SizedBox(height: 20),
             if (isPro)
@@ -182,7 +190,7 @@ class _ProScreenState extends State<ProScreen> {
                         children: [
                           const Text('Pro（月額）', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
                           const SizedBox(height: 4),
-                          Text('1日$proCap回まで。いつでも解約できます。', style: const TextStyle(fontSize: 13, color: Palette.inkSoft)),
+                          Text('広告なし・1日$proCap回まで。いつでも解約できます。', style: const TextStyle(fontSize: 13, color: Palette.inkSoft)),
                         ],
                       ),
                     ),

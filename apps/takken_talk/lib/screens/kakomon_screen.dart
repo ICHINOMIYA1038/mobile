@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../ads/ad_banner.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/readable.dart';
@@ -50,6 +51,8 @@ class _KakomonScreenState extends State<KakomonScreen> {
   Widget build(BuildContext context) {
     final d = _data;
     return Scaffold(
+      // Pro でない人にだけ、一覧の下にバナー（下のタブの上）
+      bottomNavigationBar: const AdBanner(),
       appBar: AppBar(title: const Text('過去問演習')),
       body: d == null
           ? Center(

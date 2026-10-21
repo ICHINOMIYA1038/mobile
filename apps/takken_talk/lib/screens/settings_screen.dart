@@ -266,7 +266,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: ListTile(
                   minTileHeight: 52,
                   leading: const Icon(Icons.workspace_premium_outlined, color: Palette.primary),
-                  title: Text(state.me?['pro'] == true ? 'Pro（1日${state.me?['proCap'] ?? ''}回まで）' : '1日に AI と話せる回数を増やす',
+                  title: Text(state.me?['pro'] == true ? 'Pro（1日${state.me?['proCap'] ?? ''}回まで）' : '広告をなくす・AI と話せる回数を増やす',
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => ProScreen.show(context, reason: 'settings'),

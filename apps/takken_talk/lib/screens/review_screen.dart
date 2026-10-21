@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../ads/ad_banner.dart';
 import '../main.dart';
 import '../models/core.dart';
 import '../state/app_state.dart';
@@ -94,6 +95,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
   Widget build(BuildContext context) {
     final lists = _lists;
     return Scaffold(
+      // Pro でない人にだけ、一覧の下にバナー（下のタブの上）
+      bottomNavigationBar: const AdBanner(),
       appBar: AppBar(
         title: const Text('復習', style: TextStyle(fontWeight: FontWeight.w700)),
       ),

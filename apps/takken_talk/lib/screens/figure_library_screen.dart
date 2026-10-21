@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../ads/ad_banner.dart';
 import '../models/core.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
@@ -90,6 +91,8 @@ class _FigureLibraryScreenState extends State<FigureLibraryScreen> {
     final state = AppScope.of(context);
     final all = _all;
     return Scaffold(
+      // Pro でない人にだけ、一覧の下にバナー（下のタブの上）
+      bottomNavigationBar: const AdBanner(),
       appBar: AppBar(
         title: const Text('図解ライブラリ', style: TextStyle(fontWeight: FontWeight.w700)),
       ),

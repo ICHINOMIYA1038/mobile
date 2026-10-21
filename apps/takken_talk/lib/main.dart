@@ -1,6 +1,7 @@
 import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 
+import 'ads/ad_service.dart';
 import 'api/client.dart';
 import 'firebase_options.dart';
 import 'screens/figure_library_screen.dart';
@@ -15,6 +16,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // 計測は失敗してもアプリを止めない作りなので、ここで待って問題ない。
   await AppInsights.initialize(options: DefaultFirebaseOptions.currentPlatform);
+  // 起動してすぐは全画面広告を出さないため、時刻だけ覚える（広告の SDK は最初の広告まで起動しない）
+  AdService.instance.markLaunched();
   final state = AppState(ApiClient());
   runApp(AppScope(state: state, child: const App()));
   state.init();

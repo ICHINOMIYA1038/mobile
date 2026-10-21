@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../../ads/ad_banner.dart';
+import '../../ads/ad_service.dart';
 import '../../api/client.dart';
 import '../../models/core.dart';
 import '../../state/app_state.dart';
@@ -83,6 +85,10 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
   void initState() {
     super.initState();
     _load();
+    // 全画面広告は「次の問題」で出すので、先に読んでおく（Pro の人には読まない）
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && adsAllowed(AppScope.read(context))) AdService.instance.preloadInterstitial();
+    });
   }
 
   @override
@@ -121,6 +127,12 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
     _load();
   }
 
+  /// 答えたあとの「次の問題」。10問ごとに全画面広告（間隔の決まりは AdService。答えている途中には出さない）
+  void _next() {
+    if (adsAllowed(AppScope.read(context))) AdService.instance.maybeShowInterstitial();
+    _go(_pos + 1);
+  }
+
   void _go(int to) {
     setState(() => _pos = to.clamp(0, _order.length));
     if (_scroll.hasClients) _scroll.jumpTo(0);
@@ -133,6 +145,7 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
     setState(() => _sending = true);
     try {
       final j = await _api.answer(id, a);
+      AdService.instance.onKakomonAnswered();
       if (mounted) setState(() => _graded[id] = Graded.fromJson(j, answer: a));
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('送れませんでした。もう一度押してください。')));
@@ -232,7 +245,17 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
               children: [
                 _header(),
                 Expanded(child: _body()),
-                if (_cur != null) _stepBar(),
+                // 下の操作とバナーをまとめてホームインジケーターの上に置く（バナーは Pro でない人だけ）
+                ColoredBox(
+                  color: Palette.desk,
+                  child: SafeArea(
+                    top: false,
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      if (_cur != null) _stepBar(),
+                      const AdBanner(),
+                    ]),
+                  ),
+                ),
               ],
             ),
     );
@@ -392,9 +415,7 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
     const label = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
     return Container(
       decoration: const BoxDecoration(color: Palette.desk, border: Border(top: BorderSide(color: Palette.line))),
-      child: SafeArea(
-        top: false,
-        child: Padding(
+      child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
           child: Readable(
             child: Row(
@@ -429,7 +450,7 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
                 Expanded(
                   child: answered
                       ? FilledButton(
-                          onPressed: () => _go(_pos + 1),
+                          onPressed: _next,
                           style: FilledButton.styleFrom(shape: shape, padding: const EdgeInsets.symmetric(horizontal: 12)),
                           child: Text(last ? '結果を見る ›' : '次の問題 ›'),
                         )
@@ -442,7 +463,6 @@ class _KakomonSetScreenState extends State<KakomonSetScreen> {
               ],
             ),
           ),
-        ),
       ),
     );
   }

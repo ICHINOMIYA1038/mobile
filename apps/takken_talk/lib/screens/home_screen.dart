@@ -1,5 +1,7 @@
+import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 
+import '../ads/ad_banner.dart';
 import '../main.dart';
 import '../models/core.dart';
 import '../state/app_state.dart';
@@ -7,6 +9,9 @@ import '../theme.dart';
 import '../widgets/readable.dart';
 import 'common/parts.dart';
 import 'map_screen.dart';
+import 'pro/analysis_screen.dart';
+import 'pro/mock_screen.dart';
+import 'pro_screen.dart';
 
 /// 「学ぶ」タブ（サイトの /takken と同じ並び: いまの状況 → 続きから → カリキュラム）。
 /// データは AppState.home（タブを開くたびに main.dart が取り直す）。
@@ -21,6 +26,8 @@ class HomeScreen extends StatelessWidget {
     final byId = {for (final p in (progress['chapters'] as List? ?? const [])) (p as Map)['chapterId'] as String: p.cast<String, dynamic>()};
     final chapters = state.chapters;
     return Scaffold(
+      // Pro でない人にだけ、一覧の下にバナー（下のタブの上）
+      bottomNavigationBar: const AdBanner(),
       appBar: AppBar(
         title: const Text('pAIrOf 宅建', style: TextStyle(fontWeight: FontWeight.w700)),
         actions: [
@@ -45,6 +52,8 @@ class HomeScreen extends StatelessWidget {
                   _Status(home: home, progress: progress, state: state),
                   const SizedBox(height: 12),
                   _Next(home: home, first: chapters.firstOrNull, state: state),
+                  const SizedBox(height: 20),
+                  _ProTools(pro: state.me?['pro'] == true),
                   const SizedBox(height: 28),
                   const Text(
                     'カリキュラム',
@@ -94,6 +103,86 @@ class HomeScreen extends StatelessWidget {
 void _open(BuildContext context, String chapterId) {
   final state = AppScope.read(context);
   openChapter(context, chapterId).then((_) => state.refresh());
+}
+
+/// Pro の学習ツール（苦手分析と学習プラン・模擬試験）。Pro でない人には「Pro」の印を付ける。
+/// 苦手分析は Pro でなくても開ける（科目ごとの正答率だけ見せて、Pro で何が増えるかを伝える）。模擬試験は Pro の案内を開く。
+class _ProTools extends StatelessWidget {
+  const _ProTools({required this.pro});
+  final bool pro;
+
+  void _analysis(BuildContext context) {
+    AppInsights.logEvent('pro_tool_open', parameters: {'tool': 'analysis', 'pro': pro ? 1 : 0});
+    final state = AppScope.read(context);
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const AnalysisScreen(), settings: const RouteSettings(name: 'pro_analysis')))
+        .then((_) => state.refresh());
+  }
+
+  void _mock(BuildContext context) {
+    AppInsights.logEvent('pro_tool_open', parameters: {'tool': 'mock', 'pro': pro ? 1 : 0});
+    if (!pro) {
+      ProScreen.show(context, reason: 'mock');
+      return;
+    }
+    final state = AppScope.read(context);
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const MockIntroScreen(), settings: const RouteSettings(name: 'pro_mock')))
+        .then((_) => state.refresh());
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text('Pro の学習ツール', style: Theme.of(context).textTheme.bodySmall),
+      const SizedBox(height: 6),
+      Card(
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            _ToolRow(icon: Icons.insights, title: '苦手分析と学習プラン', sub: '科目・論点ごとの正答率と、AI が作る今週のプラン', locked: !pro, onTap: () => _analysis(context)),
+            const Divider(height: 1),
+            _ToolRow(icon: Icons.timer_outlined, title: '模擬試験（本番の比率で50問）', sub: '30分で過去問の○×を解いて、採点と AI の講評', locked: !pro, onTap: () => _mock(context)),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _ToolRow extends StatelessWidget {
+  const _ToolRow({required this.icon, required this.title, required this.sub, required this.locked, required this.onTap});
+  final IconData icon;
+  final String title;
+  final String sub;
+  final bool locked;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+      child: Row(
+        children: [
+          Icon(icon, color: Palette.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, height: 1.5, color: Palette.ink)),
+                Text(sub, style: const TextStyle(fontSize: 12, height: 1.5, color: Palette.inkSoft)),
+              ],
+            ),
+          ),
+          if (locked) ...[const SizedBox(width: 8), const ProBadge()],
+          const Icon(Icons.chevron_right, color: Palette.inkFaint),
+        ],
+      ),
+    ),
+  );
 }
 
 /// 試験までの日数と、定着・説明済み・今日話せる回数

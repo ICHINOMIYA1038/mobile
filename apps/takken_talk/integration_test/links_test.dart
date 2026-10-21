@@ -45,6 +45,9 @@ void main() {
     await settle(tester, 3);
     expect(find.text('この論点を先生と学ぶ'), findsOneWidget);
     await shot(tester, 'l02_answered');
+    // Pro でない人には下にバナーがあるので、隠れていれば見えるところまで動かす
+    await tester.ensureVisible(find.text('この論点を先生と学ぶ'));
+    await settle(tester, 1);
     await tester.tap(find.text('この論点を先生と学ぶ'));
     await settle(tester, 8);
 

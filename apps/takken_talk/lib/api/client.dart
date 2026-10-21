@@ -80,16 +80,17 @@ class ApiClient {
   }
 
   /// JSON の通信。401（知らないトークン）なら学習者を作り直して1回だけやり直す。
-  Future<Map<String, dynamic>> _json(String method, String path, {Object? body, bool retried = false}) async {
+  /// timeout: AI が文章を書く通信（Pro の学習プラン・模擬試験の講評）は長めに待つ
+  Future<Map<String, dynamic>> _json(String method, String path, {Object? body, bool retried = false, Duration timeout = const Duration(seconds: 30)}) async {
     if (_token == null) await ensureUser();
     final req = http.Request(method, Uri.parse('$baseUrl$path'))..headers.addAll(_headers);
     if (body != null) req.body = jsonEncode(body);
-    final streamed = await _http.send(req).timeout(const Duration(seconds: 30));
+    final streamed = await _http.send(req).timeout(timeout);
     final res = await http.Response.fromStream(streamed);
     if (res.statusCode == 401 && !retried) {
       await forgetUser();
       await _createUser();
-      return _json(method, path, body: body, retried: true);
+      return _json(method, path, body: body, retried: true, timeout: timeout);
     }
     Map<String, dynamic>? parsed;
     try {
@@ -143,6 +144,24 @@ class ApiClient {
 
   /// 試験日（YYYY-MM-DD か null）・呼び名・進め方（drill / standard / fast）。渡したものだけ変える
   Future<void> patchSettings(Map<String, Object?> changes) => _json('PATCH', '$_examPath/settings', body: changes);
+
+  // ---------- Pro だけの機能（/pro/…。Pro でなければ模擬試験は 403 pro_required、分析は pro: false で科目ごとの数字だけ） ----------
+
+  /// 苦手分析と学習プラン。プランはその日の最初の GET で AI が作る（10秒ほどかかる）。refresh で作り直す（1日3回まで。plansLeft）
+  Future<Map<String, dynamic>> proAnalysis({bool refresh = false}) => refresh
+      ? _json('POST', '$_examPath/pro/analysis', body: {'refresh': true}, timeout: const Duration(seconds: 60))
+      : _json('GET', '$_examPath/pro/analysis', timeout: const Duration(seconds: 60));
+
+  /// 模擬試験を始める → { id, seconds, passLine, questions[{ …PublicQuestion, subject, origin }] }
+  Future<Map<String, dynamic>> startMock() => _json('POST', '$_examPath/pro/mock');
+
+  /// 答えを出す（answers: 問題 id → true / false / null）→ 結果（score・bySubject・review・items）。AI が講評を書くので長めに待つ
+  Future<Map<String, dynamic>> submitMock(String id, Map<String, bool?> answers, int seconds) =>
+      _json('POST', '$_examPath/pro/mock/${Uri.encodeComponent(id)}', body: {'answers': answers, 'seconds': seconds}, timeout: const Duration(seconds: 60));
+
+  /// 終えた模擬試験の記録 → { pro, history[{ id, finishedAt, score, total, passLine }] }
+  Future<Map<String, dynamic>> mockHistory() => _json('GET', '$_examPath/pro/mock');
+  Future<Map<String, dynamic>> mockResult(String id) => _json('GET', '$_examPath/pro/mock/${Uri.encodeComponent(id)}');
 
   // ---------- 自分 ----------
 
