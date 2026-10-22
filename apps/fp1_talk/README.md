@@ -26,3 +26,8 @@ iOS アプリ「AIとチャットしながら学ぶFP1級 - pAIrOf」（ホー�
 | Firebase（iOS アプリ jp.pairof.fp1.talk） | このフォルダで `flutterfire configure`（lib/firebase_options.dart と GoogleService-Info.plist、Crashlytics の手順が足される。いまは null で計測なし） |
 | サポートのページ | lib/config.dart の `supportUrl`（仮） |
 | アイコン | icon/icon.png（仮）→ `dart run flutter_launcher_icons` |
+
+## TestFlight（2026-10-23 から）
+- App Store Connect のアプリ id `6825911478`。内部テストのグループ「開発」（全ビルドを配る）。Bundle ID と配布用プロファイル「pAIrOf FP1 App Store」は ASC API で作った（証明書は宅建と同じ Apple Distribution）
+- ビルドの出し方: `flutter build ios --release --config-only` → `xcodebuild … archive -allowProvisioningUpdates`（API キー）→ `xcodebuild -exportArchive`（build/ios/ipa/ExportOptions.plist は手動署名・上のプロファイル）→ `xcrun altool --upload-app`。手順の細部は ~/private/mobile の docs/maintenance.md 8.
+- つなぎ先は本番（shikaku.pairof.jp）。FP1 は exam.json の draft のあいだ Web には出ず、API からだけ引ける（サイトの fp1-integration ブランチ）
