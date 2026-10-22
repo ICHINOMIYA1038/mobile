@@ -41,6 +41,8 @@ void main() {
 
     test('誤りの文を正しいと思いがち（差 0.15 から）', () {
       expect(habitNotes(habits(tf: 0.40, dt: 0.25)).single, contains('誤りの文を正しいと思いがち'));
+      // 本試験形式（FP1）では「不適切なものを選ぶ問」の読みかえ
+      expect(habitNotes(habits(tf: 0.40, dt: 0.25), items: true).single, contains('「不適切なもの」を選ぶ問'));
       expect(habitNotes(habits(tf: 0.39, dt: 0.25)), isEmpty, reason: '差 0.14');
     });
 
@@ -78,10 +80,11 @@ void main() {
   });
 
   group('模擬試験の結果の絞り込み', () {
+    // 本試験形式の模擬試験の結果（items[].response・result）
     final items = [
-      {'answer': true, 'correct': true},
-      {'answer': false, 'correct': false},
-      {'answer': null, 'correct': false},
+      {'response': {'choice': 2}, 'result': {'correct': true}},
+      {'response': {'choice': 1}, 'result': {'correct': false}},
+      {'response': null, 'result': {'correct': false}},
     ];
     test('すべて・まちがえた（未回答も含む）・未回答', () {
       expect(mockFilter(items, 'all').map((e) => e.$1), [0, 1, 2]);

@@ -173,7 +173,7 @@ class _ProScreenState extends State<ProScreen> {
             _Line('1日に AI の先生と話せる回数が $freeCap回 から $proCap回 に増えます。'),
             if (AppConfig.proTools) ...[
               const _Line('苦手分析と AI の学習プラン（答えた記録から苦手な論点を出し、AI が今週やることを決めます）。'),
-              const _Line('模擬試験（AI の講評つき）。'),
+              const _Line('模擬試験（基礎編・応用編を本試験と同じ形式・時間で。予測点つき）。'),
             ],
             const _Line('教材・本試験形式の問題・図解・復習は、Pro でなくてもすべて使えます。'),
             const SizedBox(height: 20),

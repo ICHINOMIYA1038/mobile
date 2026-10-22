@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 
@@ -7,6 +9,8 @@ import '../../widgets/calculator.dart';
 import '../../widgets/exam_text.dart';
 import '../../widgets/readable.dart';
 import '../common/parts.dart';
+import '../kakomon/explain_sheet.dart';
+import '../pro/mock_result_screen.dart';
 
 /// 本試験形式の問題を1問ずつ解く（サイトの /fp1/items/<まとまり> と同じ。サイトの docs/question-formats.md の 5.）。
 /// - 四答択一: 押したらすぐ答え合わせ。正解の番号と、選択肢ごとの解説
@@ -14,11 +18,24 @@ import '../common/parts.dart';
 /// - 応用編は設例を上に（折りたためる）。表は横にスクロール
 /// - 電卓は右上のボタンでいつでも出せる（閉じても値は残る）
 ///
+/// - 模擬試験（mock）: 答え合わせはせずに選ぶ・書くだけ。上に残り時間、「答えを出す」でまとめて採点（時間が来たら自動で出す）
+/// - 模擬試験の見直し（review）: 結果の答え・正解・解説を1問ずつ（AIに聞く もできる）
+///
 /// 計算に集中する画面なので広告は出さない。
 class ItemSetScreen extends StatefulWidget {
-  const ItemSetScreen({super.key, required this.set, required this.label});
+  const ItemSetScreen({super.key, required this.set, required this.label, this.startAt = 0}) : mock = null, review = null;
+
+  /// 模擬試験を解く（POST /pro/mock の返り値: id・deadline・now・items・cases）
+  const ItemSetScreen.mock({super.key, required Map<String, dynamic> this.mock, required this.label}) : set = '', review = null, startAt = 0;
+
+  /// 模擬試験の結果を1問ずつ見る（`POST /pro/mock/<id>` の返り値。items[].response・result）
+  const ItemSetScreen.review({super.key, required Map<String, dynamic> this.review, required this.label, this.startAt = 0}) : set = '', mock = null;
+
   final String set;
   final String label;
+  final Map<String, dynamic>? mock;
+  final Map<String, dynamic>? review;
+  final int startAt;
 
   @override
   State<ItemSetScreen> createState() => _ItemSetScreenState();
@@ -48,6 +65,9 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
   /// 問題 id → 採点の結果
   final Map<String, Map<String, dynamic>> _results = {};
 
+  /// 問題 id → 答え合わせに送ったもの（「AIに聞く」に渡す。正解・解説はサーバーが入れる）
+  final Map<String, Map<String, Object>> _sent = {};
+
   /// 問題 id → 欄の label → 入力欄（答え・計算過程）。問題を行き来しても書いたものは残す
   final Map<String, Map<String, TextEditingController>> _inputs = {};
   final Map<String, Map<String, TextEditingController>> _process = {};
@@ -55,10 +75,179 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
   /// 選択肢から選ぶ欄（kind: option）の答え
   final Map<String, Map<String, String>> _picked = {};
 
+  /// 模擬試験で選んだ番号（答え合わせはしない）
+  final Map<String, int> _choice = {};
+  Timer? _timer;
+
+  /// サーバーの時計との差（残り時間はサーバーの deadline から数える）
+  Duration _skew = Duration.zero;
+  final _opened = DateTime.now();
+  bool _submitting = false;
+
+  bool get _isMock => widget.mock != null;
+  bool get _isReview => widget.review != null;
+
   @override
   void initState() {
     super.initState();
-    _load();
+    if (widget.mock case final m?) {
+      _data = m;
+      final now = (m['now'] as num?)?.toInt();
+      if (now != null) _skew = DateTime.fromMillisecondsSinceEpoch(now).difference(DateTime.now());
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+    } else if (widget.review case final r?) {
+      _data = r;
+      _pos = widget.startAt;
+      for (final it in _items) {
+        final id = it['id'] as String;
+        final res = (it['result'] as Map?)?.cast<String, dynamic>();
+        final resp = (it['response'] as Map?)?.cast<String, dynamic>();
+        if (res != null) _results[id] = res;
+        if (resp != null) _sent[id] = resp.map((k, v) => MapEntry(k, v as Object));
+        for (final pr in ((res?['parts'] as List?) ?? const []).map((e) => (e as Map).cast<String, dynamic>())) {
+          final label = pr['label'] as String;
+          final part = _parts(it).where((x) => x['label'] == label).firstOrNull;
+          if (part?['kind'] == 'option') {
+            (_picked[id] ??= {})[label] = pr['response'] as String? ?? '';
+          } else {
+            _ctl(_inputs, id, label).text = pr['response'] as String? ?? '';
+          }
+          final proc = ((resp?['process'] as Map?)?[label] as List?)?.cast<String>();
+          if (proc != null) _ctl(_process, id, label).text = proc.join('\n');
+        }
+      }
+    } else {
+      _load();
+    }
+  }
+
+  // ---------- 模擬試験 ----------
+
+  int get _deadline => (widget.mock?['deadline'] as num?)?.toInt() ?? 0;
+  int get _leftSec => ((_deadline - DateTime.now().add(_skew).millisecondsSinceEpoch) / 1000).ceil().clamp(0, 1 << 30);
+
+  void _tick() {
+    if (!mounted) return;
+    setState(() {});
+    if (_leftSec <= 0 && !_submitting) _submit(timeUp: true);
+  }
+
+  static String _clock(int sec) {
+    final h = sec ~/ 3600;
+    final m = (sec % 3600) ~/ 60;
+    final s = sec % 60;
+    return '${h > 0 ? '$h:' : ''}${m.toString().padLeft(h > 0 ? 2 : 1, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  /// 答えた問か（四答択一は選んだ、書く問はどれかの欄を書いた）
+  bool _answeredInMock(Map<String, dynamic> it) {
+    final id = it['id'] as String;
+    if (_choiceFormats.contains(it['format'])) return _choice[id] != null;
+    return _parts(it).any((p) => p['kind'] == 'option' ? (_picked[id]?[p['label']] ?? '').isNotEmpty : (_inputs[id]?[p['label']]?.text.trim().isNotEmpty ?? false));
+  }
+
+  Map<String, Object> _mockAnswers() {
+    final out = <String, Object>{};
+    for (final it in _items) {
+      final id = it['id'] as String;
+      if (!_answeredInMock(it)) continue;
+      if (_choiceFormats.contains(it['format'])) {
+        out[id] = {'choice': _choice[id]!};
+        continue;
+      }
+      final parts = <String, String>{};
+      final process = <String, List<String>>{};
+      for (final p in _parts(it)) {
+        final label = p['label'] as String;
+        parts[label] = p['kind'] == 'option' ? (_picked[id]?[label] ?? '') : _ctl(_inputs, id, label).text;
+        if (p['showProcess'] == true) process[label] = _ctl(_process, id, label).text.split('\n').where((l) => l.trim().isNotEmpty).toList();
+      }
+      out[id] = {'parts': parts, if (process.isNotEmpty) 'process': process};
+    }
+    return out;
+  }
+
+  Future<void> _submit({bool timeUp = false}) async {
+    if (_submitting) return;
+    final blank = _items.where((it) => !_answeredInMock(it)).length;
+    if (!timeUp) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('答えを出しますか？'),
+          content: Text(blank == 0 ? 'すべての問に答えています。採点します。' : 'まだ答えていない問が $blank問 あります。このまま採点しますか？'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('続ける')),
+            FilledButton(key: const Key('mock-submit-ok'), onPressed: () => Navigator.pop(ctx, true), child: const Text('答えを出す')),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+    }
+    FocusScope.of(context).unfocus();
+    setState(() => _submitting = true);
+    _timer?.cancel();
+    final api = AppScope.read(context).api;
+    final nav = Navigator.of(context);
+    try {
+      final r = await api.submitMock(widget.mock!['id'] as String, _mockAnswers(), DateTime.now().difference(_opened).inSeconds);
+      AppInsights.logEvent('mock_finish', parameters: {'section': (widget.mock?['section'] as Map?)?['key']?.toString() ?? '', 'score': (r['score'] as num?) ?? 0});
+      if (!mounted) return;
+      await nav.pushReplacement(MaterialPageRoute<void>(builder: (_) => MockResultScreen(result: r), settings: const RouteSettings(name: 'pro_mock_result')));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      if (_leftSec > 0) _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorText(e))));
+    }
+  }
+
+  /// 問の番号の一覧（答えた問に印）。押すとその問へ
+  void _showList() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Wrap(spacing: 8, runSpacing: 8, children: [
+            for (final (i, it) in _items.indexed)
+              SizedBox(
+                width: 52,
+                height: 44,
+                child: OutlinedButton(
+                  key: Key('mock-jump-${i + 1}'),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    backgroundColor: _isMock && _answeredInMock(it) ? Palette.primarySoft : _results[it['id']]?['correct'] == false ? Palette.dangerSoft : null,
+                    side: BorderSide(color: i == _pos ? Palette.primary : Palette.lineStrong, width: i == _pos ? 2 : 1),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    _go(i);
+                  },
+                  child: Text('${i + 1}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink)),
+                ),
+              ),
+          ]),
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _confirmLeave() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('模擬試験をやめますか？'),
+        content: const Text('書いた答えは残りません。制限時間のあいだは、模擬試験の画面の「解きかけ」から最初の状態でやり直せます。'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('続ける')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('やめる', style: TextStyle(color: Palette.danger))),
+        ],
+      ),
+    );
+    return ok == true;
   }
 
   @override
@@ -70,6 +259,7 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
     }
     _calc.dispose();
     _scroll.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -80,6 +270,8 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
         setState(() {
           _data = d;
           _error = null;
+          final n = ((d['items'] as List?) ?? const []).length;
+          if (_pos == 0 && widget.startAt > 0 && n > 0) _pos = widget.startAt.clamp(0, n - 1);
         });
       }
     } catch (e) {
@@ -124,7 +316,12 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
     try {
       final r = await AppScope.read(context).api.itemAnswer(id, choice: choice, parts: choice == null ? parts : null, process: choice == null && process.isNotEmpty ? process : null);
       AppInsights.logEvent('item_answer', parameters: {'format': it['format'] as String? ?? '', 'correct': r['correct'] == true ? 1 : 0});
-      if (mounted) setState(() => _results[id] = r);
+      if (mounted) {
+        setState(() {
+          _results[id] = r;
+          _sent[id] = {'choice': ?choice, if (choice == null) 'parts': parts, if (choice == null && process.isNotEmpty) 'process': process};
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _sendError = e);
     } finally {
@@ -138,10 +335,24 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
   Widget build(BuildContext context) {
     final items = _items;
     final d = _data;
-    return Scaffold(
+    final left = _isMock ? _leftSec : 0;
+    final scaffold = Scaffold(
       appBar: AppBar(
-        title: Text(widget.label, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+        title: _isMock
+            ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(widget.label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                Text('残り ${_clock(left)}', key: const Key('mock-clock'), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: left < 600 ? Palette.danger : Palette.inkSoft, fontFeatures: const [FontFeature.tabularFigures()])),
+              ])
+            : Text(widget.label, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
         actions: [
+          if (_isMock || _isReview)
+            IconButton(
+              key: const Key('mock-list'),
+              tooltip: '問の一覧',
+              onPressed: _showList,
+              icon: const Icon(Icons.grid_view),
+              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            ),
           IconButton(
             key: const Key('calc-toggle'),
             tooltip: _calcOpen ? '電卓を閉じる' : '電卓を出す',
@@ -151,7 +362,18 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
             selectedIcon: const Icon(Icons.calculate),
             constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           ),
-          const SizedBox(width: 4),
+          if (_isMock)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilledButton(
+                key: const Key('mock-submit'),
+                onPressed: _submitting ? null : () => _submit(),
+                style: FilledButton.styleFrom(minimumSize: const Size(44, 40), padding: const EdgeInsets.symmetric(horizontal: 12)),
+                child: _submitting ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)) : const Text('答えを出す'),
+              ),
+            )
+          else
+            const SizedBox(width: 4),
         ],
       ),
       body: d == null
@@ -188,6 +410,20 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
                   ],
                 ),
     );
+    if (!_isMock) return scaffold;
+    // 戻るでは「やめますか」と聞く（答えは残らない）
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop || _submitting) return;
+        final nav = Navigator.of(context);
+        if (await _confirmLeave()) {
+          _timer?.cancel();
+          nav.pop();
+        }
+      },
+      child: scaffold,
+    );
   }
 
   Widget _question(Map<String, dynamic> it, int total) {
@@ -196,8 +432,10 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
     final isChoice = _choiceFormats.contains(it['format']);
     final cases = (_data?['cases'] as Map?)?.cast<String, dynamic>() ?? const {};
     final theCase = it['caseId'] != null ? (cases[it['caseId']] as Map?)?.cast<String, dynamic>() : null;
-    final chapterLabel = ((_data?['chapters'] as Map?)?[it['chapterId']] as String?) ?? '';
-    final answered = _items.where((x) => _results.containsKey(x['id']) || x['lastScore'] != null).length;
+    final chapterLabel = ((_data?['chapters'] as Map?)?[it['chapterId']] as String?) ?? (it['chapter'] as String?) ?? '';
+    final answered = _isMock ? _items.where(_answeredInMock).length : _items.where((x) => _results.containsKey(x['id']) || x['lastScore'] != null).length;
+    final points = ((it['points'] as List?) ?? const []).fold<num>(0, (a, b) => a + (b as num));
+    final estimated = (_data?['section'] as Map?)?['estimated'] == true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -205,6 +443,12 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
           Text('${_pos + 1} / $total問', key: const Key('item-pos'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink)),
           const SizedBox(width: 8),
           Text('（答えた $answered問）', style: const TextStyle(fontSize: 13, color: Palette.inkSoft)),
+          const Spacer(),
+          if (points > 0)
+            Text(
+              _isReview && it['earned'] != null ? '${it['earned']} / $points点${estimated ? '（推定）' : ''}' : '配点 $points点${estimated ? '（推定）' : ''}',
+              style: const TextStyle(fontSize: 12, color: Palette.inkSoft),
+            ),
         ]),
         const SizedBox(height: 8),
         if (theCase != null) ...[_case(theCase), const SizedBox(height: 12)],
@@ -216,6 +460,7 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
               children: [
                 Wrap(spacing: 8, runSpacing: 2, children: [
                   if (chapterLabel.isNotEmpty) Text(chapterLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.primary)),
+                  if ((it['subject'] as String?)?.isNotEmpty == true && _isMock) Text(it['subject'] as String, style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
                   if (it['origin'] != null) Text('出典: ${it['origin']}', style: const TextStyle(fontSize: 11, color: Palette.inkFaint)),
                 ]),
                 const SizedBox(height: 8),
@@ -303,15 +548,29 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
             key: Key('option-${i + 1}'),
             no: i + 1,
             text: o,
-            state: res == null
+            state: _isMock
+                ? (_choice[it['id']] == i + 1 ? _Opt.selected : _Opt.idle)
+                : res == null
                 ? _Opt.idle
                 : answer == i + 1
                     ? _Opt.right
                     : chose == i + 1
                         ? _Opt.wrong
                         : _Opt.dim,
-            mark: res == null ? null : answer == i + 1 ? '正解' : chose == i + 1 ? 'あなたの答え' : null,
-            onTap: res != null || _sending ? null : () => _send(it, choice: i + 1),
+            mark: _isMock
+                ? (_choice[it['id']] == i + 1 ? '選んだ答え' : null)
+                : res == null
+                ? null
+                : answer == i + 1
+                ? '正解'
+                : chose == i + 1
+                ? 'あなたの答え'
+                : null,
+            onTap: _isMock
+                ? (_submitting ? null : () => setState(() => _choice[it['id'] as String] = i + 1))
+                : res != null || _sending
+                ? null
+                : () => _send(it, choice: i + 1),
           ),
         ),
         if (i < notes.length && (notes[i] ?? '').isNotEmpty)
@@ -333,8 +592,8 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
       if ((it['instructions'] as String?)?.isNotEmpty == true && it['format'] != 'calc')
         Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(it['instructions'] as String, style: const TextStyle(fontSize: 13, height: 1.6, color: Palette.inkSoft))),
       const Divider(height: 20),
-      for (final p in parts) _partField(id, p, results[p['label']], locked: res != null),
-      if (res == null)
+      for (final p in parts) _partField(id, p, results[p['label']], locked: res != null || _isReview || _submitting),
+      if (res == null && !_isMock && !_isReview)
         Padding(
           padding: const EdgeInsets.only(top: 8),
           child: FilledButton(
@@ -382,6 +641,7 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
                       key: Key('part-$label'),
                       controller: _ctl(_inputs, id, label),
                       enabled: !locked,
+                      onChanged: _isMock ? (_) => setState(() {}) : null,
                       keyboardType: numeric ? const TextInputType.numberWithOptions(decimal: true, signed: true) : TextInputType.text,
                       autocorrect: false,
                       enableSuggestions: false,
@@ -534,10 +794,18 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
           ],
           const SizedBox(height: 8),
           Wrap(spacing: 8, runSpacing: 4, children: [
+            if (!_isReview)
+              TextButton.icon(
+                onPressed: () => setState(() => _results.remove(it['id'])),
+                icon: const Icon(Icons.replay, size: 18),
+                label: const Text('もう一度解く'),
+                style: TextButton.styleFrom(minimumSize: const Size(44, 44)),
+              ),
             TextButton.icon(
-              onPressed: () => setState(() => _results.remove(it['id'])),
-              icon: const Icon(Icons.replay, size: 18),
-              label: const Text('もう一度解く'),
+              key: const Key('item-ask'),
+              onPressed: _sent[it['id']] == null ? null : () => _askAi(it, res),
+              icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+              label: const Text('AIに聞く'),
               style: TextButton.styleFrom(minimumSize: const Size(44, 44)),
             ),
             // 本試験形式で分からなかった章を、AI の先生と学び直す
@@ -556,7 +824,25 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
   }
 }
 
-enum _Opt { idle, right, wrong, dim }
+extension on _ItemSetScreenState {
+  /// 答え合わせのあと、その問（設例・自分の答え・正解・解説）を文脈に AI に聞く
+  void _askAi(Map<String, dynamic> it, Map<String, dynamic> res) {
+    final id = it['id'] as String;
+    final sent = _sent[id];
+    if (sent == null) return;
+    final chapterLabel = ((_data?['chapters'] as Map?)?[it['chapterId']] as String?) ?? '';
+    final stem = (it['stem'] as String? ?? '').replaceAll(RegExp(r'\s+'), ' ').trim();
+    showItemExplainSheet(
+      context,
+      itemId: id,
+      statement: stem,
+      where: '${widget.label}${chapterLabel.isEmpty ? '' : '・$chapterLabel'}',
+      answer: ExplainAnswer.fromItem(res, sent),
+    );
+  }
+}
+
+enum _Opt { idle, right, wrong, dim, selected }
 
 class _OptionButton extends StatelessWidget {
   const _OptionButton({super.key, required this.no, required this.text, required this.state, this.mark, this.onTap});
@@ -571,6 +857,7 @@ class _OptionButton extends StatelessWidget {
     final (bg, border) = switch (state) {
       _Opt.right => (Palette.successSoft, Palette.success),
       _Opt.wrong => (Palette.dangerSoft, Palette.danger),
+      _Opt.selected => (Palette.primarySoft, Palette.primary),
       _ => (Palette.paper, Palette.lineStrong),
     };
     return Material(
@@ -588,8 +875,8 @@ class _OptionButton extends StatelessWidget {
               width: 26,
               height: 26,
               alignment: Alignment.center,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: state == _Opt.right ? Palette.success : state == _Opt.wrong ? Palette.danger : Palette.primarySoft),
-              child: Text('$no', style: TextStyle(fontWeight: FontWeight.w800, color: state == _Opt.right || state == _Opt.wrong ? Colors.white : Palette.primaryStrong)),
+              decoration: BoxDecoration(shape: BoxShape.circle, color: state == _Opt.right ? Palette.success : state == _Opt.wrong ? Palette.danger : state == _Opt.selected ? Palette.primary : Palette.primarySoft),
+              child: Text('$no', style: TextStyle(fontWeight: FontWeight.w800, color: state == _Opt.right || state == _Opt.wrong || state == _Opt.selected ? Colors.white : Palette.primaryStrong)),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -598,7 +885,7 @@ class _OptionButton extends StatelessWidget {
                 if (mark != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
-                    child: Text(mark!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: state == _Opt.right ? Palette.success : Palette.danger)),
+                    child: Text(mark!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: state == _Opt.right ? Palette.success : state == _Opt.selected ? Palette.primary : Palette.danger)),
                   ),
               ]),
             ),

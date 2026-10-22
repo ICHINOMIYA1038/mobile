@@ -76,9 +76,9 @@ Future<void> startTask(BuildContext context, Map<String, dynamic> t) async {
     case TaskGo.learn:
       await openChapter(context, r.chapterId!, pointId: r.pointId);
     case TaskGo.kakomon:
+      // FP1 の予定の「過去問」は本試験形式の問（サイトの withProgress は item_log で済みにする）。章のまとまりを開く
       final c = AppScope.read(context).chapter(r.chapterId!);
-      final title = kakomonTitle(t['text'] as String? ?? '') ?? (c == null ? null : (c.short.isNotEmpty ? c.short : c.title));
-      await openKakomon(context, set: r.chapterId!, label: c == null ? r.chapterId! : '第${c.order}章', point: r.pointId, pointTitle: title);
+      await openItems(context, set: r.chapterId!, label: c == null ? r.chapterId! : '第${c.order}章 ${c.short.isNotEmpty ? c.short : c.title}');
     case TaskGo.review:
       // 復習はタブなので、重ねた画面を閉じて「復習」へ
       Shell.show(context, 2);

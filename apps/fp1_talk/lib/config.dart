@@ -15,9 +15,9 @@ class AppConfig {
   /// （jp.pairof.fp1.talk.pro）で FP1 の Pro と見分ける
   static const proProductId = 'jp.pairof.fp1.talk.pro.monthly';
 
-  /// Pro の学習ツール（苦手分析と学習プラン・模擬試験）を出すか。サイトの苦手分析と模擬試験はまだ○×の過去問（宅建）の形で、
-  /// FP1 の本試験形式（基礎編50問＋応用編）に合わせていない（サイトの docs/handoff.md の「まだ」）。合わせたら true にする
-  static const proTools = false;
+  /// Pro の学習ツール（苦手分析と学習プラン・模擬試験）を出すか。サイトの /api/v1/fp1/pro/… が FP1 の本試験形式
+  /// （基礎編 四答択一50問・応用編 設例5つ、各150分、予測点は200点満点で120点が目安）を返すので出す
+  static const proTools = true;
 
   static const privacyPolicyUrl = 'https://shikaku.pairof.jp/privacy';
   static const termsUrl = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';

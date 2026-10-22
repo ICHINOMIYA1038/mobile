@@ -5,13 +5,17 @@ iOS アプリ「AIとチャットしながら学ぶFP1級 - pAIrOf」（ホー�
 
 - 裏側はサイト（~/private/pairof-shikaku、shikaku.pairof.jp）の `/api/v1/fp1/…`。仕様はサイトの docs/app-api.md
 - 画面: 学ぶ（章の講義と AI の先生との会話・○×）/ 本試験形式（回×編・章 → 1問ずつ。四答択一・空欄・計算・設例・電卓）/ 復習 / 図解 / 設定・Pro
-- Pro の学習ツール（苦手分析・模擬試験）は `AppConfig.proTools = false` で隠している（サイトが FP1 の本試験形式にまだ合わせていない）
+- 本試験形式の問は、答え合わせのあと「AIに聞く」（サイトの /api/v1/fp1/item-explain。正解・解説はサーバーが入れる。回数は ○× の「AIに聞く」と同じ）
+- Pro の学習ツール（`AppConfig.proTools = true`）: 苦手分析（予測点 200点満点・合格の目安 120点、基礎編・応用編ごと。応用編の配点は推定と表示）と、模擬試験（基礎編 四答択一50問・応用編 設例5つ、各150分。解く画面は本試験形式と同じで電卓つき、結果から問ごとに答え・正解・解説・AIに聞く）
+- 復習の「まちがえた」の上に、本試験形式（過去問・模擬試験）で前回まちがえた問。押すとその問から、「まとめて解き直す」で全部（サイトの items/wrong）
+- 自分（/api/v1/me）は `?exam=fp1` を付けて読む（Pro は試験ごと）
 
 ## 確かめ方
 - `flutter analyze`、`flutter test`（`dart format` は流さない）
 - 通し: サイトの worktree で `pnpm dev --port 3150`（AI はモック）→
   `tool/shots.sh <シミュレーターの UDID> tool/shots integration_test/fp1_flow_test.dart --dart-define=API_BASE=http://localhost:3150`
   （「SHOT 名前」のところで tool/shots/ に画面を撮る）。会話の入力欄は integration_test/keyboard_test.dart
+- Pro（模擬試験・苦手分析・本試験形式の「AIに聞く」・復習）: integration_test/fp1_pro_test.dart。Pro の学習者を手元の D1 に作ってトークンを渡す（手順はファイルの頭）
 
 ## 出す前にオーナーが登録して、値を入れる所
 | 登録 | 入れる所 |

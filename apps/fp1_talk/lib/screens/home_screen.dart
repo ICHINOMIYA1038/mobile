@@ -144,9 +144,9 @@ class _ProTools extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
-            _ToolRow(icon: Icons.insights, title: '苦手分析と学習プラン', sub: '科目・論点ごとの正答率と、AI が作る今週のプラン', locked: !pro, onTap: () => _analysis(context)),
+            _ToolRow(key: const Key('tool-analysis'), icon: Icons.insights, title: '苦手分析と学習プラン', sub: '予測点（200点満点）・分野と論点ごとの出来と、AI が作る今週のプラン', locked: !pro, onTap: () => _analysis(context)),
             const Divider(height: 1),
-            _ToolRow(icon: Icons.timer_outlined, title: '模擬試験（本番の比率で50問）', sub: '30分で過去問の○×を解いて、採点と AI の講評', locked: !pro, onTap: () => _mock(context)),
+            _ToolRow(key: const Key('tool-mock'), icon: Icons.timer_outlined, title: '模擬試験（基礎編・応用編 各150分）', sub: '本試験と同じ形式・時間で解いて、点数と予測点', locked: !pro, onTap: () => _mock(context)),
           ],
         ),
       ),
@@ -155,7 +155,7 @@ class _ProTools extends StatelessWidget {
 }
 
 class _ToolRow extends StatelessWidget {
-  const _ToolRow({required this.icon, required this.title, required this.sub, required this.locked, required this.onTap});
+  const _ToolRow({super.key, required this.icon, required this.title, required this.sub, required this.locked, required this.onTap});
   final IconData icon;
   final String title;
   final String sub;

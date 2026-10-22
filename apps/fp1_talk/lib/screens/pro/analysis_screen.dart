@@ -97,9 +97,10 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
   void _learn(String chapterId, String? pointId) => _then(openChapter(context, chapterId, pointId: pointId));
 
+  /// FP1 の分析は本試験形式の問の記録から作る（サイトの itemanalysis.ts）ので、過去問は本試験形式の章のまとまりを開く
   void _kakomon(String chapterId, {String? pointId, String? title}) {
     final c = AppScope.read(context).chapter(chapterId);
-    _then(openKakomon(context, set: chapterId, label: c == null ? chapterId : '第${c.order}章', point: pointId, pointTitle: title ?? (c == null ? null : (c.short.isNotEmpty ? c.short : c.title))));
+    _then(openItems(context, set: chapterId, label: c == null ? chapterId : '第${c.order}章 ${c.short.isNotEmpty ? c.short : c.title}'));
   }
 
   Future<void> _toPro() async {
@@ -153,7 +154,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             ]),
           ),
         if (chapters.isNotEmpty) _Section(title: '章ごとの出来', sub: '押すとその章の過去問へ。', child: _ChapterGrid(chapters: chapters, onTap: (c) => _kakomon(c))),
-        if (habits != null && !empty) _Section(title: 'まちがい方の癖', child: _Habits(h: habits)),
+        if (habits != null && !empty) _Section(title: 'まちがい方の癖', child: _Habits(h: habits, items: r['kind'] == 'items')),
         if (pace != null) _Section(title: '学習量とペース', child: _Pace(p: pace, daysToExam: (r['daysToExam'] as num?)?.toInt())),
         if (untouched.isNotEmpty)
           _Section(
@@ -277,7 +278,7 @@ class _EmptyGuide extends StatelessWidget {
       children: [
         const Text('過去問を解くと、ここに分析が出ます', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Palette.primaryStrong)),
         const SizedBox(height: 4),
-        const Text('答えた記録から、予測点・苦手な論点・まちがい方の癖を出します。まずは第1章から10問ほど解いてみましょう。', style: TextStyle(fontSize: 14, height: 1.6, color: Palette.ink)),
+        const Text('本試験形式の問題に答えた記録から、予測点・苦手な論点・まちがい方の癖を出します。まずは第1章から10問ほど解いてみましょう。', style: TextStyle(fontSize: 14, height: 1.6, color: Palette.ink)),
         const SizedBox(height: 10),
         FilledButton(onPressed: onStart, child: const Text('第1章の過去問を解く')),
       ],
@@ -301,13 +302,18 @@ class _ForecastCard extends StatelessWidget {
     final bySubject = _maps(f['bySubject']);
     final mock = (r['lastMock'] as Map?)?.cast<String, dynamic>();
     final good = score >= passLine;
+    // FP1 は200点満点（基礎編100点・応用編100点）。宅建の形なら50点
+    final max = (f['scoreTotal'] as num?)?.toInt() ?? 50;
+    final bySection = _maps(f['bySection']);
+    final noItems = ((f['noItems'] as List?) ?? const []).cast<String>();
+    final items = r['kind'] == 'items';
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('いまの予測点', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Palette.inkSoft)),
+            Text(items ? 'いまの予測点（$max点満点）' : 'いまの予測点', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Palette.inkSoft)),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
@@ -321,11 +327,39 @@ class _ForecastCard extends StatelessWidget {
             ),
             Text(forecastStatus(score: score, passLine: passLine, target: target), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: good ? Palette.success : Palette.warning)),
             const SizedBox(height: 10),
-            _ScoreBar(score: score, low: low, high: high, passLine: passLine, target: target),
+            _ScoreBar(score: score, low: low, high: high, passLine: passLine, target: target, max: max),
+            if (bySection.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Row(children: [
+                for (final (i, b) in bySection.indexed) ...[
+                  if (i > 0) const SizedBox(width: 8),
+                  Expanded(
+                    child: Container(
+                      key: Key('forecast-${b['key']}'),
+                      padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
+                      decoration: BoxDecoration(color: Palette.fill, borderRadius: BorderRadius.circular(8)),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('${b['label']}${b['estimated'] == true ? '（配点は推定）' : ''}', style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
+                        Text.rich(TextSpan(children: [
+                          TextSpan(text: '${b['expected']}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Palette.ink)),
+                          TextSpan(text: ' / ${b['max']}点', style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
+                        ])),
+                      ]),
+                    ),
+                  ),
+                ],
+              ]),
+            ],
             const Divider(height: 28),
-            for (final s in bySubject) _SubjectForecast(s: s),
+            for (final s in bySubject) _SubjectForecast(s: s, items: items),
             const SizedBox(height: 6),
-            Text('○×の正答率と、解いた割合から出した目安です。', style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              items
+                  ? '本試験形式の問題（四答択一・応用編の欄）の正答率と、解いた割合から出した目安です。応用編の配点は公表されていないため、1設例20点として欄の重さで割り振った推定です。'
+                  : '○×の正答率と、解いた割合から出した目安です。',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (noItems.isNotEmpty) Text('まだ問題が無い分野（${noItems.join('・')}）は、一問一答の正答率からの見込みです。', style: Theme.of(context).textTheme.bodySmall),
             if (mock != null) ...[
               const SizedBox(height: 4),
               Text('直近の模擬試験 ${mock['score']}/${mock['total']}点', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.ink)),
@@ -337,19 +371,20 @@ class _ForecastCard extends StatelessWidget {
   }
 }
 
-/// 0〜50点の棒。幅（low〜high）を薄く、予測点を濃い印、合格点の目安（下に文字）と目標（上に文字）を縦線で
+/// 0〜満点の棒。幅（low〜high）を薄く、予測点を濃い印、合格点の目安（下に文字）と目標（上に文字）を縦線で
 class _ScoreBar extends StatelessWidget {
-  const _ScoreBar({required this.score, required this.low, required this.high, required this.passLine, required this.target});
+  const _ScoreBar({required this.score, required this.low, required this.high, required this.passLine, required this.target, this.max = 50});
   final int score;
   final int low;
   final int high;
   final int passLine;
   final int target;
+  final int max;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, c) {
     final w = c.maxWidth;
-    double x(num v) => scorePos(v) * w;
+    double x(num v) => scorePos(v, max: max) * w;
     const label = TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Palette.inkSoft);
     Widget tick(num v, Color color) => Positioned(left: x(v) - 1, top: 14, child: Container(width: 2, height: 22, color: color));
     // 文字は棒の端からはみ出さないように寄せる
@@ -367,7 +402,7 @@ class _ScoreBar extends StatelessWidget {
           Positioned(left: x(score) - 9, top: 16, child: Container(width: 18, height: 18, decoration: BoxDecoration(color: Palette.primary, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 3)))),
           Positioned(left: lx(passLine, 80), top: 38, width: 80, child: Text('合格点 $passLine', textAlign: TextAlign.center, style: label.copyWith(color: Palette.warning))),
           const Positioned(left: 0, top: 50, child: Text('0', style: TextStyle(fontSize: 11, color: Palette.inkFaint))),
-          const Positioned(right: 0, top: 50, child: Text('50', style: TextStyle(fontSize: 11, color: Palette.inkFaint))),
+          Positioned(right: 0, top: 50, child: Text('$max', style: const TextStyle(fontSize: 11, color: Palette.inkFaint))),
         ],
       ),
     );
@@ -376,14 +411,18 @@ class _ScoreBar extends StatelessWidget {
 
 /// 科目ごとの予測点と目標（目標との差は赤）
 class _SubjectForecast extends StatelessWidget {
-  const _SubjectForecast({required this.s});
+  const _SubjectForecast({required this.s, this.items = false});
   final Map<String, dynamic> s;
+
+  /// 本試験形式（FP1）: 点数で、棒の右端はその分野の満点（max）
+  final bool items;
 
   @override
   Widget build(BuildContext context) {
     final expected = (s['expected'] as num?) ?? 0;
     final target = (s['target'] as num?) ?? 0;
-    final n = (s['examQuestions'] as num?) ?? 1;
+    final q = (s['examQuestions'] as num?) ?? 1;
+    final n = items ? ((s['max'] as num?) ?? (q * 2 + 20)) : q;
     final gap = (s['gap'] as num?) ?? 0;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
@@ -391,7 +430,7 @@ class _SubjectForecast extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(children: [
-            Expanded(child: Text('${s['label']}（${n.toInt()}問）', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.ink))),
+            Expanded(child: Text(items ? '${s['label']}（${n.toInt()}点）' : '${s['label']}（${n.toInt()}問）', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.ink))),
             Text.rich(TextSpan(children: [
               const TextSpan(text: '予測 ', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
               TextSpan(text: pts(expected), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Palette.ink)),
@@ -547,7 +586,7 @@ class _PlanCard extends StatelessWidget {
   }
 }
 
-String _ox(Object? a) => a == null ? '未回答' : (a == true ? '○' : '×');
+String _ox(Object? a) => a == null ? '未回答' : a is String ? a : (a == true ? '○' : '×');
 
 /// 優先したい論点の1つ: 名前・章と科目・何回出たか・正答率の棒・説明はまだ・まちがえた問題（開く）・次にやること
 class _PriorityCard extends StatelessWidget {
@@ -626,7 +665,8 @@ class _MissedQuestion extends StatelessWidget {
           const TextSpan(text: '・正しい答え '),
           TextSpan(text: _ox(m['correctAnswer']), style: const TextStyle(fontWeight: FontWeight.w700, color: Palette.success)),
         ]), style: const TextStyle(fontSize: 13, color: Palette.inkSoft)),
-        if ((m['origin'] as String? ?? '').isNotEmpty) Text('${m['origin']} の論点（文は作り直し）', style: const TextStyle(fontSize: 12, color: Palette.inkFaint)),
+        if ((m['origin'] as String? ?? '').isNotEmpty)
+          Text(m['correctAnswer'] is String ? '出典: ${m['origin']}' : '${m['origin']} の論点（文は作り直し）', style: const TextStyle(fontSize: 12, color: Palette.inkFaint)),
       ],
     ),
   );
@@ -706,8 +746,11 @@ class _ChapterTile extends StatelessWidget {
 
 /// まちがい方の癖。数字の小さなタイル（データが無いものは出さない）と、目立つ差の読み方
 class _Habits extends StatelessWidget {
-  const _Habits({required this.h});
+  const _Habits({required this.h, this.items = false});
   final Map<String, dynamic> h;
+
+  /// 本試験形式（FP1）: ○×の取り違えの代わりに「適切／不適切を選ぶ問」と形式ごとの正答率
+  final bool items;
 
   @override
   Widget build(BuildContext context) {
@@ -716,17 +759,42 @@ class _Habits extends StatelessWidget {
     final n = (h['numbers'] as Map?)?.cast<String, dynamic>() ?? const {};
     final t = (h['trend'] as Map?)?.cast<String, dynamic>() ?? const {};
     final forgotten = (h['forgotten'] as num?)?.toInt() ?? 0;
-    final notes = habitNotes(h);
+    final notes = habitNotes(h, items: items);
+    final formats = _maps(h['formats']).where((f) => ((f['answered'] as num?) ?? 0) > 0).toList();
     final tiles = <Widget>[
       if ((tf['asked'] as num? ?? 0) > 0 || (dt['asked'] as num? ?? 0) > 0)
         _PairTile(
-          title: '○と×の取り違え',
-          a: ('誤りの文を正しいと思った', pct(tf['rate']), '${tf['wrong'] ?? 0}/${tf['asked'] ?? 0}'),
-          b: ('正しい文を誤りと思った', pct(dt['rate']), '${dt['wrong'] ?? 0}/${dt['asked'] ?? 0}'),
+          title: items ? '四答択一の向き' : '○と×の取り違え',
+          a: (items ? '不適切・誤っているものを選ぶ問' : '誤りの文を正しいと思った', pct(tf['rate']), '${tf['wrong'] ?? 0}/${tf['asked'] ?? 0}'),
+          b: (items ? '適切・正しいものを選ぶ問' : '正しい文を誤りと思った', pct(dt['rate']), '${dt['wrong'] ?? 0}/${dt['asked'] ?? 0}'),
           note: 'まちがえた割合',
         ),
       if ((n['answered'] as num? ?? 0) > 0)
-        _PairTile(title: '数字の入った問題', a: ('数字の入った問題', pct(n['accuracy']), '${n['answered']}回'), b: ('それ以外', pct(n['othersAccuracy']), null), note: '正答率'),
+        _PairTile(
+          title: items ? '計算・数値の欄' : '数字の入った問題',
+          a: (items ? '数値・計算の欄' : '数字の入った問題', pct(n['accuracy']), '${n['answered']}回'),
+          b: ('それ以外', pct(n['othersAccuracy']), null),
+          note: '正答率',
+        ),
+      if (formats.isNotEmpty)
+        Card(
+          key: const Key('habit-formats'),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              const Text('形式ごとの正答率', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Palette.primary)),
+              for (final f in formats)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Row(children: [
+                    Expanded(child: Text(f['label'] as String? ?? '', style: const TextStyle(fontSize: 13, height: 1.4, color: Palette.ink))),
+                    Text(pct(f['accuracy']), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Palette.ink)),
+                    SizedBox(width: 56, child: Text('（${f['answered']}）', textAlign: TextAlign.right, style: const TextStyle(fontSize: 12, color: Palette.inkSoft))),
+                  ]),
+                ),
+            ]),
+          ),
+        ),
       if ((t['recentCount'] as num? ?? 0) > 0 || (t['beforeCount'] as num? ?? 0) > 0)
         _PairTile(title: '正答率の変化', a: ('直近7日', pct(t['recent']), '${t['recentCount'] ?? 0}回'), b: ('それより前', pct(t['before']), '${t['beforeCount'] ?? 0}回'), note: '正答率'),
       _OneTile(label: '一度できたのに忘れた', value: '$forgotten問', bad: forgotten >= 5),

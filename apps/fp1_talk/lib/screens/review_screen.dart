@@ -11,6 +11,8 @@ import 'common/parts.dart';
 
 /// 復習（サイトの /fp1/review）。あとで復習 / 前回まちがえた / 復習の時期 の3つ。
 /// 答えは POST answer で採点する（AI を使わないので、1日に話せる回数は減らない）。
+/// 「まちがえた」の上には、本試験形式（過去問・模擬試験）で前回まちがえた問（GET review の items）を出し、
+/// 押すとその問から、「まとめて解き直す」で全部を、本試験形式の画面（items/wrong）で解き直す。
 class ReviewScreen extends StatefulWidget {
   const ReviewScreen({super.key});
 
@@ -42,6 +44,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
   static const _tabs = [('bookmarks', 'あとで復習', '○×カードの「☆ あとで復習」を押すと、ここに集まります。'), ('wrong', 'まちがえた', '前回まちがえた問題はありません。'), ('due', '復習の時期', '今日もう一度解く時期の問題はありません。')];
 
   Map<String, List<_Item>>? _lists;
+
+  /// 本試験形式で前回まちがえた問（{ id, format, sectionLabel, caseTitle, chapter, origin, text, lastScore }）
+  List<Map<String, dynamic>> _wrongItems = const [];
+  String _itemSet = 'wrong';
   Object? _error;
   int _tab = 0;
 
@@ -72,6 +78,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
       if (!mounted) return;
       setState(() {
         _lists = {for (final t in _tabs) t.$1: _Item.listFrom(d[t.$1])};
+        _wrongItems = ((d['items'] as List?) ?? const []).map((e) => (e as Map).cast<String, dynamic>()).toList();
+        _itemSet = d['itemSet'] as String? ?? 'wrong';
         _error = null;
       });
     } catch (e) {
@@ -113,13 +121,86 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
   }
 
+  /// 本試験形式の画面で解き直す。戻ったら一覧を取り直す（合えば消える）
+  Future<void> _solveItems({int startAt = 0}) async {
+    await openItems(context, set: _itemSet, label: '本試験形式でまちがえた問', startAt: startAt);
+    if (mounted) _load();
+  }
+
+  Widget _itemsSection() => Padding(
+    padding: const EdgeInsets.only(top: 4, bottom: 8),
+    child: Card(
+      key: const Key('review-items'),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+            child: Row(children: [
+              Expanded(child: Text('本試験形式でまちがえた問 ${_wrongItems.length}問', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink))),
+              FilledButton(key: const Key('review-items-solve'), onPressed: () => _solveItems(), child: const Text('まとめて解き直す')),
+            ]),
+          ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(14, 0, 14, 6),
+            child: Text('過去問演習・模擬試験で、すべての欄が合わなかった問。解き直して合えば消えます。', style: TextStyle(fontSize: 12, height: 1.5, color: Palette.inkSoft)),
+          ),
+          for (final (i, it) in _wrongItems.take(8).indexed) ...[
+            const Divider(height: 1),
+            InkWell(
+              key: Key('review-item-$i'),
+              onTap: () => _solveItems(startAt: i),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 8, 8, 8),
+                child: Row(children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(
+                        [
+                          if ((it['chapter'] as Map?) case final c?) '第${c['order']}章 ${c['short']}',
+                          if (it['sectionLabel'] != null) it['sectionLabel'],
+                          if (it['caseTitle'] != null) '《設例》${it['caseTitle']}',
+                        ].join('・'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.primary),
+                      ),
+                      Text(it['text'] as String? ?? '', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, height: 1.5, color: Palette.ink)),
+                      Text(
+                        '${(it['format'] == 'choice' || it['format'] == 'count' || it['format'] == 'combination') ? '四答択一' : '欄 ${(((it['lastScore'] as num?) ?? 0) * 100).round()}% 正解'}${_sitting(it['origin']) == null ? '' : '・${_sitting(it['origin'])}'}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11, color: Palette.inkFaint),
+                      ),
+                    ]),
+                  ),
+                  const Icon(Icons.chevron_right, color: Palette.inkFaint),
+                ]),
+              ),
+            ),
+          ],
+          if (_wrongItems.length > 8)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
+              child: Text('ほか ${_wrongItems.length - 8}問は「まとめて解き直す」から', style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
+            ),
+        ],
+      ),
+    ),
+  );
+
   Widget _body(Map<String, List<_Item>> lists) {
     final (key, _, empty) = _tabs[_tab];
     final items = lists[key] ?? const [];
+    // 「まちがえた」の上に本試験形式の問（○×が無くても出す）
+    final withItems = key == 'wrong' && _wrongItems.isNotEmpty;
+    final head = withItems ? 2 : 1;
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-      itemCount: items.isEmpty ? 2 : items.length + 1,
+      itemCount: items.isEmpty ? 2 : items.length + head,
       itemBuilder: (context, i) {
+        if (withItems && i == 1) return Readable(child: _itemsSection());
         if (i == 0) {
           return Readable(
             child: Column(
@@ -133,7 +214,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     for (var t = 0; t < _tabs.length; t++)
                       ButtonSegment(
                         value: t,
-                        label: Text('${_tabs[t].$2} ${lists[_tabs[t].$1]?.length ?? 0}', maxLines: 1, softWrap: false, overflow: TextOverflow.fade),
+                        label: Text('${_tabs[t].$2} ${(lists[_tabs[t].$1]?.length ?? 0) + (_tabs[t].$1 == 'wrong' ? _wrongItems.length : 0)}', maxLines: 1, softWrap: false, overflow: TextOverflow.fade),
                       ),
                   ],
                   selected: {_tab},
@@ -151,8 +232,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
             ),
           );
         }
-        if (items.isEmpty) return Readable(child: _Empty(text: empty));
-        final it = items[i - 1];
+        if (items.isEmpty) return withItems ? const SizedBox.shrink() : Readable(child: _Empty(text: empty));
+        final it = items[i - head];
         return Readable(
           child: Padding(
             padding: const EdgeInsets.only(top: 12),
@@ -183,6 +264,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
   }
 }
+
+/// 出典の文（「一般社団法人… 2026年9月 問1」）から回と問の番号だけ（「2026年9月 問1」）
+String? _sitting(Object? origin) => origin is String ? RegExp(r'\d{4}年\d{1,2}月 問\d+').firstMatch(origin)?.group(0) : null;
 
 /// 空のとき。問題が集まる場所（過去問・学ぶ）へ案内する
 class _Empty extends StatelessWidget {

@@ -75,7 +75,7 @@ void main() {
     // 基礎編: 四答択一は押したらすぐ答え合わせ。選択肢ごとの解説が出る
     await tester.tap(find.byKey(const Key('items-2026-09-kiso')));
     await settle(tester, 4);
-    expect(find.text('1 / 24問'), findsOneWidget);
+    expect(find.text('1 / 50問'), findsOneWidget);
     await tapVisible(tester, find.byKey(const Key('option-1')));
     await settle(tester, 3);
     expect(find.byKey(const Key('item-result')), findsOneWidget);
@@ -98,7 +98,7 @@ void main() {
     await settle(tester, 2);
     await tapVisible(tester, find.byKey(const Key('item-next')));
     await settle(tester, 2);
-    expect(find.text('3 / 6問'), findsOneWidget);
+    expect(find.text('3 / 15問'), findsOneWidget);
     expect(find.byKey(const Key('process-①')), findsOneWidget, reason: '計算過程の欄');
 
     // 電卓（押した順に計算・丸めない）

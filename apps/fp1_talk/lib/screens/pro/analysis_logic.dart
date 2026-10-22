@@ -21,7 +21,8 @@ num? _rate(Object? m) => m is Map ? m['rate'] as num? : null;
 int _int(Object? v) => (v as num?)?.toInt() ?? 0;
 
 /// まちがい方の癖から読み取れること（目立つものだけ。無ければ空）
-List<String> habitNotes(Map<String, dynamic>? h) {
+/// items: 本試験形式（FP1）の記録から作った癖（trustsFalse は「不適切なものを選ぶ問」、numbers は数値・計算の欄）
+List<String> habitNotes(Map<String, dynamic>? h, {bool items = false}) {
   if (h == null) return const [];
   final notes = <String>[];
   final tf = (h['trustsFalse'] as Map?)?.cast<String, dynamic>();
@@ -29,14 +30,18 @@ List<String> habitNotes(Map<String, dynamic>? h) {
   final tfRate = _rate(tf);
   final dtRate = _rate(dt);
   if (tfRate != null && dtRate != null && _int(tf?['asked']) >= habitMinSample && _int(dt?['asked']) >= habitMinSample) {
-    if (tfRate - dtRate >= habitGap) notes.add('誤りの文を正しいと思いがちです。文末の結論を疑って読みましょう');
-    if (dtRate - tfRate >= habitGap) notes.add('正しい文まで誤りと思いがちです。ひっかけを探しすぎず、知っている決まりと照らしましょう');
+    if (tfRate - dtRate >= habitGap) {
+      notes.add(items ? '「不適切なもの」を選ぶ問で点を落としています。問いの向きに印を付け、選択肢ごとに○×を書いてから選びましょう' : '誤りの文を正しいと思いがちです。文末の結論を疑って読みましょう');
+    }
+    if (dtRate - tfRate >= habitGap) {
+      notes.add(items ? '「適切なもの」を選ぶ問で点を落としています。正しそうな選択肢の数字・条件を、知っている決まりと照らしましょう' : '正しい文まで誤りと思いがちです。ひっかけを探しすぎず、知っている決まりと照らしましょう');
+    }
   }
   final n = (h['numbers'] as Map?)?.cast<String, dynamic>();
   final numAcc = n?['accuracy'] as num?;
   final otherAcc = n?['othersAccuracy'] as num?;
   if (numAcc != null && otherAcc != null && _int(n?['answered']) >= habitMinSample && otherAcc - numAcc >= habitGap) {
-    notes.add('数字の問題で点を落としています。期間・金額などの数字は図解でまとめて覚えましょう');
+    notes.add(items ? '数値・計算の欄で点を落としています。応用編の計算は、模範の計算過程の順に電卓で解き直しましょう' : '数字の問題で点を落としています。期間・金額などの数字は図解でまとめて覚えましょう');
   }
   final forgotten = _int(h['forgotten']);
   if (forgotten >= 5) notes.add('一度できた問題を$forgotten問忘れています。「復習」で間隔をあけて解き直しましょう');

@@ -24,11 +24,11 @@ Future<void> openKakomon(BuildContext context, {required String set, required St
   ),
 );
 
-/// 本試験形式の問題を解く画面を開く。set は回×編（2026-09-kiso）・章（ch04）
-Future<void> openItems(BuildContext context, {required String set, required String label}) => Navigator.of(context).push<void>(
+/// 本試験形式の問題を解く画面を開く。set は回×編（2026-09-kiso）・章（ch04）・自分がまちがえた問（wrong）。startAt: 最初に出す問の位置
+Future<void> openItems(BuildContext context, {required String set, required String label, int startAt = 0}) => Navigator.of(context).push<void>(
   MaterialPageRoute(
     settings: RouteSettings(name: 'items_$set'),
-    builder: (_) => ItemSetScreen(set: set, label: label),
+    builder: (_) => ItemSetScreen(set: set, label: label, startAt: startAt),
   ),
 );
 

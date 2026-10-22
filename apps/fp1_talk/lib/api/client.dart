@@ -125,6 +125,9 @@ class ApiClient {
 
   Future<List<String>> figureBookmarks() async => ((await _json('GET', '$_examPath/figure-bookmarks'))['ids'] as List? ?? const []).cast<String>();
 
+  /// 本試験形式の問の「AIに聞く」の会話（{ messages: [{ role, text }] }）
+  Future<Map<String, dynamic>> itemExplainHistory(String itemId) => _json('GET', '$_examPath/item-explain?itemId=${Uri.encodeQueryComponent(itemId)}');
+
   /// その問題の「AIに聞く」の会話（{ messages: [{ id, role, text }] }）
   Future<Map<String, dynamic>> explainHistory(String questionId) => _json('GET', '$_examPath/explain?questionId=${Uri.encodeQueryComponent(questionId)}');
 
@@ -170,20 +173,24 @@ class ApiClient {
   Future<Map<String, dynamic>> checkPlanTask({required num planAt, required String taskId, required bool done}) =>
       _json('POST', '$_examPath/pro/plan/check', body: {'planAt': planAt, 'taskId': taskId, 'done': done});
 
-  /// 模擬試験を始める → { id, seconds, passLine, questions[{ …PublicQuestion, subject, origin }] }
-  Future<Map<String, dynamic>> startMock() => _json('POST', '$_examPath/pro/mock');
+  /// 模擬試験を始める（FP1 は編を選ぶ: kiso / ouyou）→ { id, section{key,label,minutes,estimated,estimateNote}, deadline, now, seconds, max, passLine, cases{}, items[…, subject, chapter, points[]] }。
+  /// 正解・解説は入らない（サイトの itemmock.ts。docs/app-api.md の「本試験形式の試験（FP1）の模擬試験」）
+  Future<Map<String, dynamic>> startMock(String section) => _json('POST', '$_examPath/pro/mock', body: {'section': section});
 
-  /// 答えを出す（answers: 問題 id → true / false / null）→ 結果（score・bySubject・review・items）。AI が講評を書くので長めに待つ
-  Future<Map<String, dynamic>> submitMock(String id, Map<String, bool?> answers, int seconds) =>
+  /// 答えを出す（answers: 問の id → { choice } か { parts, process }。答えていない問は入れない）
+  /// → 結果（score・max・passLine・passed・bySubject・review、items[].response・result（正解・解説・計算過程）・earned）
+  Future<Map<String, dynamic>> submitMock(String id, Map<String, Object> answers, int seconds) =>
       _json('POST', '$_examPath/pro/mock/${Uri.encodeComponent(id)}', body: {'answers': answers, 'seconds': seconds}, timeout: const Duration(seconds: 60));
 
-  /// 終えた模擬試験の記録 → { pro, history[{ id, finishedAt, score, total, passLine }] }
+  /// 模擬試験の入口 → { kind: items, pro, plans[{ key, label, minutes, kind: choice|case, planned, available, maxPoints, estimated, estimateNote, missing[] }],
+  /// passLine, scoreTotal, passLineNote, forecast, history[{ id, section, label, finishedAt, score, max, passLine }], open[{ id, section, label, deadline }] }
   Future<Map<String, dynamic>> mockHistory() => _json('GET', '$_examPath/pro/mock');
   Future<Map<String, dynamic>> mockResult(String id) => _json('GET', '$_examPath/pro/mock/${Uri.encodeComponent(id)}');
 
   // ---------- 自分 ----------
 
-  Future<Map<String, dynamic>> me() => _json('GET', '/api/v1/me');
+  /// ?exam= を付ける（Pro は試験ごと。付けないとサイトは宅建の Pro かを返す）
+  Future<Map<String, dynamic>> me() => _json('GET', '/api/v1/me?exam=${AppConfig.exam}');
 
   /// 学習データを全部消して、新しい匿名の学習者になる
   Future<void> deleteMe() async {
@@ -201,6 +208,11 @@ class ApiClient {
   /// 過去問の「AIに聞く」。answer は画面で答えた○×（無ければヒントだけ）。イベントは text / done / error
   Stream<Map<String, dynamic>> explain({required String questionId, String? message, bool? answer}) =>
       _sse('$_examPath/explain', {'questionId': questionId, 'message': ?message, 'answer': ?answer});
+
+  /// 本試験形式の問の「AIに聞く」。response は item-answer に送ったもの（{ choice } か { parts, process }。無ければヒントだけ）。
+  /// 正解・解説はサーバーが入れる。イベントは text / done / error（explain と同じ）
+  Stream<Map<String, dynamic>> itemExplain({required String itemId, String? message, Map<String, Object>? response}) =>
+      _sse('$_examPath/item-explain', {'itemId': itemId, 'message': ?message, 'response': ?response});
 
   /// 上限（429/503）などはストリームが始まる前に ApiException で投げる。
   Stream<Map<String, dynamic>> _sse(String path, Map<String, Object?> body, {bool retried = false}) async* {

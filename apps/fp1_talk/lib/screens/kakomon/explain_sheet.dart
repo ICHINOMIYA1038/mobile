@@ -18,13 +18,38 @@ Future<void> showExplainSheet(
   List<Term> glossary = const [],
 }) {
   final state = AppScope.read(context);
-  final thread = ExplainThread.of(questionId)..load(state.api);
+  return _openSheet(context, ExplainThread.of(questionId)..load(state.api), statement: statement, where: where, answer: graded == null ? null : ExplainAnswer.fromGraded(graded), glossary: glossary);
+}
+
+/// 本試験形式の問題（四答択一・空欄・計算）の「AIに聞く」（サイトの /api/v1/fp1/item-explain）。
+/// 送るのは自分の答え（response）だけで、正解・解説・模範の計算過程はサーバーが教材から入れる。
+Future<void> showItemExplainSheet(
+  BuildContext context, {
+  required String itemId,
+  required String statement,
+  required String where,
+  required ExplainAnswer answer,
+}) {
+  final state = AppScope.read(context);
+  return _openSheet(context, ExplainThread.item(itemId)..load(state.api), statement: statement, where: where, answer: answer, routeName: 'item_explain');
+}
+
+Future<void> _openSheet(
+  BuildContext context,
+  ExplainThread thread, {
+  required String statement,
+  required String where,
+  ExplainAnswer? answer,
+  List<Term> glossary = const [],
+  String routeName = 'kakomon_explain',
+}) {
+  final state = AppScope.read(context);
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Palette.paper,
-    routeSettings: const RouteSettings(name: 'kakomon_explain'),
+    routeSettings: RouteSettings(name: routeName),
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
     clipBehavior: Clip.antiAlias,
     builder: (ctx) => Padding(
@@ -41,7 +66,7 @@ Future<void> showExplainSheet(
           scroll: scroll,
           statement: statement,
           where: where,
-          graded: graded,
+          answer: answer,
           glossary: glossary,
           onTurn: state.applyTurn,
           api: state.api,
@@ -49,6 +74,55 @@ Future<void> showExplainSheet(
       ),
     ),
   );
+}
+
+/// 答えたあとの「AIに聞く」に要るもの（○× と本試験形式で共通）
+class ExplainAnswer {
+  const ExplainAnswer({required this.correct, required this.summary, required this.firstAsk, required this.cta, required this.payload, required this.source, this.quick = const ['もっとかみくだいて', '具体例で説明して', 'ひっかけのポイントは？']});
+
+  final bool correct;
+
+  /// 見出しに出す結果（「あなたの答え ○・正しくは ×」「3欄のうち2欄 正解」）
+  final String summary;
+
+  /// 最初の頼み（サーバーが保存する最初の一言と同じ。explain.ts / itemexplain.ts の firstAsk）
+  final String firstAsk;
+  final String cta;
+
+  /// サーバーへ送る答え（○×: bool、本試験形式: { choice } か { parts, process }）
+  final Object payload;
+
+  /// 答え合わせのもと（同じ答え合わせでまだ「なぜ」を聞いていないかを見分ける）
+  final Object source;
+  final List<String> quick;
+
+  factory ExplainAnswer.fromGraded(Graded g) => ExplainAnswer(
+        correct: g.correct,
+        summary: 'あなたの答え ${g.answer ? '○' : '×'}${g.correct ? '' : '・正しくは ${g.rightAnswer ? '○' : '×'}'}',
+        firstAsk: g.correct ? 'なぜこの答えになるのか、解説してください。' : 'なぜ「${g.rightAnswer ? '○' : '×'}」なのか、解説してください。',
+        cta: g.correct ? 'なぜこの答えになるの？' : 'なぜ「${g.rightAnswer ? '○' : '×'}」なの？',
+        payload: g.answer,
+        source: g,
+      );
+
+  /// 本試験形式の答え合わせ（item-answer の結果）から。response は item-answer に送ったもの
+  factory ExplainAnswer.fromItem(Map<String, dynamic> result, Map<String, Object> response) {
+    final correct = result['correct'] == true;
+    final parts = ((result['parts'] as List?) ?? const []).map((e) => (e as Map).cast<String, dynamic>()).toList();
+    final summary = parts.isEmpty
+        ? 'あなたの答え ${result['choice'] ?? '－'}${correct ? '' : '・正しくは ${result['answer']}'}'
+        : '${parts.length}欄のうち${parts.where((p) => p['ok'] == true).length}欄 正解';
+    return ExplainAnswer(
+      correct: correct,
+      summary: summary,
+      firstAsk: correct ? 'なぜこの答えになるのか、解説してください。' : 'まちがえたところを解説してください。',
+      cta: correct ? 'なぜこの答えになるの？' : 'どこをまちがえたの？',
+      payload: response,
+      source: result,
+      // 四答択一は選択肢の見分け方、欄のある問は計算の順番
+      quick: parts.isEmpty ? const ['もっとかみくだいて', 'ほかの選択肢は？', 'ひっかけのポイントは？'] : const ['もっとかみくだいて', '計算の順番を教えて', 'ひっかけのポイントは？'],
+    );
+  }
 }
 
 class ExplainMsg {
@@ -63,11 +137,16 @@ class ExplainMsg {
 /// 1問ぶんの会話。問題を行き来しても、シートを閉じても残す（アプリを開いているあいだ）。
 /// 返答が流れている途中でシートを閉じても、ここで受け続けるので、開き直せば続きが見える。
 class ExplainThread extends ChangeNotifier {
-  ExplainThread._(this.questionId);
+  ExplainThread._(this.questionId, {this.isItem = false});
   static final _cache = <String, ExplainThread>{};
   static ExplainThread of(String questionId) => _cache.putIfAbsent(questionId, () => ExplainThread._(questionId));
 
+  /// 本試験形式の問の会話（サイトの item-explain。会話は問ごと）
+  static ExplainThread item(String itemId) => _cache.putIfAbsent('item:$itemId', () => ExplainThread._(itemId, isItem: true));
+
+  /// ○× の問題の id か、本試験形式の問の id
   final String questionId;
+  final bool isItem;
   final List<ExplainMsg> msgs = [];
   bool loading = false;
   bool _loaded = false;
@@ -80,14 +159,14 @@ class ExplainThread extends ChangeNotifier {
   static int? left;
 
   /// 最後に聞いたときの答え合わせ。答えてからまだ聞いていなければ、最初の頼み（なぜ…？）をもう一度出す
-  Graded? askedWith;
+  ExplainAnswer? askedWith;
 
   Future<void> load(ApiClient api) async {
     if (_loaded || loading) return;
     loading = true;
     notifyListeners();
     try {
-      final j = await api.explainHistory(questionId);
+      final j = isItem ? await api.itemExplainHistory(questionId) : await api.explainHistory(questionId);
       final got = ((j['messages'] as List?) ?? const [])
           .map((m) => (m as Map).cast<String, dynamic>())
           .where((m) => (m['text'] as String? ?? '').isNotEmpty)
@@ -103,27 +182,25 @@ class ExplainThread extends ChangeNotifier {
   }
 
   /// message が無ければ最初の頼み（答える前はヒント、答えたあとは「なぜ」）。
-  /// 答えたあとは、毎回その○×を送る（サーバーが正解・不正解を踏まえて話す）
-  Future<void> ask(ApiClient api, {String? message, Graded? graded, void Function(Map<String, dynamic>? turn)? onTurn}) async {
+  /// 答えたあとは、毎回その答えを送る（サーバーが正解・不正解を踏まえて話す）
+  Future<void> ask(ApiClient api, {String? message, ExplainAnswer? answered, void Function(Map<String, dynamic>? turn)? onTurn}) async {
     if (busy) return;
     final text = message?.trim();
     busy = true;
     limit = null;
-    askedWith = graded;
-    // 最初の一言はサーバーが保存するもの（explain.ts の firstAsk）と同じにする
-    final shown = (text != null && text.isNotEmpty)
-        ? text
-        : graded == null
-            ? 'この問題のヒントをください。'
-            : graded.correct
-                ? 'なぜこの答えになるのか、解説してください。'
-                : 'なぜ「${graded.rightAnswer ? '○' : '×'}」なのか、解説してください。';
+    askedWith = answered;
+    // 最初の一言はサーバーが保存するもの（explain.ts / itemexplain.ts の firstAsk）と同じにする
+    final shown = (text != null && text.isNotEmpty) ? text : answered?.firstAsk ?? 'この問題のヒントをください。';
     msgs.add(ExplainMsg('user', shown));
     final reply = ExplainMsg('assistant', '');
     msgs.add(reply);
     notifyListeners();
     try {
-      await for (final e in api.explain(questionId: questionId, message: (text?.isNotEmpty ?? false) ? text : null, answer: graded?.answer)) {
+      final said = (text?.isNotEmpty ?? false) ? text : null;
+      final stream = isItem
+          ? api.itemExplain(itemId: questionId, message: said, response: answered?.payload as Map<String, Object>?)
+          : api.explain(questionId: questionId, message: said, answer: answered?.payload as bool?);
+      await for (final e in stream) {
         switch (e['type']) {
           case 'text':
             reply.text += e['delta'] as String? ?? '';
@@ -155,11 +232,11 @@ class ExplainThread extends ChangeNotifier {
   }
 
   /// 失敗した1往復を消して、同じ頼みをもう一度
-  Future<void> retry(ApiClient api, {Graded? graded, void Function(Map<String, dynamic>? turn)? onTurn}) {
+  Future<void> retry(ApiClient api, {ExplainAnswer? answered, void Function(Map<String, dynamic>? turn)? onTurn}) {
     final u = msgs[msgs.length - 2];
     msgs.removeRange(msgs.length - 2, msgs.length);
-    final first = msgs.isEmpty && RegExp(r'^(この問題のヒントをください。|なぜ.+解説してください。)$').hasMatch(u.text);
-    return ask(api, message: first ? null : u.text, graded: graded, onTurn: onTurn);
+    final first = msgs.isEmpty && RegExp(r'^(この問題のヒントをください。|なぜ.+解説してください。|まちがえたところを解説してください。)$').hasMatch(u.text);
+    return ask(api, message: first ? null : u.text, answered: answered, onTurn: onTurn);
   }
 }
 
@@ -169,7 +246,7 @@ class _ExplainPanel extends StatefulWidget {
     required this.scroll,
     required this.statement,
     required this.where,
-    required this.graded,
+    required this.answer,
     required this.glossary,
     required this.onTurn,
     required this.api,
@@ -178,7 +255,7 @@ class _ExplainPanel extends StatefulWidget {
   final ScrollController scroll;
   final String statement;
   final String where;
-  final Graded? graded;
+  final ExplainAnswer? answer;
   final List<Term> glossary;
   final void Function(Map<String, dynamic>? turn) onTurn;
   final ApiClient api;
@@ -236,20 +313,20 @@ class _ExplainPanelState extends State<_ExplainPanel> {
     FocusScope.of(context).unfocus();
     _draft.clear();
     _pin = true;
-    return _t.ask(widget.api, message: message, graded: widget.graded, onTurn: widget.onTurn);
+    return _t.ask(widget.api, message: message, answered: widget.answer, onTurn: widget.onTurn);
   }
 
   @override
   Widget build(BuildContext context) {
-    final g = widget.graded;
+    final g = widget.answer;
     final t = _t;
     final msgs = t.msgs;
     final lastUser = msgs.lastIndexWhere((m) => m.role == 'user');
     final failed = msgs.isNotEmpty && msgs.last.error != null;
     // 答えたあとまだ「なぜ」を聞いていなければ、会話があっても最初の頼みを出す（ヒントだけ聞いてから答えたとき）
-    final showCta = !t.loading && (msgs.isEmpty || (g != null && !identical(t.askedWith, g) && !t.busy && !failed));
-    final quick = g != null ? const ['もっとかみくだいて', '具体例で説明して', 'ひっかけのポイントは？'] : const ['もう少しヒントを'];
-    final ctaLabel = g == null ? 'ヒントをもらう' : (g.correct ? 'なぜこの答えになるの？' : 'なぜ「${g.rightAnswer ? '○' : '×'}」なの？');
+    final showCta = !t.loading && (msgs.isEmpty || (g != null && !identical(t.askedWith?.source, g.source) && !t.busy && !failed));
+    final quick = g != null ? g.quick : const ['もう少しヒントを'];
+    final ctaLabel = g == null ? 'ヒントをもらう' : g.cta;
 
     return Column(
       children: [
@@ -281,7 +358,7 @@ class _ExplainPanelState extends State<_ExplainPanel> {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            'あなたの答え ${g.answer ? '○' : '×'}${g.correct ? '' : '・正しくは ${g.rightAnswer ? '○' : '×'}'}',
+                            g.summary,
                             style: const TextStyle(fontSize: 13, color: Palette.inkSoft),
                           ),
                         ),
@@ -353,7 +430,7 @@ class _ExplainPanelState extends State<_ExplainPanel> {
                             _Say(
                               msg: msgs[i],
                               glossary: widget.glossary,
-                              onRetry: i == msgs.length - 1 && !t.busy ? () => t.retry(widget.api, graded: g, onTurn: widget.onTurn) : null,
+                              onRetry: i == msgs.length - 1 && !t.busy ? () => t.retry(widget.api, answered: g, onTurn: widget.onTurn) : null,
                             ),
                           const SizedBox(height: 14),
                         ],
@@ -362,7 +439,7 @@ class _ExplainPanelState extends State<_ExplainPanel> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: g != null
-                                ? FilledButton(onPressed: t.busy ? null : () => _ask(), child: Text(ctaLabel))
+                                ? FilledButton(key: const Key('explain-cta'), onPressed: t.busy ? null : () => _ask(), child: Text(ctaLabel))
                                 : OutlinedButton(onPressed: t.busy ? null : () => _ask(), child: Text(ctaLabel)),
                           ),
                         if (t.limit != null)
