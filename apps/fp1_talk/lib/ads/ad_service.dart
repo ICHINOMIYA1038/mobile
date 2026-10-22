@@ -61,14 +61,13 @@ class AdService {
   static final instance = AdService._();
 
   // 本番の広告ユニット（AdMob のアプリ「pAIrOf FP1級」iOS）。アプリ ID は Info.plist の GADApplicationIdentifier。
-  // **まだ AdMob に登録していないので空**（空のあいだはリリースのビルドでも Google のテスト用 ID を使う）。
-  // 登録したら、ここに広告ユニット（バナー・インタースティシャル）の ID を、Info.plist にアプリ ID（ca-app-pub-…~…）を入れる。
+  // 2026-10-23 に AdMob に登録（アプリ ID ca-app-pub-8691137965825158~6412568866）。
   // 宅建アプリの ID は使わない（収益と広告の設定がアプリごとのため）。
   // 開発中（debug ビルド。手元の実行や integration_test）は Google のテスト用 ID を使う。
   // 本番の ID で自分が広告を見たり押したりするとポリシー違反になるため。リリースのビルドだけが本番の ID を使う。
   // test/release_readiness_test.dart が、本番の ID が入ったら Google のテスト用でないことを、提出前の確認では空でないことを確かめる。
-  static const _prodBannerIos = '';
-  static const _prodInterstitialIos = '';
+  static const _prodBannerIos = 'ca-app-pub-8691137965825158/2369382075';
+  static const _prodInterstitialIos = 'ca-app-pub-8691137965825158/6368336830';
 
   static const _testBannerIos = 'ca-app-pub-3940256099942544/2934735716';
   static const _testInterstitialIos = 'ca-app-pub-3940256099942544/4411468910';

@@ -18,6 +18,7 @@ iOS アプリ「AIとチャットしながら学ぶFP1級 - pAIrOf」（ホー�
 - Pro（模擬試験・苦手分析・本試験形式の「AIに聞く」・復習）: integration_test/fp1_pro_test.dart。Pro の学習者を手元の D1 に作ってトークンを渡す（手順はファイルの頭）
 
 ## 出す前にオーナーが登録して、値を入れる所
+- 2026-10-23 に登録済み: ASC のサブスクリプション `jp.pairof.fp1.talk.pro.monthly`（グループ「AIとチャットしながら学ぶFP1級 Pro」、¥3,000/月、日本だけ。審査用のスクリーンショットはまだ）。RevenueCat はプロジェクト「話して受かる宅建」にアプリ「pAIrOf FP1級 (App Store)」（App 内課金のキーは宅建と同じ 3423JXZJR9）・offering `fp1`・entitlement `fp1_pro`、Webhook はプロジェクト共通。AdMob はアプリ「pAIrOf FP1級」（~6412568866）とバナー・インタースティシャル
 | 登録 | 入れる所 |
 |---|---|
 | App Store Connect のアプリ（jp.pairof.fp1.talk）と Pro 月額（仮 ID `jp.pairof.fp1.talk.pro.monthly`） | ID を変えたら lib/config.dart の `proProductId` と ios/Runner/Products.storekit |

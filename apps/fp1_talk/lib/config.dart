@@ -7,11 +7,11 @@ class AppConfig {
   static const exam = 'fp1';
 
   /// RevenueCat の公開キー(クライアント埋め込み前提。秘密鍵ではない)。未設定なら課金UIは「準備中」表示になる。
-  /// **FP1 アプリはまだ RevenueCat に登録していないので空**。RevenueCat にこのアプリ（jp.pairof.fp1.talk）を足したら、
-  /// その「appl_…」の公開キーを defaultValue に入れる（宅建アプリのキーは使わない。Pro が別の商品のため）。
-  static const revenueCatPublicApiKey = String.fromEnvironment('RC_KEY', defaultValue: '');
+  /// RevenueCat のプロジェクト「話して受かる宅建」のアプリ「pAIrOf FP1級 (App Store)」の鍵（宅建アプリとは別。2026-10-23）。
+  /// 商品は offering「fp1」・entitlement「fp1_pro」。Webhook はプロジェクトで1つ（サイトが商品 ID で FP1 の Pro と見分ける）
+  static const revenueCatPublicApiKey = String.fromEnvironment('RC_KEY', defaultValue: 'appl_RlzXjFFyqSYXfKoAjoaKWYlfgvW');
 
-  /// Pro 月額の商品 ID（仮。App Store Connect で作った ID に合わせる）。サイトは exam.json の app.proProductPrefix
+  /// Pro 月額の商品 ID（App Store Connect のサブスクリプション。¥3,000/月、日本だけ）。サイトは exam.json の app.proProductPrefix
   /// （jp.pairof.fp1.talk.pro）で FP1 の Pro と見分ける
   static const proProductId = 'jp.pairof.fp1.talk.pro.monthly';
 
