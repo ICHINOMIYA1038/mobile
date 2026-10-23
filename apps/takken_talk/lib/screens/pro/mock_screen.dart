@@ -257,6 +257,11 @@ class _MockExamScreenState extends State<MockExamScreen> {
         ),
       );
       if (ok != true || !mounted) return;
+    } else {
+      // 時間切れのときに確認のダイアログや問題の一覧のシートが開いていたら閉じる（開いたまま結果の画面へ置き換えると、
+      // 置き換わるのはそのダイアログで、この画面が下に残って戻れなくなる）
+      final self = ModalRoute.of(context);
+      Navigator.of(context).popUntil((r) => r == self || r.isFirst);
     }
     setState(() => _submitting = true);
     final answers = {for (final q in _qs) q['id'] as String: _answers[q['id']]};
