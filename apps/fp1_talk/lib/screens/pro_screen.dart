@@ -236,6 +236,8 @@ class _ProScreenState extends State<ProScreen> {
               'お支払いは Apple ID のアカウントに請求されます。管理と解約は「設定」アプリの「サブスクリプション」から行えます。',
               style: TextStyle(fontSize: 13, height: 1.7, color: Palette.inkSoft),
             ),
+            const SizedBox(height: 16),
+            const _Cancel(),
             const SizedBox(height: 8),
             Wrap(
               spacing: 4,
@@ -250,6 +252,56 @@ class _ProScreenState extends State<ProScreen> {
       ),
     );
   }
+}
+
+/// Pro の解約のしかた（App Store のサブスクリプションなので、アプリの中では解約できない）
+class _Cancel extends StatelessWidget {
+  const _Cancel();
+
+  static const _steps = [
+    'iPhone の「設定」アプリを開く',
+    'いちばん上の自分の名前（Apple アカウント）を押す',
+    '「サブスクリプション」を押す',
+    '「AIとチャットしながら学ぶFP1級 - pAIrOf」を選び、「サブスクリプションをキャンセル」を押す',
+  ];
+
+  @override
+  Widget build(BuildContext context) => _Box(
+        key: const Key('pro-cancel'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('解約のしかた', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            for (final (i, step) in _steps.indexed)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: 22, child: Text('${i + 1}.', style: const TextStyle(fontSize: 14, height: 1.7, color: Palette.ink))),
+                    Expanded(child: Text(step, style: const TextStyle(fontSize: 14, height: 1.7, color: Palette.ink))),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 4),
+            const Text(
+              '期間が終わる24時間前までに解約すれば、次の更新から請求されません。解約しても、いまの期間が終わるまでは Pro のまま使えます。'
+              'アプリを削除しても解約にはなりません。',
+              style: TextStyle(fontSize: 13, height: 1.7, color: Palette.inkSoft),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('pro-manage'),
+                onPressed: () => launchUrl(Uri.parse('https://apps.apple.com/account/subscriptions'), mode: LaunchMode.externalApplication),
+                icon: const Icon(Icons.open_in_new, size: 18),
+                label: const Text('サブスクリプションの管理を開く'),
+              ),
+            ),
+          ],
+        ),
+      );
 }
 
 class _Line extends StatelessWidget {
@@ -270,7 +322,7 @@ class _Line extends StatelessWidget {
 }
 
 class _Box extends StatelessWidget {
-  const _Box({required this.child, this.highlight = false});
+  const _Box({super.key, required this.child, this.highlight = false});
   final Widget child;
   final bool highlight;
 
