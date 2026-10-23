@@ -185,6 +185,12 @@ class _ItemSetScreenState extends State<ItemSetScreen> {
       if (ok != true || !mounted) return;
     }
     FocusScope.of(context).unfocus();
+    // 時間切れのときに確認のダイアログや問の一覧のシートが開いていたら閉じる（開いたまま結果の画面へ置き換えると、
+    // 置き換わるのはそのダイアログで、この画面が下に残って戻れなくなる）
+    if (timeUp) {
+      final self = ModalRoute.of(context);
+      Navigator.of(context).popUntil((r) => r == self || r.isFirst);
+    }
     setState(() => _submitting = true);
     _timer?.cancel();
     final api = AppScope.read(context).api;
