@@ -17,7 +17,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.12.2
@@ -103,7 +103,7 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 # アプリアイコン: `dart run flutter_launcher_icons` で各プラットフォームに書き出す。
-# 元画像は icon/icon.png (1024x1024)。いまは仮（藍色の地に「FP1」）。
+# 元画像は icon/icon.png (1024x1024)。icon/source/icon.html（ヒラギノ角ゴ W9/W8）を Chrome の headless で 1024x1024 に撮ったもの。宅建アプリと同じ型（太字・マーカー・帯）で、色はアプリの藍と金。
 flutter_launcher_icons:
   image_path: "icon/icon.png"
   ios: true

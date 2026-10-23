@@ -26,9 +26,13 @@ iOS アプリ「AIとチャットしながら学ぶFP1級 - pAIrOf」（ホー�
 | AdMob のアプリ「pAIrOf FP1級」とバナー・インタースティシャル | lib/ads/ad_service.dart の `_prodBannerIos`・`_prodInterstitialIos`、ios/Runner/Info.plist の `GADApplicationIdentifier`（いまは Google のテスト用。test/release_readiness_test.dart の提出前の確認は空のあいだ skip） |
 | Firebase（iOS アプリ jp.pairof.fp1.talk） | このフォルダで `flutterfire configure`（lib/firebase_options.dart と GoogleService-Info.plist、Crashlytics の手順が足される。いまは null で計測なし） |
 | サポートのページ | lib/config.dart の `supportUrl`（仮） |
-| アイコン | icon/icon.png（仮）→ `dart run flutter_launcher_icons` |
 
 ## TestFlight（2026-10-23 から）
 - App Store Connect のアプリ id `6825911478`。内部テストのグループ「開発」（全ビルドを配る）。Bundle ID と配布用プロファイル「pAIrOf FP1 App Store」は ASC API で作った（証明書は宅建と同じ Apple Distribution）
 - ビルドの出し方: `flutter build ios --release --config-only` → `xcodebuild … archive -allowProvisioningUpdates`（API キー）→ `xcodebuild -exportArchive`（build/ios/ipa/ExportOptions.plist は手動署名・上のプロファイル）→ `xcrun altool --upload-app`。手順の細部は ~/private/mobile の docs/maintenance.md 8.
 - つなぎ先は本番（shikaku.pairof.jp）。FP1 は exam.json の draft のあいだ Web には出ず、API からだけ引ける（サイトの fp1-integration ブランチ）
+
+## アイコンとストアの画像（2026-10-23）
+- アイコン: icon/source/icon.html（宅建アプリと同じ型。藍の地に白の「FP1級」、金のマーカーと「AIと話して合格」の帯）を Chrome の headless で 1024×1024 に撮って icon/icon.png → `dart run flutter_launcher_icons`
+- ストアの画像: `node tool/store_compose/compose.mjs`（iPhone 8枚・iPad 6枚を ios/fastlane/screenshots/ja/ に）。文言と切り抜きは tool/store_compose/slots.mjs、素材は tool/store_compose/raw/
+- 素材の撮り直し: サイトの手元の dev（.dev.vars を本物のキーに一時差し替え）に Pro の学習者を作って記録を入れ、`tool/store_shots.sh <UDID> build/store_raw/iphone --dart-define=API_BASE=… --dart-define=PRO_TOKEN=… --dart-define=PRO_USER=…`（integration_test/store_shots_test.dart）。iPhone 17 Pro Max（1320×2868）と iPad Pro 13インチ（2064×2752）のシミュレーターで撮る
