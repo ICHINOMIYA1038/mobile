@@ -42,6 +42,12 @@ void main() {
     }
   }
 
+  // 日本語ロケールでは戻るボタンのツールチップが「戻る」になり、tester.pageBack() が
+  // ボタンを見つけられない。画面を直接閉じる。
+  Future<void> back(WidgetTester tester) async {
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+  }
+
   testWidgets('ストア用スクリーンショット', (tester) async {
     // 1枚目: ホーム画面。ガチャマシンのイラストとシチュエーションタイル一覧。
     await tester.pumpWidget(const NetaGachaApp());
@@ -66,7 +72,7 @@ void main() {
     // お気に入りに登録してからお気に入り画面へ。
     await tester.tap(find.byIcon(Icons.star_border_rounded));
     await tester.pumpAndSettle();
-    await tester.pageBack();
+    await back(tester);
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.star_rounded));
     await tester.pumpAndSettle();
@@ -74,7 +80,7 @@ void main() {
     // 4枚目: お気に入り画面。
     await shoot(tester, '04_favorites');
 
-    await tester.pageBack();
+    await back(tester);
     await tester.pumpAndSettle();
 
     // カスタムお題画面へ。サンプルを1件追加してから撮る。

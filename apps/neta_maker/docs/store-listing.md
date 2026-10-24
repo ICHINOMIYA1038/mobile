@@ -77,6 +77,9 @@ App Store の「説明」と同じ本文を使用してよい。Play では見�
 ## 審査・提出時の注意
 
 - 審査メモは `docs/app-store-submission.md` の「審査メモ」節を使う。
-- スクリーンショットは未整備。用意する場合は etude_generator の `tool/screenshots.sh` を参考に、
-  ホーム画面・入力画面・結果画面（3カテゴリ分）の4〜5枚程度を想定。
+- アイコン: `icon/source/icon.json` を `python scripts/icon/make_text_icon.py apps/neta_maker/icon/source/icon.json`
+  で `icon/icon.png` にし、`dart run flutter_launcher_icons`（2026-10-24 に文字が主役のデザインへ変更。Android は未反映）。
+- スクリーンショット: `./tool/screenshots.sh` で iPhone、`./tool/screenshots.sh "iPad Pro 13-inch (M4)" screenshots_ipad`
+  で iPad を撮り、リポジトリのルートで `node scripts/store_compose/compose.mjs apps/neta_maker` を実行すると
+  `ios/fastlane/screenshots/ja/` に見出し・バッジつきの画像ができる。文言は `tool/store_compose/slots.mjs`。
 - プロモーション用テキストとキーワードは審査を通さず後から変更できるので、公開後に反応を見て調整可。
