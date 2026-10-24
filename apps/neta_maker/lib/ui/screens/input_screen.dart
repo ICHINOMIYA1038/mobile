@@ -35,7 +35,7 @@ class _InputScreenState extends State<InputScreen> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
+      MaterialPageRoute(settings: const RouteSettings(name: 'result'), 
         builder: (_) =>
             ResultScreen(category: widget.category, input: _controller.text),
       ),

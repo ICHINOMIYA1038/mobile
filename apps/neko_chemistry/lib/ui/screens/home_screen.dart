@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _openSetup({required bool byUnit}) {
     Navigator.of(context)
         .push(
-          MaterialPageRoute(builder: (_) => QuizSetupScreen(byUnit: byUnit)),
+          MaterialPageRoute(settings: const RouteSettings(name: 'quiz_setup'), builder: (_) => QuizSetupScreen(byUnit: byUnit)),
         )
         .then((_) => _loadProgress());
   }
@@ -157,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         : () {
                             Navigator.of(context)
                                 .push(
-                                  MaterialPageRoute(
+                                  MaterialPageRoute(settings: const RouteSettings(name: 'quiz'), 
                                     builder: (_) => QuizScreen(
                                       controller: QuizController(
                                         weakReviewOnly: true,
@@ -180,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         : () {
                             Navigator.of(context)
                                 .push(
-                                  MaterialPageRoute(
+                                  MaterialPageRoute(settings: const RouteSettings(name: 'quiz'), 
                                     builder: (_) => QuizScreen(
                                       controller: QuizController(
                                         bookmarkOnly: true,

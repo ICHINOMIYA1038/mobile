@@ -36,6 +36,13 @@
   iPhone 専用にするのでなければ iPhone / iPad 両方を撮る。作り方は [docs/screenshot-guidelines.md](docs/screenshot-guidelines.md)
   （`tool/screenshots.sh` → fastlane `frameit`）
 
+## 計測（全アプリ共通）
+
+- 計測は `packages/app_insights` だけを通す（Firebase を直接触らない）。新規アプリは `create_app.sh` が入れる
+- 画面遷移には必ず `RouteSettings(name: ...)` を付ける。タブなど遷移しない切り替えは `AppInsights.logScreen`
+- `python3 scripts/check_insights.py` が入れ忘れを見つける（CI でも走る）。詳細は [docs/analytics.md](docs/analytics.md)
+- debug ビルドと iOS シミュレータは計測を送らない。撮影や動作確認の数字が DAU・継続率に混ざらないようにするため
+
 ## 各アプリの資料
 
 - 提出済みのアプリには `apps/<app>/docs/app-store-submission.md` がある（審査履歴・却下理由・直したもの・未対応の項目）。

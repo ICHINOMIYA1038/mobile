@@ -1,0 +1,26 @@
+name: insights check
+
+# 全アプリの計測（app_insights）の入れ忘れ・名前の無い画面遷移を PR で止める。docs/analytics.md の「画面遷移」参照
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "packages/app_insights/**"
+      - "scripts/check_insights.py"
+      - "scripts/insights-exempt.txt"
+      - ".github/workflows/insights-check.yml"
+  pull_request:
+    paths:
+      - "apps/**"
+      - "packages/app_insights/**"
+      - "scripts/check_insights.py"
+      - "scripts/insights-exempt.txt"
+      - ".github/workflows/insights-check.yml"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/check_insights.py

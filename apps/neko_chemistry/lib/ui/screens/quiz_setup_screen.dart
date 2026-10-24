@@ -144,7 +144,7 @@ class _QuizSetupScreenState extends State<QuizSetupScreen> {
                   ? null
                   : () {
                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
+                        MaterialPageRoute(settings: const RouteSettings(name: 'quiz'), 
                           builder: (_) => QuizScreen(
                             controller: QuizController(
                               questionCount: _selectedCount,

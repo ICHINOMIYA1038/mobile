@@ -73,7 +73,7 @@ class HomeScreen extends StatelessWidget {
                   emoji: category.emoji,
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
+                      MaterialPageRoute(settings: const RouteSettings(name: 'input'), 
                         builder: (_) => InputScreen(category: category),
                       ),
                     );
