@@ -3,7 +3,7 @@ resolution: workspace
 description: "猫と学ぶ高校化学 - デザイン重視の一問一答クイズアプリ"
 publish_to: 'none'
 
-version: 1.0.2+3
+version: 1.0.3+4
 
 environment:
   sdk: ^3.11.5
