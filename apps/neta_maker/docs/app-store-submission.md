@@ -280,3 +280,5 @@ python3 tool/upload_to_play.py jp.pairof.netamaker build/app/outputs/bundle/rele
 2. AdMob の管理画面で、このアプリを Firebase にリンクする（広告収益が GA4 に入る。任意）
 3. プライバシーポリシーの更新（nullstead-web）が本番に出ていることを確かめる
 
+
+- **2026-10-24: 1.0.3 (4)**: Firebase Analytics / Crashlytics の追加、アイコンとストア画像の作り直し。App プライバシーの申告にクラッシュ・パフォーマンス・製品の操作・デバイスID（分析目的・ユーザーに紐づけない・トラッキングなし）を追加して公開。審査に提出（WAITING_FOR_REVIEW）
