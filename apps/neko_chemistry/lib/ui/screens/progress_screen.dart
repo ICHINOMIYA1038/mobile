@@ -189,7 +189,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 unlockedCount: data.unlocked.length,
                 onTap: () async {
                   await Navigator.of(context).push(
-                    MaterialPageRoute(
+                    MaterialPageRoute(settings: const RouteSettings(name: 'accessory'), 
                       builder: (_) =>
                           AccessoryScreen(repository: widget.repository),
                     ),

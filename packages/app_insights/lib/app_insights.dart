@@ -119,6 +119,19 @@ class AppInsights {
     }
   }
 
+  /// 画面遷移を伴わない画面の切り替え（下のタブなど）を screen_view として記録する。
+  ///
+  /// Navigator で開く画面は [navigatorObservers] が記録するので、これは呼ばない。
+  static Future<void> logScreen(String name) async {
+    final analytics = _analytics;
+    if (analytics == null) return;
+    try {
+      await analytics.logScreenView(screenName: name);
+    } catch (error) {
+      debugPrint('AppInsights: 画面 $name の記録に失敗しました: $error');
+    }
+  }
+
   /// ユーザー属性を設定する。GA4 で「この属性を持つ人の継続率」のように
   /// セグメントを切るために使う。個人を特定できる値は入れないこと。
   static Future<void> setUserProperty(String name, String? value) async {

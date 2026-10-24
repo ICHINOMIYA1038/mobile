@@ -71,7 +71,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (!mounted) return;
     Navigator.of(
       context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+    ).pushReplacement(MaterialPageRoute(settings: const RouteSettings(name: 'home'), builder: (_) => const AppShell()));
   }
 
   void _next() {

@@ -122,10 +122,21 @@ MaterialPageRoute(
 )
 ```
 
+下のタブのように画面遷移を伴わない切り替えは、切り替えたときに
+`AppInsights.logScreen('progress')` を呼ぶ（navigator の外なので自動では記録されない）。
+
+`python3 scripts/check_insights.py` が、全アプリで `AppInsights.initialize` と
+`navigatorObservers` を入れているか、名前の無い `MaterialPageRoute` / `CupertinoPageRoute`
+が無いかを確かめる。CI（`.github/workflows/insights-check.yml`）でも PR ごとに走る。
+計測を入れないと決めたアプリだけ `scripts/insights-exempt.txt` に理由つきで書く。
+
 ## デバッグビルドは計測しない
 
 開発中のセッションが本番の DAU や継続率に混ざらないよう、`kDebugMode` では
-収集を無効化している。実機で計測の実装そのものを確認したいときだけ:
+収集を無効化している。iOS シミュレータでも release / profile ビルドを含めて送らない
+（2026-10、撮影で入れ直すたびに新規ユーザーとして数えられ、takken_talk の28日のユーザー58人のうち
+49人がシミュレータだった）。GA4 側で過去の分を見るときは、端末（deviceModel）が `arm64` /
+`x86_64` のものを除く。実機で計測の実装そのものを確認したいときだけ:
 
 ```dart
 await AppInsights.initialize(

@@ -25,21 +25,21 @@ class HomeScreen extends StatelessWidget {
             tooltip: 'お気に入り',
             icon: const Icon(Icons.star_rounded),
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+              MaterialPageRoute(settings: const RouteSettings(name: 'favorites'), builder: (_) => const FavoritesScreen()),
             ),
           ),
           IconButton(
             tooltip: 'カスタムお題',
             icon: const Icon(Icons.edit_note_rounded),
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CustomPromptScreen()),
+              MaterialPageRoute(settings: const RouteSettings(name: 'custom_prompt'), builder: (_) => const CustomPromptScreen()),
             ),
           ),
           IconButton(
             tooltip: '設定',
             icon: const Icon(Icons.settings_rounded),
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              MaterialPageRoute(settings: const RouteSettings(name: 'settings'), builder: (_) => const SettingsScreen()),
             ),
           ),
         ],
@@ -87,7 +87,7 @@ class HomeScreen extends StatelessWidget {
                       situation: situation,
                       index: index,
                       onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
+                        MaterialPageRoute(settings: const RouteSettings(name: 'roulette'), 
                           builder: (_) =>
                               RouletteScreen(situationId: situation.id),
                         ),
