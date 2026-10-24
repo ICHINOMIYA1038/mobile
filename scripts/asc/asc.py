@@ -6,9 +6,9 @@
     python3 scripts/asc/asc.py            # 全アプリのバージョン状態と審査提出の一覧
     from asc import get, send             # 他スクリプトから
 """
-import jwt, time, json, sys, urllib.request, urllib.parse
+import jwt, os, time, json, sys, urllib.request, urllib.parse
 KEY_ID="3URMU94JK9"; ISS="1039c5ec-53b4-4125-b857-d5059f3f3e74"
-key=open('/Users/ichinomiya/.appstoreconnect/private_keys/AuthKey_3URMU94JK9.p8').read()
+key=open(os.path.expanduser('~/.appstoreconnect/private_keys/AuthKey_3URMU94JK9.p8')).read()
 def token():
     now=int(time.time())
     return jwt.encode({'iss':ISS,'iat':now,'exp':now+1100,'aud':'appstoreconnect-v1'},key,algorithm='ES256',headers={'kid':KEY_ID})
