@@ -97,3 +97,26 @@ support@gikyokutosyokan.com
 | 03_sidewing | 袖からの抜けも/確かめられる | 客席・俯瞰・袖・自由の4視点 |
 | 04_houselights | 客電を入れて/明転も再現 | 作業灯と本番の差がわかる |
 | 05_panel | 在来もLEDも/22機種を収録 | PAR・Fresnel・Source Four・ETC |
+
+---
+
+## スクリーンショット・アイコン（2026-10-24 作り直し）
+
+[docs/screenshot-guidelines.md](../../../docs/screenshot-guidelines.md) の4要素（全枚に見出し・色帯/バッジ・具体的な数字・アイコンと同じ配色）に合わせ、takken_talk と同じ合成ツールで作った。
+
+| 枚 | バッジ | 見出し | サブ |
+|---|---|---|---|
+| 1 客席 | 器具 22種を収録 | 舞台照明を / 3Dで確かめる | 客席からの見え方を、仕込む前に |
+| 2 俯瞰 | 視点は 4つ | 吊り位置も / 俯瞰でひと目で | 客席・俯瞰・袖・自由をワンタップで |
+| 3 袖 | 物理ベースの描画 | ヘイズの中の / ビームと影まで | 袖からの抜けも同じシーンで |
+| 4 客電ON | 客電 ON/OFF | 作業灯と本番を / 見比べる | 本番の暗さで明かりを確かめる |
+| 5 器具 | 6メーカー＋在来機材 | PARから / LEDまで | 実機に近いプロファイルの器具を選ぶ |
+
+数字（器具 22 種・6 メーカー）は Web 版の `src/lighting/fixtureTypes.ts` の収録数。器具を増減したら見出しも直す。
+
+作り直し方:
+1. `./tool/screenshots.sh` と `./tool/screenshots.sh "iPad Pro 13-inch (M4)" screenshots_ipad` で撮る（本番サイトを表示するのでネットが要る）
+2. `screenshots/*.png` を `tool/store_compose/raw/iphone/`、`screenshots_ipad/*.png` を `tool/store_compose/raw/ipad/` にコピー
+3. `node tool/store_compose/compose.mjs` → `ios/fastlane/screenshots/ja/` に iPhone 1320×2868・iPad 2048×2732 ができる（文言は `tool/store_compose/slots.mjs`）
+
+アイコンは `python icon/source/make_icon.py`（fonttools が要る）→ `dart run flutter_launcher_icons`。暗転した舞台に上からの光、極太「舞台照明」、赤い帯「3Dで仕込み」。
