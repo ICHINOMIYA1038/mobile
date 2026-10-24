@@ -145,6 +145,12 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
     try {
       final result = await services.impulseProbe.capture();
       if (!mounted) return;
+      // 手叩きで残響を出せなかったときは記録せず、このステップで叩き直してもらう
+      // (記録すると「測った項目」に見えるが、採点はできない)。
+      if (_step == InspectionStep.clap && result.rt60 == null) {
+        setState(() => _impulseHint = '残響を測れませんでした。静かにして、手を1回強めに叩き直してください。');
+        return;
+      }
       setState(() {
         _impulseHint = null;
         _inspection = _step == InspectionStep.knock
@@ -174,7 +180,7 @@ class _InspectionFlowScreenState extends State<InspectionFlowScreen> {
   void _showImpulseFeedback(ImpulseResult result) {
     final text = _step == InspectionStep.knock
         ? 'ノック音を捕捉(重心 ${result.spectralCentroidHz.round()}Hz)'
-        : '手叩きを捕捉(残響 ${result.rt60?.toStringAsFixed(2) ?? '--'}秒)';
+        : '手叩きを捕捉(残響 ${result.rt60!.toStringAsFixed(2)}秒)';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(text), duration: const Duration(seconds: 2)),
     );

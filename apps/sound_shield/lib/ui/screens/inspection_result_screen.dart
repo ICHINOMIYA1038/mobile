@@ -18,7 +18,7 @@ class InspectionResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final score = const InspectionScorer().score(inspection);
     final scheme = Theme.of(context).colorScheme;
-    final color = scoreColor(context, score.score);
+    final color = inspectionScoreColor(context, score);
     final measurement = inspection.window ?? inspection.ambient ?? inspection.neighbor;
 
     return Scaffold(
@@ -49,7 +49,7 @@ class InspectionResultScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      '${score.score}',
+                      score.scoreText,
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: color,
@@ -67,7 +67,9 @@ class InspectionResultScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          '${score.grade} ・ ${score.gradeLabel}',
+                          score.isEvaluated
+                              ? '${score.grade} ・ ${score.gradeLabel}'
+                              : score.gradeLabel,
                           style: TextStyle(
                             color: color,
                             fontWeight: FontWeight.w700,
@@ -78,7 +80,7 @@ class InspectionResultScreen extends StatelessWidget {
                   ],
                 ),
                 Text(
-                  '${score.measuredSteps}/${InspectionStep.values.length}項目を計測 ・ 同じ端末での相対評価',
+                  '${score.stepsText} ・ 同じ端末での相対評価',
                   style: Theme.of(
                     context,
                   ).textTheme.labelSmall?.copyWith(color: scheme.outline),
@@ -86,6 +88,15 @@ class InspectionResultScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 24),
+            for (final note in score.notes) ...[
+              _Callout(
+                icon: Icons.info_outline,
+                color: scheme.outline,
+                title: '評価していない項目',
+                body: note,
+              ),
+              const SizedBox(height: 12),
+            ],
             if (score.weakest != null)
               _Callout(
                 icon: Icons.warning_amber_rounded,
