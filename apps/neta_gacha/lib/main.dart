@@ -1,15 +1,19 @@
 import 'dart:async';
 
+import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'firebase_options.dart';
 import 'data/notification_service.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 計測は失敗してもアプリを止めない作りなので、ここで待って問題ない。
+  await AppInsights.initialize(options: DefaultFirebaseOptions.currentPlatform);
   // 抽選画面は固定高さのColumnで横向きだと収まらない。縦固定で十分なアプリ。
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   // リマインダーは毎日繰り返す1件の予約だが、OSの都合で消えることがあるため
@@ -24,6 +28,7 @@ class NetaGachaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorObservers: AppInsights.navigatorObservers,
       title: 'ネタガチャ',
       debugShowCheckedModeBanner: false,
       // 時刻ピッカー等の標準ウィジェットを日本語にする。

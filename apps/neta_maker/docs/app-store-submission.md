@@ -58,7 +58,7 @@ etude_generator/takken_simpleと同じAdMobアカウントに「ネタメーカ�
 
 ### App のプライバシー（申告内容）
 
-本アプリはアカウント登録・分析SDKを持たないが、**Google AdMobを組み込んでいるため、SDKが扱う分を申告する必要がある**。
+本アプリはアカウント登録を持たないが、**Google AdMobを組み込んでいるため、SDKが扱う分を申告する必要がある**。2026-10-24 からは Firebase の計測も入っているので、末尾の「2026-10-24 追記」の分も申告する。
 
 - トラッキング: **なし**（非パーソナライズ広告のみを配信し、ATT も要求していない）
 - 収集するデータ:
@@ -265,4 +265,18 @@ python3 tool/upload_to_play.py jp.pairof.netamaker build/app/outputs/bundle/rele
   SKAdNetworkItems 0件→50件、`ITSAppUsesNonExemptEncryption=false`、未使用の shared_preferences を削除、
   4+ 維持のため「お酒欲」を削除
 - 注意: 語彙バンクを変えたので、同じ名前でも以前のバージョンとは結果が変わる（バージョン内では決定的）
+
+## 2026-10-24 追記: 計測（Firebase）を入れた
+
+- `app_insights` を配線した（Firebase Analytics・Crashlytics。Firebase の `ichinomiya-apps` にアプリを登録済み）。計測のために ATT は求めない（IDFA を使わない）
+- プライバシーポリシーを更新した: nullstead.com の `/apps/neta-maker/privacy`（nullstead-web）と `docs/privacy-policy.md`。「いかなる情報も収集しない」「分析SDKは組み込んでいない」などの記述を直した
+- アプリ側の `PrivacyInfo.xcprivacy` は変えない（Firebase の SDK が自分のマニフェストで収集データを申告する。sound_shield と同じ扱い）
+
+**審査に出す前にやること（オーナー）**
+1. App Store Connect →「App のプライバシー」に次を足す（[docs/analytics.md](../../../docs/analytics.md) の表のとおり。すべて「ユーザーに紐付けない」「トラッキング: いいえ」）:
+   - 識別子 → デバイスID: 分析（広告の「サードパーティ広告」と両方にチェック）
+   - 使用状況データ → 製品の操作: 分析
+   - 診断 → クラッシュデータ・パフォーマンスデータ: 分析
+2. AdMob の管理画面で、このアプリを Firebase にリンクする（広告収益が GA4 に入る。任意）
+3. プライバシーポリシーの更新（nullstead-web）が本番に出ていることを確かめる
 

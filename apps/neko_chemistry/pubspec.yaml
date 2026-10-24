@@ -21,9 +21,15 @@ dependencies:
   package_info_plus: ^10.1.0
   flutter_localizations:
     sdk: flutter
+  firebase_core: ^4.13.0
+  firebase_crashlytics: ^5.2.7
+  app_insights:
+    path: ../../packages/app_insights
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
 
   flutter_lints: ^6.0.0

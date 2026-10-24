@@ -75,8 +75,10 @@
 ## 審査・提出時の注意
 
 - 審査メモは `docs/app-store-submission.md` の「審査メモ」節を使う。
-- スクリーンショットは `./tool/screenshots.sh && ./tool/store_previews.sh` で生成
-  （`docs/screenshot-guidelines.md` のパターンを適用済み）。1枚目はホーム画面
-  （01_home）を置く。
+- アイコン: `icon/source/icon.json` を `python scripts/icon/make_text_icon.py apps/neta_gacha/icon/source/icon.json`
+  で `icon/icon.png` にし、`dart run flutter_launcher_icons`（2026-10-24 に文字が主役のデザインへ変更。Android は未反映）。
+- スクリーンショット: `./tool/screenshots.sh` で iPhone、`./tool/screenshots.sh "iPad Pro 13-inch (M4)" screenshots_ipad`
+  で iPad を撮り、リポジトリのルートで `node scripts/store_compose/compose.mjs apps/neta_gacha` を実行すると
+  `ios/fastlane/screenshots/ja/` に見出し・バッジつきの画像ができる。文言は `tool/store_compose/slots.mjs`。
 - プロモーション用テキストとキーワードは審査を通さず後から変更できるので、公開後に
   反応を見て調整可。
