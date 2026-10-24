@@ -6,8 +6,9 @@ import AVFoundation
 /// 既定の 100 dB は市販の騒音計との比較(2026-08-29, iPhone 実機)による目安。
 /// ユーザーが設定画面で手持ちの騒音計に合わせると `userAdjustmentDb` が変わる
 /// (SoundMeterPlugin の setCalibration で反映。保存は Flutter 側が持つ)。
-/// iOS はマイク感度が機種間でほぼ揃っている(NIOSH の実測で機種間平均差 ≈2dB)ため、
-/// 機種別テーブルは持たず「既定+ユーザー校正」の1本で扱う。
+/// 機種別テーブルは持たず「既定+ユーザー校正」の1本で扱う。マイク感度は機種で数dB
+/// 違いうる(Kardous & Shaw 2014, JASA 135(4) EL186 では端末の影響を「かなり大きい」と
+/// している)ので、既定値は同じ端末で比べる目安として扱う。
 enum LevelCalibration {
     static let defaultOffsetDb: Double = 100.0
 

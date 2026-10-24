@@ -245,7 +245,11 @@ class _InspectionTile extends StatelessWidget {
       leading: ScoreChip(score: score),
       title: Text(inspection.name),
       subtitle: Text(
-        score.weakest == null ? '弱点なし' : '弱点: ${score.weakest!.label}',
+        !score.isEvaluated
+            ? '評価なし'
+            : score.weakest == null
+            ? '弱点なし'
+            : '弱点: ${score.weakest!.label}',
         style: TextStyle(color: scheme.outline),
       ),
       trailing: Icon(Icons.chevron_right, color: scheme.outline),
@@ -267,7 +271,7 @@ class ScoreChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = scoreColor(context, score.score);
+    final color = inspectionScoreColor(context, score);
     return Container(
       width: 44,
       height: 44,
@@ -282,6 +286,12 @@ class ScoreChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 診断のスコアの色。評価できた項目が無い(点が「—」)ときは良い色にせず控えめな色にする。
+Color inspectionScoreColor(BuildContext context, InspectionScore score) {
+  if (!score.isEvaluated) return Theme.of(context).colorScheme.outline;
+  return scoreColor(context, score.score);
 }
 
 Color scoreColor(BuildContext context, int score) {
