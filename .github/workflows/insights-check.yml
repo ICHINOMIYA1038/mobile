@@ -24,3 +24,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 scripts/check_insights.py
+
+  app-insights-package:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/app_insights
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
