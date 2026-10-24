@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -19,6 +21,10 @@ class AppInsights {
 
   static FirebaseAnalytics? _analytics;
   static List<NavigatorObserver> _navigatorObservers = const [];
+
+  /// iOS シミュレータ上で動いているか。シミュレータは `SIMULATOR_DEVICE_NAME` を必ず渡す。
+  static bool get _isSimulator =>
+      !kIsWeb && Platform.isIOS && Platform.environment.containsKey('SIMULATOR_DEVICE_NAME');
 
   /// 計測が有効か。初期化に失敗していれば false。
   static bool get isEnabled => _analytics != null;
@@ -53,7 +59,10 @@ class AppInsights {
       return;
     }
 
-    final collect = collectInDebug || !kDebugMode;
+    // シミュレータでは release / profile ビルドでも送らない。スクリーンショット撮影などで
+    // 入れ直すたびに新規ユーザーとして数えられ、DAU と継続率が崩れたため（2026-10、
+    // takken_talk の28日のユーザー58人のうち49人がシミュレータだった）。
+    final collect = collectInDebug || (!kDebugMode && !_isSimulator);
 
     final analytics = FirebaseAnalytics.instance;
     await analytics.setAnalyticsCollectionEnabled(collect);
