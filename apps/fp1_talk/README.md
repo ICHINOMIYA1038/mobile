@@ -36,3 +36,8 @@ iOS アプリ「AIとチャットしながら学ぶFP1級 - pAIrOf」（ホー�
 - アイコン: icon/source/icon.html（宅建アプリと同じ型。藍の地に白の「FP1級」、金のマーカーと「AIと話して合格」の帯）を Chrome の headless で 1024×1024 に撮って icon/icon.png → `dart run flutter_launcher_icons`
 - ストアの画像: `node tool/store_compose/compose.mjs`（iPhone 8枚・iPad 6枚を ios/fastlane/screenshots/ja/ に）。文言と切り抜きは tool/store_compose/slots.mjs、素材は tool/store_compose/raw/
 - 素材の撮り直し: サイトの手元の dev（.dev.vars を本物のキーに一時差し替え）に Pro の学習者を作って記録を入れ、`tool/store_shots.sh <UDID> build/store_raw/iphone --dart-define=API_BASE=… --dart-define=PRO_TOKEN=… --dart-define=PRO_USER=…`（integration_test/store_shots_test.dart）。iPhone 17 Pro Max（1320×2868）と iPad Pro 13インチ（2064×2752）のシミュレーターで撮る
+
+## 審査の提出（2026-10-30）
+- バージョン 1.0（ビルド 5）と、サブスクのグループ「AIとチャットしながら学ぶFP1級 Pro」・「Pro 月額」を一緒に提出した（ASC の提出 d27f012a）。承認されたら自動で公開
+- 出す前に引っかかった所: サブスクの価格が日本だけだと ASC は「価格未入力」とみなして「審査用に追加」できない。Web の サブスクリプション価格 → 初期価格 → 価格を編集 で、日本 ¥3,000 を基準に175か国を自動計算して確定した（配信は日本のみのまま）。API の `state` は Web より遅れる（Web が「提出準備中」でも API は MISSING_METADATA のことがある）
+- サブスクの審査用スクリーンショットは `tool/shots.sh <UDID> build/paywall integration_test/paywall_shot_test.dart` で撮る。シミュレーターは sandbox のアカウントを入れないとストアフロントが USA になり、日本限定の商品が読めず「プラン情報を取得できませんでした」の表示になる（宅建もその画像で承認された）。価格が写った画像にしたいときは、シミュレーターの 設定 → App Store → サンドボックスアカウント に日本の sandbox テスターを入れてから撮る
