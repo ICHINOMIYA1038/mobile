@@ -6,6 +6,7 @@ import '../catalog/filter.dart';
 import '../catalog/models.dart';
 import '../theme.dart';
 import '../widgets/play_card.dart';
+import 'about_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -54,7 +55,14 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('戯曲図書館', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text('戯曲図書館', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
+                      ),
+                      IconButton(tooltip: 'このアプリについて', icon: const Icon(Icons.info_outline, color: Palette.inkSoft), onPressed: () => AboutScreen.open(context)),
+                    ],
+                  ),
                   const SizedBox(height: 2),
                   const Text('上演する台本を、人数と時間から探す', style: TextStyle(fontSize: 13, color: Palette.inkSoft)),
                   const SizedBox(height: 12),
