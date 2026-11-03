@@ -1,11 +1,14 @@
 import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'app_scope.dart';
 import 'catalog/catalog_repository.dart';
 import 'catalog/models.dart';
 import 'catalog/shortlist.dart';
+import 'catalog/theater_log.dart';
 import 'firebase_options.dart';
+import 'screens/log_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/shortlist_screen.dart';
 import 'theme.dart';
@@ -18,14 +21,17 @@ Future<void> main() async {
   final catalog = await repository.load();
   final shortlist = Shortlist();
   await shortlist.load();
-  runApp(App(repository: repository, catalog: catalog, shortlist: shortlist));
+  final log = TheaterLog();
+  await log.load();
+  runApp(App(repository: repository, catalog: catalog, shortlist: shortlist, log: log));
 }
 
 class App extends StatefulWidget {
-  const App({super.key, required this.repository, required this.catalog, required this.shortlist});
+  const App({super.key, required this.repository, required this.catalog, required this.shortlist, required this.log});
   final CatalogRepository repository;
   final Catalog catalog;
   final Shortlist shortlist;
+  final TheaterLog log;
 
   @override
   State<App> createState() => _AppState();
@@ -46,10 +52,14 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) => AppScope(
     catalog: _catalog,
     shortlist: widget.shortlist,
+    log: widget.log,
     child: MaterialApp(
       title: '戯曲図書館',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
+      locale: const Locale('ja'),
+      supportedLocales: const [Locale('ja')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       // 画面遷移を screen_view として記録する。RouteSettings.name を付けたルートだけが記録される
       navigatorObservers: AppInsights.navigatorObservers,
       home: const Shell(),
@@ -65,7 +75,7 @@ class Shell extends StatefulWidget {
 }
 
 class _ShellState extends State<Shell> {
-  static const _names = ['search', 'shortlist'];
+  static const _names = ['log', 'search', 'shortlist'];
   int _tab = 0;
 
   @override
@@ -78,7 +88,7 @@ class _ShellState extends State<Shell> {
   Widget build(BuildContext context) {
     final shortlist = AppScope.of(context).shortlist;
     return Scaffold(
-      body: IndexedStack(index: _tab, children: const [SearchScreen(), ShortlistScreen()]),
+      body: IndexedStack(index: _tab, children: const [LogScreen(), SearchScreen(), ShortlistScreen()]),
       bottomNavigationBar: ListenableBuilder(
         listenable: shortlist,
         builder: (context, _) => NavigationBar(
@@ -88,7 +98,8 @@ class _ShellState extends State<Shell> {
             AppInsights.logScreen(_names[i]);
           },
           destinations: [
-            const NavigationDestination(icon: Icon(Icons.search), label: 'さがす'),
+            const NavigationDestination(icon: Icon(Icons.theater_comedy_outlined), selectedIcon: Icon(Icons.theater_comedy), label: '観劇ノート'),
+            const NavigationDestination(icon: Icon(Icons.search), label: '台本をさがす'),
             NavigationDestination(
               icon: Badge(isLabelVisible: shortlist.ids.isNotEmpty, label: Text('${shortlist.ids.length}'), child: const Icon(Icons.bookmark_border)),
               selectedIcon: const Icon(Icons.bookmark),
