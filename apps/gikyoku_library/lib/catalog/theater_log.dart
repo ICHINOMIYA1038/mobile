@@ -4,6 +4,8 @@ import 'package:app_insights/app_insights.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'log_photos.dart';
+
 /// 観劇の記録 1 件。カタログの作品につながっていれば playId が入る
 class TheaterLogEntry {
   const TheaterLogEntry({
@@ -16,6 +18,10 @@ class TheaterLogEntry {
     this.venue,
     this.rating,
     this.note = '',
+    this.showTime,
+    this.seat,
+    this.price,
+    this.photos = const [],
   });
 
   final String id;
@@ -28,6 +34,16 @@ class TheaterLogEntry {
   final int? rating;
   final String note;
 
+  /// 'matinee' か 'soiree'
+  final String? showTime;
+  final String? seat;
+
+  /// チケット代（円）
+  final int? price;
+
+  /// 写真のファイル名（端末の中の保存先からの相対。アプリの更新で絶対パスが変わるため）
+  final List<String> photos;
+
   Map<String, Object?> toJson() => {
     'id': id,
     'title': title,
@@ -38,6 +54,10 @@ class TheaterLogEntry {
     'venue': venue,
     'rating': rating,
     'note': note,
+    'showTime': showTime,
+    'seat': seat,
+    'price': price,
+    'photos': photos,
   };
 
   factory TheaterLogEntry.fromJson(Map<String, dynamic> j) => TheaterLogEntry(
@@ -50,6 +70,10 @@ class TheaterLogEntry {
     venue: j['venue'] as String?,
     rating: j['rating'] as int?,
     note: (j['note'] as String?) ?? '',
+    showTime: j['showTime'] as String?,
+    seat: j['seat'] as String?,
+    price: j['price'] as int?,
+    photos: ((j['photos'] as List?) ?? const []).cast<String>(),
   );
 }
 
@@ -60,6 +84,16 @@ class TheaterLog extends ChangeNotifier {
 
   /// 観た日が新しい順
   List<TheaterLogEntry> get entries => List.unmodifiable(_entries);
+
+  /// 自分が前に入れた値を、よく使う順に返す（入力の候補）
+  List<String> recent(String? Function(TheaterLogEntry) pick) {
+    final counts = <String, int>{};
+    for (final e in _entries) {
+      final v = pick(e);
+      if (v != null && v.isNotEmpty) counts[v] = (counts[v] ?? 0) + 1;
+    }
+    return (counts.keys.toList()..sort((a, b) => counts[b]! - counts[a]!));
+  }
 
   int countInYear(int year) => _entries.where((e) => e.watchedOn.year == year).length;
 
@@ -96,6 +130,10 @@ class TheaterLog extends ChangeNotifier {
   }
 
   Future<void> remove(String id) async {
+    final removed = _entries.where((e) => e.id == id).expand((e) => e.photos).toList();
+    for (final name in removed) {
+      await LogPhotos.delete(name);
+    }
     _entries.removeWhere((e) => e.id == id);
     notifyListeners();
     AppInsights.logEvent('log_delete');

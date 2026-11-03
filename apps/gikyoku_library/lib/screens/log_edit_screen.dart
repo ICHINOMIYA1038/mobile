@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../app_scope.dart';
+import '../catalog/log_photos.dart';
 import '../catalog/models.dart';
 import '../catalog/theater_log.dart';
 import '../theme.dart';
@@ -25,6 +29,13 @@ class _LogEditScreenState extends State<LogEditScreen> {
   late DateTime _date = widget.entry?.watchedOn ?? DateUtils.dateOnly(DateTime.now());
   late int? _rating = widget.entry?.rating;
   late Play? _play = widget.play;
+  late final _seat = TextEditingController(text: widget.entry?.seat);
+  late final _price = TextEditingController(text: widget.entry?.price?.toString());
+  late String? _showTime = widget.entry?.showTime;
+  late final List<String> _photos = [...?widget.entry?.photos];
+  // 保存せずに閉じたら消す写真
+  final List<String> _added = [];
+  bool _saved = false;
   TextEditingController? _title;
 
   @override
@@ -32,6 +43,13 @@ class _LogEditScreenState extends State<LogEditScreen> {
     _group.dispose();
     _venue.dispose();
     _note.dispose();
+    _seat.dispose();
+    _price.dispose();
+    if (!_saved) {
+      for (final name in _added) {
+        LogPhotos.delete(name);
+      }
+    }
     super.dispose();
   }
 
@@ -64,9 +82,30 @@ class _LogEditScreenState extends State<LogEditScreen> {
         venue: _text(_venue),
         rating: _rating,
         note: _note.text.trim(),
+        showTime: _showTime,
+        seat: _text(_seat),
+        price: int.tryParse(_price.text.replaceAll(RegExp(r'[,，円\s]'), '')),
+        photos: _photos,
       ),
     );
+    _saved = true;
+    for (final name in _removed) {
+      await LogPhotos.delete(name);
+    }
     if (mounted) Navigator.of(context).pop();
+  }
+
+  final List<String> _removed = [];
+
+  Future<void> _addPhoto() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 2000, imageQuality: 85);
+    if (picked == null) return;
+    final name = await LogPhotos.save(File(picked.path));
+    if (!mounted) return;
+    setState(() {
+      _photos.add(name);
+      _added.add(name);
+    });
   }
 
   Future<void> _delete() async {
@@ -147,6 +186,7 @@ class _LogEditScreenState extends State<LogEditScreen> {
           const SizedBox(height: 8),
           TextField(controller: _group, decoration: const InputDecoration(labelText: '劇団・団体', border: border)),
           // 同じ作品を別の劇団が上演することがあるので、自動では入れない
+          if (_play == null || _play!.groups.isEmpty) _Suggestions(values: AppScope.of(context).log.recent((e) => e.group), onPick: (v) => setState(() => _group.text = v)),
           if (_play != null && _play!.groups.isNotEmpty) ...[
             const SizedBox(height: 6),
             const Text('この作品を上演した劇団（押すと入ります）', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
@@ -164,6 +204,7 @@ class _LogEditScreenState extends State<LogEditScreen> {
           ],
           const SizedBox(height: 16),
           TextField(controller: _venue, decoration: const InputDecoration(labelText: '劇場', border: border)),
+          _Suggestions(values: AppScope.of(context).log.recent((e) => e.venue), onPick: (v) => setState(() => _venue.text = v)),
           const SizedBox(height: 16),
           const Text('評価', style: TextStyle(fontSize: 13, color: Palette.inkSoft)),
           Row(
@@ -187,11 +228,89 @@ class _LogEditScreenState extends State<LogEditScreen> {
             decoration: const InputDecoration(labelText: 'ひとこと・感想', alignLabelWithHint: true, border: border),
           ),
           const Text('この試作では、記録は端末の中だけに保存されます。', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
+          const SizedBox(height: 8),
+          ExpansionTile(
+            key: const Key('log-details'),
+            tilePadding: EdgeInsets.zero,
+            initiallyExpanded: _showTime != null || _seat.text.isNotEmpty || _price.text.isNotEmpty || _photos.isNotEmpty,
+            title: const Text('写真・座席・チケット代（任意）', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SegmentedButton<String>(
+                  emptySelectionAllowed: true,
+                  showSelectedIcon: false,
+                  segments: const [ButtonSegment(value: 'matinee', label: Text('昼公演')), ButtonSegment(value: 'soiree', label: Text('夜公演'))],
+                  selected: {?_showTime},
+                  onSelectionChanged: (v) => setState(() => _showTime = v.isEmpty ? null : v.first),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(controller: _seat, decoration: const InputDecoration(labelText: '座席（例: C列12番）', border: border)),
+              const SizedBox(height: 12),
+              TextField(key: const Key('log-price'), controller: _price, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'チケット代（円）', border: border)),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final name in _photos)
+                    Stack(
+                      children: [
+                        ClipRRect(borderRadius: BorderRadius.circular(6), child: LogPhotoImage(name: name, size: 84)),
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: GestureDetector(
+                            onTap: () => setState(() {
+                              _photos.remove(name);
+                              // 今回足した写真はすぐ消す。保存済みの写真は、保存を押すまで残す
+                              if (_added.remove(name)) {
+                                LogPhotos.delete(name);
+                              } else {
+                                _removed.add(name);
+                              }
+                            }),
+                            child: const CircleAvatar(radius: 11, backgroundColor: Colors.black54, child: Icon(Icons.close, size: 14, color: Colors.white)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (_photos.length < LogPhotos.maxPerEntry)
+                    SizedBox(
+                      width: 84,
+                      height: 84,
+                      child: OutlinedButton(onPressed: _addPhoto, style: OutlinedButton.styleFrom(padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))), child: const Icon(Icons.add_a_photo_outlined)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
           if (widget.entry != null) ...[
             const SizedBox(height: 16),
             TextButton(onPressed: _delete, child: const Text('この記録を削除', style: TextStyle(color: Palette.vermilion))),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// 自分が前に入れた値を、押すだけで入れられるようにする
+class _Suggestions extends StatelessWidget {
+  const _Suggestions({required this.values, required this.onPick});
+  final List<String> values;
+  final ValueChanged<String> onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    if (values.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Wrap(
+        spacing: 6,
+        children: [for (final v in values.take(5)) ActionChip(label: Text(v), onPressed: () => onPick(v))],
       ),
     );
   }
