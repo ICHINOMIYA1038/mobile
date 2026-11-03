@@ -37,6 +37,10 @@ class _ProScreenState extends State<ProScreen> {
   Offerings? _offerings;
   bool _loading = true;
   bool _busy = false;
+
+  /// 支払いが済み、サーバーの反映を待っているあいだ。ここで閉じると、上限で止まった会話などが Pro を受け取れない。
+  /// App Store の応答待ちは含めない（応答が来ないと画面から出られなくなる）
+  bool _confirming = false;
   String? _error;
 
   String get _userId => AppScope.read(context).api.userId ?? '';
@@ -70,14 +74,22 @@ class _ProScreenState extends State<ProScreen> {
   }
 
   /// 購入の通知（Webhook）がサーバーに届くまで数秒かかるので、Pro になるまで少し待って取り直す
-  Future<bool> _waitForPro() async {
-    final state = AppScope.read(context);
-    for (var i = 0; i < 8; i++) {
-      await Future<void>.delayed(const Duration(seconds: 2));
-      await state.refresh();
-      if (state.me?['pro'] == true) return true;
+  Future<bool> _waitForPro(AppState state) async {
+    if (mounted) setState(() => _confirming = true);
+    try {
+      for (var i = 0; i < 8; i++) {
+        await Future<void>.delayed(const Duration(seconds: 2));
+        try {
+          await state.refreshQuietly().timeout(const Duration(seconds: 5));
+        } on TimeoutException {
+          // 通信が遅いときは、次の回に任せる
+        }
+        if (state.me?['pro'] == true) return true;
+      }
+      return false;
+    } finally {
+      if (mounted) setState(() => _confirming = false);
     }
-    return false;
   }
 
   /// 購入・復元の結果は必ずダイアログで見せる（何も出ないと、買えたのかどうか分からない）
@@ -99,6 +111,7 @@ class _ProScreenState extends State<ProScreen> {
         PurchasesErrorCode.paymentPendingError => '支払いの承認を待っています。承認されると Pro になります。',
         PurchasesErrorCode.purchaseNotAllowedError => 'この端末では購入が許可されていません（スクリーンタイムの設定などを確かめてください）。',
         PurchasesErrorCode.storeProblemError => 'App Store で問題が起きました。少し待ってからもう一度お試しください。',
+        PurchasesErrorCode.operationAlreadyInProgressError => '前の購入の処理が終わっていません。アプリを開き直してからもう一度お試しください。',
         _ => '購入を完了できませんでした。少し待ってからもう一度お試しください。',
       };
       return '$reason\n（エラー: ${code.name}）';
@@ -107,19 +120,23 @@ class _ProScreenState extends State<ProScreen> {
   }
 
   Future<void> _buy(Package pkg) async {
+    final state = AppScope.read(context);
     setState(() => _busy = true);
+    final pending = PurchaseService.purchase(_userId, pkg);
     try {
-      await PurchaseService.purchase(_userId, pkg);
-      AppInsights.logEvent('purchase', parameters: {'product': pkg.storeProduct.identifier});
-      final ok = await _waitForPro();
-      if (!mounted) return;
-      if (ok) {
-        await _tell('Pro になりました', 'ありがとうございます。広告が出なくなり、1日に AI と話せる回数が増えました。苦手分析と模擬試験も使えます。');
-        if (mounted) Navigator.of(context).pop();
-      } else {
-        AppInsights.logEvent('purchase_pending');
-        await _tell('購入を受け付けました', 'Pro への切り替えをまだ確認できていません。数分たってから、この画面の下の「購入を復元」を押してください。');
+      await pending.timeout(PurchaseService.storeWait);
+      await _afterPurchase(state, pkg);
+    } on TimeoutException {
+      // 支払いの画面でまだ操作中かもしれないので、購入は取り消さない。あとで完了したら Pro に切り替える
+      AppInsights.logEvent('purchase_stalled', parameters: {'stage': 'store'});
+      unawaited(_finishLate(pending, state, pkg));
+      if (mounted) {
+        setState(() => _busy = false);
+        await _tell('App Store から応答がありません', '支払いの画面が開いていないときは、アプリを開き直してからもう一度お試しください。支払いを済ませたときは、少し待ってから「購入を復元」を押してください。');
       }
+    } on StoreConnectTimeout {
+      AppInsights.logEvent('purchase_stalled', parameters: {'stage': 'connect'});
+      if (mounted) await _tell('App Store に接続できませんでした', '通信環境を確認して、もう一度お試しください。');
     } on PurchaseCancelledException {
       // 自分でやめたので何も出さない
     } catch (e, st) {
@@ -130,21 +147,53 @@ class _ProScreenState extends State<ProScreen> {
     }
   }
 
+  Future<void> _afterPurchase(AppState state, Package pkg) async {
+    AppInsights.logEvent('purchase', parameters: {'product': pkg.storeProduct.identifier});
+    final ok = await _waitForPro(state);
+    if (!mounted) return;
+    if (ok) {
+      await _tell('Pro になりました', 'ありがとうございます。広告が出なくなり、1日に AI と話せる回数が増えました。苦手分析と模擬試験も使えます。');
+      if (mounted) Navigator.of(context).pop();
+    } else {
+      AppInsights.logEvent('purchase_pending');
+      await _tell('購入を受け付けました', 'Pro への切り替えをまだ確認できていません。数分たってから、この画面の下の「購入を復元」を押してください。');
+    }
+  }
+
+  /// 待つのをやめたあとで届いた購入の結果を受け取る
+  Future<void> _finishLate(Future<void> pending, AppState state, Package pkg) async {
+    try {
+      await pending;
+      await _afterPurchase(state, pkg);
+    } on PurchaseCancelledException {
+      // 自分でやめたので何も出さない
+    } catch (e, st) {
+      AppInsights.recordError(e, st, reason: 'purchase_late');
+    }
+  }
+
   Future<void> _restore() async {
+    final state = AppScope.read(context);
     setState(() => _busy = true);
     try {
-      final info = await PurchaseService.restore(_userId);
+      final info = await PurchaseService.restore(_userId).timeout(PurchaseService.storeWait);
       // 購入が無いと分かっているなら、サーバーの反映を待たない
       if (info != null && !info.activeSubscriptions.contains(AppConfig.proProductId)) {
         if (mounted) await _tell('復元できる購入が見つかりませんでした', 'この Apple ID で購入した Pro が見つかりませんでした。購入した Apple ID でサインインしているか確かめてください。');
         return;
       }
-      final ok = await _waitForPro();
+      final ok = await _waitForPro(state);
       if (!mounted) return;
       await _tell(
         ok ? 'Pro を復元しました' : '購入を確認しました',
         ok ? '広告が出なくなり、1日に AI と話せる回数が増えました。苦手分析と模擬試験も使えます。' : 'Pro への切り替えに数分かかることがあります。少し待ってから、もう一度「購入を復元」を押してください。',
       );
+    } on TimeoutException {
+      AppInsights.logEvent('purchase_stalled', parameters: {'stage': 'restore'});
+      if (mounted) await _tell('App Store から応答がありません', '通信環境を確認して、アプリを開き直してからもう一度お試しください。');
+    } on StoreConnectTimeout {
+      AppInsights.logEvent('purchase_stalled', parameters: {'stage': 'connect'});
+      if (mounted) await _tell('App Store に接続できませんでした', '通信環境を確認して、もう一度お試しください。');
     } catch (e, st) {
       AppInsights.recordError(e, st, reason: 'restore');
       if (mounted) await _tell('復元できませんでした', _why(e));
@@ -163,9 +212,9 @@ class _ProScreenState extends State<ProScreen> {
     final pro = _pro;
     // 購入の確認中に閉じると、Pro になったことを呼び出し元（上限で止まった会話など）が受け取れない
     return PopScope(
-      canPop: !_busy,
+      canPop: !_confirming,
       child: Scaffold(
-      appBar: AppBar(title: const Text('Pro'), automaticallyImplyLeading: !_busy),
+      appBar: AppBar(title: const Text('Pro'), automaticallyImplyLeading: !_confirming),
       body: Readable(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -208,7 +257,7 @@ class _ProScreenState extends State<ProScreen> {
                     const SizedBox(width: 12),
                     FilledButton(
                       onPressed: _busy ? null : () => _buy(pro),
-                      // 確認のあいだ（最大 16 秒）押したことが分かるように
+                      // 待っているあいだ、押したことが分かるように
                       child: _busy ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)) : Text(pro.storeProduct.priceString),
                     ),
                   ],
