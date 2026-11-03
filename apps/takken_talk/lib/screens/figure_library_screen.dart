@@ -1,37 +1,57 @@
-import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 
-import '../models.dart';
+import '../ads/ad_banner.dart';
+import '../models/core.dart';
 import '../state/app_state.dart';
+import '../theme.dart';
+import '../widgets/figure/figure_view.dart';
 import '../widgets/readable.dart';
-import '../widgets/figure_card.dart';
-import '../widgets/figure_search.dart';
+import 'common/parts.dart';
 
-/// 図解の一覧。会話しなくても体系をつかめる場所。
-/// [chapter] を渡すとその章だけ、渡さないと全章を横断して探せる。
+/// 図解ライブラリ（サイトの /takken/figures）。全部の図を、中身の文字（text）と「どんなときに見る図か」で引ける。
+/// 図の一覧はみんなに同じもので重い（400枚超）ので、タブを初めて開いたときに1回だけ取って持っておく。
 class FigureLibraryScreen extends StatefulWidget {
-  const FigureLibraryScreen({super.key, this.chapter});
-  final Chapter? chapter;
+  const FigureLibraryScreen({super.key});
 
   @override
   State<FigureLibraryScreen> createState() => _FigureLibraryScreenState();
 }
 
-class _FigureLibraryScreenState extends State<FigureLibraryScreen> {
-  final _search = TextEditingController();
-  List<Figure>? _figures;
-  final _hay = <String, String>{};
-  String? _error;
-  String? _kind;
-  String? _subject;
-  String _query = '';
+class _Entry {
+  const _Entry(this.figure, this.text);
+  final FigureData figure;
+  final String text;
+}
 
-  bool get _wholeLibrary => widget.chapter == null;
+class _Chapter {
+  const _Chapter(this.id, this.order, this.title, this.subject);
+  final String id;
+  final int order;
+  final String title;
+  final String subject;
+}
+
+class _FigureLibraryScreenState extends State<FigureLibraryScreen> {
+  List<_Entry>? _all;
+  List<_Chapter> _chapters = const [];
+  List<String> _subjects = const [];
+  Object? _error;
+  bool _loading = false;
+
+  final _search = TextEditingController();
+  String _query = '';
+  String _subject = '';
+  bool _onlyFav = false;
+
+  /// お気に入りだけを見ているあいだに外した図は、すぐには消さない（押し間違いをその場で戻せるように）。
+  /// 「★ お気に入り」に切り替えた時点のお気に入りを覚えておき、それも出す
+  Set<String> _favView = {};
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // IndexedStack は見えないタブを Visibility で隠している。見えたときに初めて取る（build の途中で setState しないよう次の番に）
+    if (Visibility.of(context) && _all == null && !_loading) Future.microtask(_load);
   }
 
   @override
@@ -41,256 +61,218 @@ class _FigureLibraryScreenState extends State<FigureLibraryScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _error = null);
+    setState(() => (_loading = true, _error = null));
     try {
-      final api = AppScope.of(context).api;
-      final f = widget.chapter == null ? await api.allFigures() : await api.figures(widget.chapter!.id);
-      for (final x in f) {
-        _hay[x.id] = figureHaystack(x);
-      }
-      if (mounted) setState(() => _figures = f);
-      AppInsights.logEvent('figures_open', parameters: {'scope': _wholeLibrary ? 'all' : widget.chapter!.id});
-    } catch (_) {
-      if (mounted) setState(() => _error = '図解を読み込めませんでした');
+      final d = await AppScope.read(context).api.figures();
+      final chapters = [
+        for (final c in (d['chapters'] as List? ?? const []).cast<Map>()) _Chapter(c['id'] as String, (c['order'] as num?)?.toInt() ?? 0, c['title'] as String? ?? '', c['subject'] as String? ?? ''),
+      ];
+      final all = [for (final f in (d['figures'] as List? ?? const []).cast<Map>()) _Entry(FigureData.fromJson((f['figure'] as Map).cast<String, dynamic>()), f['text'] as String? ?? '')];
+      if (!mounted) return;
+      setState(() {
+        _chapters = chapters;
+        _subjects = [for (final s in (d['subjects'] as List? ?? const []).cast<Map>()) s['name'] as String];
+        _all = all;
+      });
+    } catch (e) {
+      if (mounted) setState(() => _error = e);
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  List<Figure> get _shown {
-    final all = _figures ?? const <Figure>[];
-    final q = _query.trim().toLowerCase();
-    final me = AppScope.of(context).me;
-    return all.where((f) {
-      if (_kind != null && f.kind != _kind) return false;
-      if (_subject != null && me?.chapter(f.chapterId)?.subject != _subject) return false;
-      if (q.isNotEmpty && !(_hay[f.id] ?? '').contains(q)) return false;
-      return true;
-    }).toList();
-  }
+  void _setOnlyFav(bool on, Set<String> favs) => setState(() {
+    _onlyFav = on;
+    _favView = {...favs};
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final me = AppScope.of(context).me!;
-    final all = _figures;
-    final shown = _shown;
-
+    final state = AppScope.of(context);
+    final all = _all;
     return Scaffold(
+      // Pro でない人にだけ、一覧の下にバナー（下のタブの上）
+      bottomNavigationBar: const AdBanner(),
       appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_wholeLibrary ? '図解ライブラリ' : '第${widget.chapter!.order}章の図解', style: theme.textTheme.titleMedium),
-            if (!_wholeLibrary) Text(widget.chapter!.short, style: theme.textTheme.labelSmall),
-          ],
-        ),
+        title: const Text('図解ライブラリ', style: TextStyle(fontWeight: FontWeight.w700)),
       ),
       body: all == null
           ? Center(
-              child: _error != null
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [Text(_error!), const SizedBox(height: 8), TextButton(onPressed: _load, child: const Text('再読み込み'))],
-                    )
-                  : const CircularProgressIndicator(),
+              child: _error != null ? LoadError(error: _error!, onRetry: _load) : const CircularProgressIndicator(),
             )
-          : Readable(
-              child: Column(
+          : Column(
               children: [
-                _Filters(
-                  figures: all,
-                  wholeLibrary: _wholeLibrary,
-                  subjects: me.subjects,
-                  chapterOf: (id) => me.chapter(id),
-                  kind: _kind,
-                  subject: _subject,
-                  controller: _search,
-                  onKind: (k) => setState(() => _kind = k),
-                  onSubject: (s) => setState(() => _subject = s),
-                  onQuery: (q) => setState(() => _query = q),
-                  shownCount: shown.length,
-                ),
-                Expanded(
-                  child: shown.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32),
-                            child: Text('該当する図解がありません。\n検索語を短くするか、絞り込みを外してみてください。',
-                                textAlign: TextAlign.center, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.outline)),
-                          ),
-                        )
-                      : ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
-                          children: [
-                            ..._sections(context, shown, me),
-                            const SizedBox(height: 20),
-                            Text('図解の内容は事前に用意したもので、AIが生成したものではありません。数字や法改正はテキストでも確認してください。',
-                                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline, height: 1.5)),
-                          ],
-                        ),
-                ),
+                _filters(state.figureFavs),
+                // 一覧を動かしたらキーボードを閉じる（ListView の keyboardDismissBehavior）
+                Expanded(child: _list(all, state.figureFavs)),
               ],
-              ),
             ),
     );
   }
 
-  /// 全章のときは章ごとに見出しを挟む。1章だけのときは並べるだけ。
-  List<Widget> _sections(BuildContext context, List<Figure> shown, Me me) {
-    final theme = Theme.of(context);
-    if (!_wholeLibrary) {
-      return [
-        for (final f in shown) ...[
-          Padding(
-            padding: const EdgeInsets.only(top: 10),
-            child: Text(f.hint, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline)),
-          ),
-          FigureCard(figure: f),
-        ],
-      ];
-    }
-    final out = <Widget>[];
-    for (final c in me.chapters) {
-      final mine = shown.where((f) => f.chapterId == c.id).toList();
-      if (mine.isEmpty) continue;
-      out.add(Padding(
-        padding: const EdgeInsets.only(top: 18, bottom: 2),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Container(width: 3, height: 15, margin: const EdgeInsets.only(right: 7),
-                decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(2))),
-            Expanded(
-              child: Text('第${c.order}章 ${c.short}',
-                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-            ),
-            Text('${mine.length}枚', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline)),
-          ],
-        ),
-      ));
-      for (final f in mine) {
-        out.add(Padding(
-          padding: const EdgeInsets.only(top: 10),
-          child: Text(f.hint, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline)),
-        ));
-        out.add(FigureCard(figure: f));
-      }
-    }
-    return out;
-  }
-}
-
-class _Filters extends StatelessWidget {
-  const _Filters({
-    required this.figures,
-    required this.wholeLibrary,
-    required this.subjects,
-    required this.chapterOf,
-    required this.kind,
-    required this.subject,
-    required this.controller,
-    required this.onKind,
-    required this.onSubject,
-    required this.onQuery,
-    required this.shownCount,
-  });
-  final List<Figure> figures;
-  final bool wholeLibrary;
-  final List<Subject> subjects;
-  final Chapter? Function(String) chapterOf;
-  final String? kind;
-  final String? subject;
-  final TextEditingController controller;
-  final ValueChanged<String?> onKind;
-  final ValueChanged<String?> onSubject;
-  final ValueChanged<String> onQuery;
-  final int shownCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Material(
-      color: theme.scaffoldBackgroundColor,
+  Widget _filters(Set<String> favs) => Readable(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: TextField(
-              controller: controller,
-              onChanged: onQuery,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: '中身を検索（例: 保証金、2週間、農地）',
-                hintStyle: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-                prefixIcon: const Icon(Icons.search, size: 20),
-                suffixIcon: controller.text.isEmpty
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () {
-                          controller.clear();
-                          onQuery('');
-                        },
-                      ),
-                filled: true,
-                fillColor: Colors.white,
-                isDense: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              ),
+          SegmentedButton<bool>(
+            showSelectedIcon: false,
+            segments: [
+              const ButtonSegment(value: false, label: Text('すべて')),
+              ButtonSegment(value: true, label: Text('★ お気に入り（${favs.length}）')),
+            ],
+            selected: {_onlyFav},
+            onSelectionChanged: (s) => _setOnlyFav(s.first, favs),
+            style: SegmentedButton.styleFrom(
+              minimumSize: const Size(0, 44),
+              textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              selectedBackgroundColor: Palette.primarySoft,
+              selectedForegroundColor: Palette.primaryStrong,
             ),
           ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _search,
+            onChanged: (v) => setState(() => _query = v.trim()),
+            textInputAction: TextInputAction.search,
+            decoration: InputDecoration(
+              isDense: true,
+              filled: true,
+              fillColor: Palette.paper,
+              prefixIcon: const Icon(Icons.search),
+              hintText: '中身を検索（例: 2週間、保証協会、農地）',
+              hintStyle: const TextStyle(fontSize: 14, color: Palette.inkFaint),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Palette.lineStrong),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Palette.lineStrong),
+              ),
+              suffixIcon: _query.isEmpty
+                  ? null
+                  : IconButton(
+                      tooltip: '消す',
+                      icon: const Icon(Icons.close),
+                      onPressed: () => setState(() {
+                        _search.clear();
+                        _query = '';
+                      }),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 6),
           SizedBox(
-            height: 38,
+            height: 44,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                _chip(context, 'すべての型', kind == null, () => onKind(null)),
-                for (final k in FigureKind.all)
-                  if (figures.any((f) => f.kind == k.key))
-                    _chip(context, '${k.label} ${figures.where((f) => f.kind == k.key).length}', kind == k.key,
-                        () => onKind(kind == k.key ? null : k.key)),
+                for (final s in ['', ..._subjects])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      label: Text(s.isEmpty ? 'すべての科目' : s),
+                      selected: _subject == s,
+                      onSelected: (_) => setState(() => _subject = s),
+                      showCheckmark: false,
+                      selectedColor: Palette.primarySoft,
+                      backgroundColor: Palette.paper,
+                      side: BorderSide(color: _subject == s ? Palette.primary : Palette.lineStrong),
+                      labelStyle: TextStyle(fontSize: 13, color: _subject == s ? Palette.primaryStrong : Palette.inkSoft, fontWeight: FontWeight.w600),
+                    ),
+                  ),
               ],
             ),
           ),
-          if (wholeLibrary && subjects.isNotEmpty)
-            SizedBox(
-              height: 38,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  _chip(context, '全科目', subject == null, () => onSubject(null)),
-                  for (final s in subjects)
-                    _chip(context, '${s.name} ${s.examQuestions}問', subject == s.name,
-                        () => onSubject(subject == s.name ? null : s.name)),
-                ],
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
-            child: Text(
-              shownCount == figures.length ? '全${figures.length}枚' : '$shownCount枚を表示中（全${figures.length}枚）',
-              style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.outline),
-            ),
-          ),
-          Divider(height: 1, color: theme.colorScheme.outlineVariant),
         ],
       ),
+    ),
+  );
+
+  Widget _list(List<_Entry> all, Set<String> favs) {
+    final subjectOf = {for (final c in _chapters) c.id: c.subject};
+    final shown = all.where((e) {
+      final f = e.figure;
+      if (_onlyFav && !favs.contains(f.id) && !_favView.contains(f.id)) return false;
+      if (_subject.isNotEmpty && subjectOf[f.chapterId] != _subject) return false;
+      return _query.isEmpty || e.text.contains(_query) || f.hint.contains(_query);
+    }).toList();
+
+    // 章の見出しと図を1列に並べる（ListView.builder で見えている分だけ作る）
+    final rows = <Object>[];
+    for (final c in _chapters) {
+      final items = shown.where((e) => e.figure.chapterId == c.id);
+      if (items.isEmpty) continue;
+      rows.add(c);
+      rows.addAll(items);
+    }
+
+    final small = Theme.of(context).textTheme.bodySmall;
+    return ListView.builder(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+      itemCount: rows.length + 1 + (rows.isEmpty ? 1 : 0),
+      itemBuilder: (context, i) {
+        if (i == 0) {
+          return Readable(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text('会話の中で先生が出す図を、章をまたいで探せます。「2週間」「保証協会」のように、数字や用語で引けます。\n${shown.length}枚', style: small),
+            ),
+          );
+        }
+        if (rows.isEmpty) {
+          final text = _onlyFav && favs.isEmpty && _favView.isEmpty
+              ? 'まだお気に入りの図はありません。図の右上の「☆ お気に入り」を押すと、ここに集まります。'
+              : _query.isNotEmpty
+              ? '「$_query」に当てはまる図解はありません。別の言葉で探してみてください。'
+              : '当てはまる図解はありません。';
+          return Readable(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 24),
+              child: Text(
+                text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Palette.inkSoft),
+              ),
+            ),
+          );
+        }
+        final row = rows[i - 1];
+        if (row is _Chapter) {
+          return Readable(
+            child: Container(
+              // Readable は中央に寄せるので、短い見出しも左に置くため幅いっぱいにする
+              width: double.infinity,
+              padding: const EdgeInsets.only(top: 20, bottom: 8),
+              child: Text(
+                '第${row.order}章 ${row.title}',
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, height: 1.5, color: Palette.ink),
+              ),
+            ),
+          );
+        }
+        final e = row as _Entry;
+        return Readable(
+          key: ValueKey(e.figure.id),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FigureView(figure: e.figure, shownOn: 'library'),
+                if (e.figure.hint.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
+                    child: Text(e.figure.hint, style: const TextStyle(fontSize: 13, height: 1.6, color: Palette.inkSoft)),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
-
-  Widget _chip(BuildContext context, String label, bool selected, VoidCallback onTap) => Padding(
-        padding: const EdgeInsets.only(right: 7),
-        child: FilterChip(
-          label: Text(label),
-          selected: selected,
-          onSelected: (_) => onTap(),
-          visualDensity: VisualDensity.compact,
-          labelStyle: Theme.of(context).textTheme.labelMedium,
-          showCheckmark: false,
-        ),
-      );
 }
