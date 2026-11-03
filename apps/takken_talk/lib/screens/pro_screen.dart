@@ -19,7 +19,7 @@ import '../widgets/readable.dart';
 class ProScreen extends StatefulWidget {
   const ProScreen({super.key, required this.reason});
 
-  /// どこから開いたか（cap = 今日の上限に達した / settings = 設定から / analysis・mock = 学ぶの「Pro の学習ツール」から）
+  /// どこから開いたか（cap = 今日の上限に達した / home_cap = ホームで残り0回 / settings = 設定から / analysis・mock = 学ぶの「Pro の学習ツール」から）
   final String reason;
 
   static Future<void> show(BuildContext context, {required String reason}) {

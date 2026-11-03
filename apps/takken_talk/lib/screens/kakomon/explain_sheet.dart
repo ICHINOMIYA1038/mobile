@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../api/client.dart';
+import '../../funnel.dart';
 import '../../models/core.dart';
 import '../../state/app_state.dart';
 import '../../theme.dart';
@@ -137,10 +140,12 @@ class ExplainThread extends ChangeNotifier {
         }
         notifyListeners();
       }
+      if (reply.error == null && reply.text.isNotEmpty) unawaited(Funnel.chatCompleted('explain'));
     } on ApiException catch (e) {
       if (e.isOverCap) {
         msgs.removeRange(msgs.length - 2, msgs.length);
         limit = e.message ?? '今日はもう話せません。';
+        Funnel.capReached('explain', e.code);
         askedWith = null;
       } else {
         reply.error = e.message ?? '送れませんでした。もう一度試してください。';
@@ -152,6 +157,12 @@ class ExplainThread extends ChangeNotifier {
       if (msgs.contains(reply) && reply.text.isEmpty && reply.error == null) reply.error = '解説を作れませんでした。もう一度押してみてください。';
       notifyListeners();
     }
+  }
+
+  /// Pro になったら、上限で止まっていた送信を戻す
+  void clearLimit() {
+    limit = null;
+    notifyListeners();
   }
 
   /// 失敗した1往復を消して、同じ頼みをもう一度
@@ -368,7 +379,7 @@ class _ExplainPanelState extends State<_ExplainPanel> {
                         if (t.limit != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 8),
-                            child: CapNotice(t.limit!),
+                            child: CapNotice(t.limit!, onPro: t.clearLimit),
                           ),
                       ],
                     ),

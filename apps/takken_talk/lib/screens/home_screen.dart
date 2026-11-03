@@ -6,6 +6,7 @@ import '../main.dart';
 import '../models/core.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
+import '../widgets/cap_notice.dart';
 import '../widgets/readable.dart';
 import 'common/parts.dart';
 import 'map_screen.dart';
@@ -239,6 +240,11 @@ class _Status extends StatelessWidget {
                 ],
               ),
             ),
+            if (!state.unlimited && left == 0)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: CapNotice('今日話せる回数を使い切りました。明日の0時にまた話せます。', reason: 'home_cap'),
+              ),
           ],
         ),
       ),

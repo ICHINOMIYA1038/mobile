@@ -56,7 +56,8 @@ class ApiClient {
   }
 
   Future<void> _createUser() async {
-    final res = await _http.post(Uri.parse('$baseUrl/api/v1/users'), headers: {'content-type': 'application/json'});
+    // 初回起動はここで止まると読み込みの表示から進めないので、打ち切って再試行の画面を出す
+    final res = await _http.post(Uri.parse('$baseUrl/api/v1/users'), headers: {'content-type': 'application/json'}).timeout(const Duration(seconds: 30));
     if (res.statusCode != 201) throw ApiException(res.statusCode, 'create_user_failed');
     final j = jsonDecode(res.body) as Map<String, dynamic>;
     await _saveToken(j['token'] as String, j['userId'] as String);
@@ -86,7 +87,7 @@ class ApiClient {
     final req = http.Request(method, Uri.parse('$baseUrl$path'))..headers.addAll(_headers);
     if (body != null) req.body = jsonEncode(body);
     final streamed = await _http.send(req).timeout(timeout);
-    final res = await http.Response.fromStream(streamed);
+    final res = await http.Response.fromStream(streamed).timeout(timeout);
     if (res.statusCode == 401 && !retried) {
       await forgetUser();
       await _createUser();
