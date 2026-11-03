@@ -27,6 +27,8 @@ class PurchaseService {
   static Future<Offerings?> Function()? offeringsForTest;
   @visibleForTesting
   static Future<void> Function(Package)? purchaseForTest;
+  @visibleForTesting
+  static Future<EntitlementInfo?> Function()? proEntitlementForTest;
 
   static Future<void> ensureConfigured(String appUserId) async {
     if (!isAvailable) return;
@@ -64,6 +66,16 @@ class PurchaseService {
       }
       rethrow;
     }
+  }
+
+  /// 今の Pro の権利。「設定」アプリで解約して戻ってきたときに古い内容を見せないよう、毎回取り直す
+  static Future<EntitlementInfo?> proEntitlement(String appUserId) async {
+    if (proEntitlementForTest != null) return proEntitlementForTest!();
+    if (!isAvailable) return null;
+    await ensureConfigured(appUserId);
+    await Purchases.invalidateCustomerInfoCache();
+    final info = await Purchases.getCustomerInfo();
+    return info.entitlements.active[AppConfig.proEntitlementId];
   }
 
   /// Guideline 3.1.1: 明示的な「購入を復元」ボタンからのみ呼ぶ。

@@ -12,6 +12,17 @@ import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/readable.dart';
 
+/// 解約済みの Pro の案内。支払いの問題で更新が止まっているときは解約ではないので出さない
+String? proCancelNotice(EntitlementInfo? pro, DateTime now) {
+  if (pro == null || pro.willRenew || pro.billingIssueDetectedAt != null) return null;
+  final until = DateTime.tryParse(pro.expirationDate ?? '')?.toUtc();
+  if (until == null || !until.isAfter(now.toUtc())) return null;
+  final minutes = until.difference(now.toUtc()).inMinutes;
+  final days = (minutes / Duration.minutesPerDay).ceil().clamp(1, 1 << 30);
+  final jst = until.add(const Duration(hours: 9));
+  return '解約済みです。Pro はあと $days 日（${jst.month}月${jst.day}日まで）使えます。';
+}
+
 /// Pro（月額の自動更新サブスクリプション）の案内。価格は RevenueCat の Offerings から出す。
 /// Pro でなくても全章・過去問・図解・復習を使える。Pro で変わるのは、広告が出なくなること・1日に AI と話せる回数・
 /// Pro だけの学習ツール（苦手分析と学習プラン・模擬試験）。
@@ -42,13 +53,37 @@ class _ProScreenState extends State<ProScreen> {
   /// App Store の応答待ちは含めない（応答が来ないと画面から出られなくなる）
   bool _confirming = false;
   String? _error;
+  String? _cancelNotice;
+  late final AppLifecycleListener _lifecycle;
 
   String get _userId => AppScope.read(context).api.userId ?? '';
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    // 解約の手続きは「設定」アプリで行うので、戻ってきたら読み直す
+    _lifecycle = AppLifecycleListener(onResume: _loadCancelNotice);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _load();
+      await _loadCancelNotice();
+    });
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  /// 取れなければ案内を出さないだけにする（Pro の利用には関係しない）
+  Future<void> _loadCancelNotice() async {
+    if (!mounted || AppScope.read(context).me?['pro'] != true) return;
+    try {
+      final pro = await PurchaseService.proEntitlement(_userId).timeout(const Duration(seconds: 10));
+      if (mounted) setState(() => _cancelNotice = proCancelNotice(pro, DateTime.now()));
+    } catch (_) {
+      // 前の表示のままにする
+    }
   }
 
   Future<void> _load() async {
@@ -236,7 +271,18 @@ class _ProScreenState extends State<ProScreen> {
             const _Line('教材・過去問・図解・復習は、Pro でなくてもすべて使えます。'),
             const SizedBox(height: 20),
             if (isPro)
-              const _Box(child: Text('いまは Pro です。ありがとうございます。', style: TextStyle(fontWeight: FontWeight.w700, color: Palette.success)))
+              _Box(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('いまは Pro です。ありがとうございます。', style: TextStyle(fontWeight: FontWeight.w700, color: Palette.success)),
+                    if (_cancelNotice != null) ...[
+                      const SizedBox(height: 6),
+                      Text(_cancelNotice!, key: const Key('pro-cancel-notice'), style: const TextStyle(height: 1.6, color: Palette.ink)),
+                    ],
+                  ],
+                ),
+              )
             else if (_loading)
               const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
             else if (pro != null)
