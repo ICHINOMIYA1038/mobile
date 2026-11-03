@@ -6,9 +6,9 @@
 | Firebase のアプリ登録 | 済（`ichinomiya-apps`） |
 | アイコン | 済（`tool/make_icon.py`） |
 | カタログ API | 本番で稼働（gikyoku_tosyokan #594） |
-| プライバシーポリシー | サイトの PR に追記 |
+| プライバシーポリシー | gikyoku_tosyokan #595（未マージ） |
 | ASC のアプリ登録 | 未（API では作れないのでオーナーの操作） |
-| スクリーンショット | 未 |
+| スクリーンショット | 済（`docs/screenshots`、iPhone 6.9 インチ 3 枚。`tool/store_compose.py`） |
 | 実機の確認 | 未 |
 
 対応端末は iPhone のみ（`TARGETED_DEVICE_FAMILY = 1`）。
