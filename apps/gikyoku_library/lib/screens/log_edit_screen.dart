@@ -19,15 +19,13 @@ class LogEditScreen extends StatefulWidget {
 }
 
 class _LogEditScreenState extends State<LogEditScreen> {
-  late final _group = TextEditingController(text: widget.entry?.group ?? _firstGroup);
+  late final _group = TextEditingController(text: widget.entry?.group);
   late final _venue = TextEditingController(text: widget.entry?.venue);
   late final _note = TextEditingController(text: widget.entry?.note);
   late DateTime _date = widget.entry?.watchedOn ?? DateUtils.dateOnly(DateTime.now());
   late int? _rating = widget.entry?.rating;
   late Play? _play = widget.play;
   TextEditingController? _title;
-
-  String? get _firstGroup => widget.play != null && widget.play!.groups.length == 1 ? widget.play!.groups.first : null;
 
   @override
   void dispose() {
@@ -110,10 +108,7 @@ class _LogEditScreenState extends State<LogEditScreen> {
               if (q.isEmpty) return const Iterable<Play>.empty();
               return plays.where((p) => p.title.toLowerCase().contains(q) || p.author.toLowerCase().contains(q)).take(8);
             },
-            onSelected: (p) => setState(() {
-              _play = p;
-              if (_group.text.isEmpty && p.groups.length == 1) _group.text = p.groups.first;
-            }),
+            onSelected: (p) => setState(() => _play = p),
             optionsViewBuilder: (context, onSelected, options) => Align(
               alignment: Alignment.topLeft,
               child: Material(
@@ -151,6 +146,22 @@ class _LogEditScreenState extends State<LogEditScreen> {
           ),
           const SizedBox(height: 8),
           TextField(controller: _group, decoration: const InputDecoration(labelText: '劇団・団体', border: border)),
+          // 同じ作品を別の劇団が上演することがあるので、自動では入れない
+          if (_play != null && _play!.groups.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            const Text('この作品を上演した劇団（押すと入ります）', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
+            Wrap(
+              spacing: 6,
+              children: [
+                for (final g in _play!.groups.take(8))
+                  ActionChip(
+                    key: Key('group-chip-$g'),
+                    label: Text(g),
+                    onPressed: () => setState(() => _group.text = g),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 16),
           TextField(controller: _venue, decoration: const InputDecoration(labelText: '劇場', border: border)),
           const SizedBox(height: 16),

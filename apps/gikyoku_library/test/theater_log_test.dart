@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 final _catalog = Catalog(
   generatedAt: DateTime.utc(2026, 11, 4),
   categories: const [],
-  plays: const [Play(id: 7, title: '赤鬼', author: '野田秀樹', groups: ['ある劇団'])],
+  plays: const [Play(id: 7, title: '赤鬼', author: '野田秀樹', groups: ['ある劇団', '別の劇団'])],
 );
 
 void main() {
@@ -50,6 +50,32 @@ void main() {
     expect(log.entries, isEmpty);
   });
 
+  testWidgets('上演した劇団が 1 つの作品でも、劇団を自動で入れない', (tester) async {
+    final log = TheaterLog();
+    final one = Catalog(
+      generatedAt: DateTime.utc(2026, 11, 4),
+      categories: const [],
+      plays: const [Play(id: 8, title: '一つだけ', author: '作者', groups: ['唯一の劇団'])],
+    );
+    await tester.pumpWidget(
+      AppScope(
+        catalog: one,
+        shortlist: Shortlist(),
+        log: log,
+        child: MaterialApp(theme: buildTheme(), home: const LogScreen()),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('log-add')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('log-title')), '一つ');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('作者'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('log-save')));
+    await tester.pumpAndSettle();
+    expect(log.entries.single.group, isNull);
+  });
+
   testWidgets('自由入力でも作品からでも記録でき、作品を選ぶと台本へつながる', (tester) async {
     final log = TheaterLog();
     await tester.pumpWidget(
@@ -74,13 +100,16 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('野田秀樹'));
     await tester.pumpAndSettle();
+    expect(find.text('別の劇団'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('group-chip-別の劇団')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('star-5')));
     await tester.pump();
     await tester.tap(find.byKey(const Key('log-save')));
     await tester.pumpAndSettle();
 
     expect(log.entries.single.playId, 7);
-    expect(log.entries.single.group, 'ある劇団');
+    expect(log.entries.single.group, '別の劇団');
     expect(log.entries.single.rating, 5);
     expect(find.byKey(const Key('log-to-play')), findsOneWidget);
     expect(find.textContaining('これまで 1 本'), findsOneWidget);
