@@ -87,6 +87,9 @@ App Store の「説明」と同じ本文を使用してよい。Play では見�
 ## 審査・提出時の注意
 
 - 審査メモは `docs/app-store-submission.md` の「審査メモ」節を使う。
-- スクリーンショットは未整備。用意する場合は takken_simple の `tool/screenshots.sh` を参考に、
-  ホーム画面・生成画面（設定）・お題結果画面・お気に入り画面の4枚程度を想定。
+- アイコン: `icon/source/icon.json` を `python scripts/icon/make_text_icon.py apps/etude_generator/icon/source/icon.json`
+  で `icon/icon.png` にし、`dart run flutter_launcher_icons`（2026-10-24 に文字が主役のデザインへ変更。Android は未反映）。
+- スクリーンショット: `./tool/screenshots.sh` で iPhone、`./tool/screenshots.sh "iPad Pro 13-inch (M4)" screenshots_ipad`
+  で iPad を撮り、リポジトリのルートで `node scripts/store_compose/compose.mjs apps/etude_generator` を実行すると
+  `ios/fastlane/screenshots/ja/` に見出し・バッジつきの画像ができる。文言は `tool/store_compose/slots.mjs`。
 - プロモーション用テキストとキーワードは審査を通さず後から変更できるので、公開後に反応を見て調整可。

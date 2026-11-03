@@ -32,6 +32,14 @@ final class AudioSpectrumAnalyzer {
     private static let windowSize = 16384
     private static let hopSize = windowSize / 2
 
+    /// FFT のパワー(片側ビンの |X|² の和)を、時間領域の平均パワー(RMS²)に戻す係数。
+    /// vDSP の実数 FFT は真の DFT の2倍の値を返す(|X|² は4倍)。片側の和は Parseval で
+    /// N/2·Σ(x·w)² = N²/2·mean(w²)·RMS²、hann(.hanningDenormalized)の mean(w²) は 3/8。
+    /// 4 × N²/2 × 3/8 = 0.75·N²(N=16384 で 83.0dB)。1.1.1 まではこれで割っておらず、
+    /// 結果が RMS 経路(InstantLevelMeter・ImpulseAnalyzer)より約83dB大きかった。
+    /// Dart 側の保存済みの記録の換算(LevelScale)も同じ係数を使う。
+    static let fftPowerScale = 0.75 * Double(windowSize) * Double(windowSize)
+
     private let fft: vDSP.FFT<DSPSplitComplex>
     private let window: [Float]
     private let bandBinRanges: [ClosedRange<Int>]
@@ -41,7 +49,8 @@ final class AudioSpectrumAnalyzer {
     private let sampleRate: Double
     private let lock = NSLock()
     private var pendingSamples: [Float] = []
-    private var latestRms: Float = 0
+    /// 直近のFFT窓のA特性レベル(結果の時系列と同じ値)。最初の窓が揃うまでは nil。
+    private var latestFrameDb: Double?
 
     private var bandPowerSum: [Double]
     private var bandPeakDb: [Double]
@@ -108,12 +117,8 @@ final class AudioSpectrumAnalyzer {
         guard frameLength > 0 else { return }
         let samples = UnsafeBufferPointer(start: channelData[0], count: frameLength)
 
-        var rms: Float = 0
-        vDSP_rmsqv(samples.baseAddress!, 1, &rms, vDSP_Length(frameLength))
-
         lock.lock()
         pendingSamples.append(contentsOf: samples)
-        latestRms = rms
         lock.unlock()
     }
 
@@ -133,12 +138,12 @@ final class AudioSpectrumAnalyzer {
         }
     }
 
-    /// 直近バッファのRMSから求めた簡易dB値(ライブメーター用、A特性補正なし)。
-    var latestOverallDb: Double {
+    /// ライブメーター用の値。結果(Leq・時系列)と同じ物差しにするため、直近のFFT窓の
+    /// A特性レベルをそのまま返す(以前は A特性なしの RMS で、結果と物差しが違っていた)。
+    var latestOverallDb: Double? {
         lock.lock()
-        let rms = latestRms
-        lock.unlock()
-        return dbFromPower(Double(rms) * Double(rms))
+        defer { lock.unlock() }
+        return latestFrameDb
     }
 
     func finalizeResult() -> Result {
@@ -167,8 +172,9 @@ final class AudioSpectrumAnalyzer {
         )
     }
 
+    /// 帯域パワー(FFT のビンの和)→ dB。fftPowerScale で割って RMS 経路と同じ物差しにする。
     private func dbFromPower(_ power: Double) -> Double {
-        10 * log10(max(power, 1e-12)) + Self.displayOffsetDb
+        10 * log10(max(power / Self.fftPowerScale, 1e-12)) + Self.displayOffsetDb
     }
 
     private func processFrame(_ rawSamples: [Float]) {
@@ -220,6 +226,7 @@ final class AudioSpectrumAnalyzer {
         if overallDb < overallMinDb { overallMinDb = overallDb }
         let t = Double(samplesConsumed) / sampleRate
         timeSeries.append(TimeSeriesPoint(t: t, db: overallDb))
+        latestFrameDb = overallDb
         samplesConsumed += Self.hopSize
         frameCount += 1
         lock.unlock()

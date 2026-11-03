@@ -55,6 +55,7 @@ await AppInsights.recordError(error, stackTrace, reason: '問題データの読�
 - **デバッグビルドは計測しない。** 開発中のセッションが本番の DAU や継続率に
   混ざらないよう、`kDebugMode` では収集を無効化します。実機で計測の実装を
   確認したいときだけ `initialize(collectInDebug: true)` を使ってください。
+iOS シミュレータでは release / profile ビルドでも送りません（`collectInDebug: true` のときだけ送ります）。
 - **イベント名は debug ビルドの assert で検証されます。** GA4 は規約違反の
   イベントをエラーではなく無言の破棄で扱うため、気付けるようにしています。
 

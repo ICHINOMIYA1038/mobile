@@ -34,3 +34,18 @@ flutter test
 - 出題途中で戻るときに確認ダイアログ。最初の1問に答えた時点で「今日学習した」と記録
 - 1問だけの苦手復習で「満点クリア」バッジが出ていた → 5問以上に
 - 問題データ: chem-243 と chem-269 が同じ設問文だったので chem-243 を言い換え、コロイド粒子径の説明を 1〜100nm に統一
+
+## 2026-10-24 追記: 計測（Firebase）を入れた
+
+- `app_insights` を配線した（Firebase Analytics・Crashlytics。Firebase の `ichinomiya-apps` にアプリを登録済み）。計測のために ATT は求めない（IDFA を使わない）
+- プライバシーポリシーを更新した: nullstead.com の `/apps/neko-chemistry/privacy`（nullstead-web）。「いかなる情報も収集しない」「分析SDKは組み込んでいない」「サーバー通信を一切行わない」などの記述を直した
+- アプリ側の `PrivacyInfo.xcprivacy` は変えない（Firebase の SDK が自分のマニフェストで収集データを申告する。sound_shield と同じ扱い）
+
+**審査に出す前にやること（オーナー）**
+1. App Store Connect →「App のプライバシー」に次を足す（[docs/analytics.md](../../../docs/analytics.md) の表のとおり。すべて「ユーザーに紐付けない」「トラッキング: いいえ」）:
+   - 識別子 → デバイスID: 分析
+   - 使用状況データ → 製品の操作: 分析
+   - 診断 → クラッシュデータ・パフォーマンスデータ: 分析
+2. （広告は無いので AdMob の作業は無い）
+3. プライバシーポリシーの更新（nullstead-web）が本番に出ていることを確かめる
+

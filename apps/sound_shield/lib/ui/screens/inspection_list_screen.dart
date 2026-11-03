@@ -38,7 +38,7 @@ class InspectionListScreen extends StatelessWidget {
             }
             final scored = [
               for (final i in list) (i, const InspectionScorer().score(i)),
-            ]..sort((a, b) => b.$2.score.compareTo(a.$2.score));
+            ]..sort((a, b) => InspectionScore.compareByScore(a.$2, b.$2));
             return ListView(
               padding: const EdgeInsets.all(20),
               children: [
@@ -62,7 +62,7 @@ class InspectionListScreen extends StatelessWidget {
                       leading: ScoreChip(score: score),
                       title: Text(inspection.name),
                       subtitle: Text(
-                        '${score.score}点 ・ ${score.wall.label}'
+                        '${score.isEvaluated ? '${score.score}点' : '評価なし'} ・ ${score.wall.label}'
                         '${score.weakest != null ? ' ・ 弱点: ${score.weakest!.label}' : ''}',
                         style: TextStyle(color: scheme.outline),
                       ),
@@ -159,10 +159,10 @@ class _CompareTable extends StatelessWidget {
                 ),
                 DataCell(
                   Text(
-                    '${score.score}',
+                    score.scoreText,
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: scoreColor(context, score.score),
+                      color: inspectionScoreColor(context, score),
                     ),
                   ),
                 ),

@@ -79,6 +79,38 @@ class MeasurementResult {
     'timeSeries': timeSeries.map((p) => p.toJson()).toList(),
   };
 
+  /// 絶対値の dB(全体・帯域・時系列)をすべて [deltaDb] ずらした写し。保存済みの記録を
+  /// 新しい物差しに換算するのに使う。ネイティブが frameCount 0 のときに返す空の結果
+  /// (値がすべて 0 で dB ではない)はそのまま返す。
+  MeasurementResult shiftLevels(double deltaDb) {
+    final isEmptyResult =
+        timeSeries.isEmpty &&
+        overallLeqDb == 0 &&
+        overallPeakDb == 0 &&
+        overallMinDb == 0;
+    if (isEmptyResult) return this;
+    return MeasurementResult(
+      durationSeconds: durationSeconds,
+      overallLeqDb: overallLeqDb + deltaDb,
+      overallPeakDb: overallPeakDb + deltaDb,
+      overallMinDb: overallMinDb + deltaDb,
+      bands: [
+        for (final b in bands)
+          BandLevel(
+            centerHz: b.centerHz,
+            leqDb: b.leqDb + deltaDb,
+            peakDb: b.peakDb + deltaDb,
+            minDb: b.minDb + deltaDb,
+          ),
+      ],
+      soundLabels: soundLabels,
+      timeSeries: [
+        for (final p in timeSeries) TimeSeriesPoint(t: p.t, db: p.db + deltaDb),
+      ],
+      soundTimeline: soundTimeline,
+    );
+  }
+
   /// 帯域のパワー合算から全体レベルを求める(シミュレーターの再計算用)。
   static double overallFromBands(Iterable<double> bandDbs) {
     var power = 0.0;

@@ -2,6 +2,9 @@ import '../models/countermeasure.dart';
 import '../models/impulse_result.dart';
 import '../models/inspection.dart';
 
+/// 壁の推定の文に添える但し書き(ノックは叩いた所の板の裏までしかわからない)。
+const _wallEstimateNote = '叩いた所の板の裏までの音からの目安で、壁の厚さや遮音の等級を確かめたものではありません。';
+
 /// 壁の重さの推定。ノック音の「余韻の長さ」と「低域の共振の強さ」で分ける。
 ///
 /// 根拠: 石膏ボード+空洞の軽量壁は板が太鼓のように共振し、低く(数百Hz以下)
@@ -12,9 +15,15 @@ import '../models/inspection.dart';
 /// (`tool/impulse_lab` で再現可)。実際の壁での閾値調整は実機で行うこと。
 /// 絶対的な閾値は端末・叩き方で動くので、判定は3段階にとどめ、SNRが低い場合は判定しない。
 enum WallEstimate {
-  heavy('重い壁(RC・厚壁相当)', '短く詰まった音で余韻がほぼありません。遮音性は高めです。'),
-  medium('中程度の壁', '一般的な間仕切り壁相当です。'),
-  light('軽い壁(石膏ボード・中空壁相当)', '低く響いて余韻が残る音。板が共振する中空の壁で、話し声が通りやすい構造です。'),
+  heavy(
+    '重い壁に近い音',
+    '短く詰まった音で余韻がほぼなく、RC・厚い壁に近い音です。$_wallEstimateNote',
+  ),
+  medium('中程度の壁に近い音', '一般的な間仕切り壁に近い音です。$_wallEstimateNote'),
+  light(
+    '軽い壁に近い音',
+    '低く響いて余韻が残り、石膏ボードなど中が空洞の壁に近い音です。$_wallEstimateNote',
+  ),
   unknown('判定できず', 'ノック音が小さすぎました。もう少し強めに叩いてください。');
 
   const WallEstimate(this.label, this.description);
@@ -71,16 +80,44 @@ class InspectionScore {
     required this.components,
     required this.wall,
     required this.rt60,
-    required this.measuredSteps,
+    required this.takenSteps,
+    required this.evaluatedSteps,
+    this.notes = const [],
   });
 
   final int score;
   final List<ScoreComponent> components;
   final WallEstimate wall;
   final double? rt60;
-  final int measuredSteps;
+  /// 測った項目の数(評価できたかどうかに関わらず、結果が保存されているステップ)。
+  final int takenSteps;
+
+  /// 点に入れた(評価できた)項目の数。
+  final int evaluatedSteps;
+
+  /// 計測したが評価できなかった項目の案内(点にも「評価できた項目」にも入れていない)。
+  final List<String> notes;
+
+  /// 評価できた項目が1つも無い(窓際だけ測った、など)ときは点を出さない。
+  bool get isEvaluated => evaluatedSteps > 0;
+
+  /// 画面・PDF に出す項目の数。測ったのに評価できなかった項目があれば、評価できた数も添える。
+  String get stepsText {
+    final taken = '測った項目 $takenSteps/${InspectionStep.values.length}';
+    return takenSteps == evaluatedSteps ? taken : '$taken(評価できたのは$evaluatedSteps)';
+  }
+
+  /// 一覧・PDF の「スコア順」。点の高い順で、評価できた項目が無い記録(点が「—」)は後ろへ。
+  static int compareByScore(InspectionScore a, InspectionScore b) {
+    if (a.isEvaluated != b.isEvaluated) return a.isEvaluated ? -1 : 1;
+    return b.score.compareTo(a.score);
+  }
+
+  /// 画面・PDF に出す点。評価できた項目が無ければ「—」。
+  String get scoreText => isEvaluated ? '$score' : '—';
 
   String get grade {
+    if (!isEvaluated) return '—';
     if (score >= 80) return 'A';
     if (score >= 65) return 'B';
     if (score >= 50) return 'C';
@@ -89,6 +126,7 @@ class InspectionScore {
   }
 
   String get gradeLabel {
+    if (!isEvaluated) return '評価できる項目がありません';
     switch (grade) {
       case 'A':
         return '静かな部屋';
@@ -122,19 +160,26 @@ class InspectionScore {
 }
 
 /// 内見診断の採点。未計測ステップは減点しない(ただしスコア表示時に
-/// 「n/5項目」と明示する)。
+/// 「測った項目 n/5」と明示する)。
+///
+/// 窓際・隣室側は部屋の中央との差で採点するので、中央が無いときは評価できない。
+/// 手叩きで残響が出なかったときも評価できない。どちらも減点0(=良い)とは扱わず、
+/// 「評価できた項目」に数えず、[InspectionScore.notes] に案内を入れる。
 class InspectionScorer {
   const InspectionScorer();
 
   static const ambientQuietDb = 40.0;
 
+  static const needsAmbientNote = '窓際・隣室側は、部屋の中央を測ると評価できます(中央との差で採点します)。';
+  static const clapRetryNote = '手叩きの残響を測れませんでした。静かにして手を1回強めに叩き、測り直してください。';
+
   InspectionScore score(Inspection inspection) {
     final components = <ScoreComponent>[];
-    var measured = 0;
+    var evaluated = 0;
 
     final ambient = inspection.ambient;
     if (ambient != null) {
-      measured++;
+      evaluated++;
       final over = ambient.overallLeqDb - ambientQuietDb;
       final penalty = (over * 1.5).clamp(0.0, 30.0);
       components.add(
@@ -149,12 +194,16 @@ class InspectionScorer {
       );
     }
 
+    final notes = <String>[];
+    if (ambient == null &&
+        (inspection.window != null || inspection.neighbor != null)) {
+      notes.add(needsAmbientNote);
+    }
+
     final window = inspection.window;
-    if (window != null) {
-      measured++;
-      final delta = ambient == null
-          ? 0.0
-          : window.overallLeqDb - ambient.overallLeqDb;
+    if (window != null && ambient != null) {
+      evaluated++;
+      final delta = window.overallLeqDb - ambient.overallLeqDb;
       final penalty = ((delta - 2) * 3).clamp(0.0, 20.0);
       final kind = window.highShare > window.lowShare ? '高音中心(隙間・ガラス)' : '低音中心(交通・構造)';
       components.add(
@@ -162,9 +211,7 @@ class InspectionScorer {
           key: 'window',
           label: '窓からの音',
           penalty: penalty,
-          detail: ambient == null
-              ? '${window.overallLeqDb.round()}dB'
-              : '中央より${delta >= 0 ? '+' : ''}${delta.round()}dB ・ $kind',
+          detail: '中央より${delta >= 0 ? '+' : ''}${delta.round()}dB ・ $kind',
           route: NoiseRoute.window,
         ),
       );
@@ -172,7 +219,7 @@ class InspectionScorer {
 
     final wall = WallEstimate.fromKnock(inspection.knock);
     if (inspection.knock != null) {
-      measured++;
+      evaluated++;
       final penalty = switch (wall) {
         WallEstimate.heavy => 0.0,
         WallEstimate.medium => 8.0,
@@ -191,11 +238,10 @@ class InspectionScorer {
     }
 
     final rt60 = inspection.clap?.rt60;
-    if (inspection.clap != null) {
-      measured++;
-      final penalty = rt60 == null
-          ? 0.0
-          : rt60 < 0.5
+    if (inspection.clap != null && rt60 == null) notes.add(clapRetryNote);
+    if (rt60 != null) {
+      evaluated++;
+      final penalty = rt60 < 0.5
           ? 0.0
           : rt60 < 0.8
           ? 3.0
@@ -207,28 +253,22 @@ class InspectionScorer {
           key: 'reverb',
           label: '部屋の響き',
           penalty: penalty,
-          detail: rt60 == null
-              ? '測定できず'
-              : '残響 ${rt60.toStringAsFixed(1)}秒${rt60 >= 0.8 ? '(空室では高めに出ます)' : ''}',
+          detail: '残響 ${rt60.toStringAsFixed(1)}秒${rt60 >= 0.8 ? '(空室では高めに出ます)' : ''}',
         ),
       );
     }
 
     final neighbor = inspection.neighbor;
-    if (neighbor != null) {
-      measured++;
-      final delta = ambient == null
-          ? 0.0
-          : neighbor.overallLeqDb - ambient.overallLeqDb;
+    if (neighbor != null && ambient != null) {
+      evaluated++;
+      final delta = neighbor.overallLeqDb - ambient.overallLeqDb;
       final penalty = ((delta - 2) * 3).clamp(0.0, 15.0);
       components.add(
         ScoreComponent(
           key: 'neighbor',
           label: '隣室・廊下側',
           penalty: penalty,
-          detail: ambient == null
-              ? '${neighbor.overallLeqDb.round()}dB'
-              : '中央より${delta >= 0 ? '+' : ''}${delta.round()}dB',
+          detail: '中央より${delta >= 0 ? '+' : ''}${delta.round()}dB',
           route: NoiseRoute.door,
         ),
       );
@@ -240,7 +280,15 @@ class InspectionScorer {
       components: components,
       wall: wall,
       rt60: rt60,
-      measuredSteps: measured,
+      takenSteps: [
+        inspection.ambient,
+        inspection.window,
+        inspection.knock,
+        inspection.clap,
+        inspection.neighbor,
+      ].where((r) => r != null).length,
+      evaluatedSteps: evaluated,
+      notes: notes,
     );
   }
 }

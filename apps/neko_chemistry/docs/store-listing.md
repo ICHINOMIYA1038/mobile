@@ -26,3 +26,11 @@
 ## 説明
 
 ASC の現行本文をそのまま使用（2026-09-24 時点で実機能と大きな食い違いなし）。
+
+## アイコン・スクリーンショット
+
+- アイコン: `icon/source/icon.json` を `python scripts/icon/make_text_icon.py apps/neko_chemistry/icon/source/icon.json`
+  で `icon/icon.png` にし、`dart run flutter_launcher_icons`（2026-10-24 に文字が主役のデザインへ変更。Android は未反映）。
+- スクリーンショット: `./tool/screenshots.sh` で iPhone、`./tool/screenshots.sh "iPad Pro 13-inch (M4)" screenshots_ipad`
+  で iPad を撮り、リポジトリのルートで `node scripts/store_compose/compose.mjs apps/neko_chemistry` を実行すると
+  `ios/fastlane/screenshots/ja/` に見出し・バッジつきの画像ができる。文言は `tool/store_compose/slots.mjs`。

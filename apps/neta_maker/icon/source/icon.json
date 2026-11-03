@@ -1,0 +1,17 @@
+{
+ "bg": "#5A1A26",
+ "big": {
+  "text": "二つ名",
+  "color": "#F2D27A",
+  "size": 300,
+  "baseline": 590
+ },
+ "band": {
+  "text": "名前で診断",
+  "color": "#E9DCC0",
+  "text_color": "#5A1A26",
+  "size": 120,
+  "y": 736,
+  "h": 200
+ }
+}

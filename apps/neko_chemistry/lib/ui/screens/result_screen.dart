@@ -63,7 +63,7 @@ class ResultScreen extends StatelessWidget {
                       // pop するとホームに戻ってしまう。クイズ画面を積み直す。
                       controller.restart();
                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
+                        MaterialPageRoute(settings: const RouteSettings(name: 'quiz'), 
                           builder: (_) => QuizScreen(
                             key: UniqueKey(),
                             controller: controller,

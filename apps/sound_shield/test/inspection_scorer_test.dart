@@ -78,7 +78,9 @@ void main() {
     expect(score.grade, 'A');
     expect(score.wall, WallEstimate.heavy);
     expect(score.weakest, isNull);
-    expect(score.measuredSteps, 5);
+    expect(score.evaluatedSteps, 5);
+    expect(score.takenSteps, 5);
+    expect(score.stepsText, '測った項目 5/5');
   });
 
   test('窓際が中央より大きく、壁が軽いと弱点が窓になり経路に窓が入る', () {
@@ -132,7 +134,92 @@ void main() {
   test('未計測のステップは減点せず、計測数だけ数える', () {
     final score = scorer.score(_inspection(ambient: _m(38)));
     expect(score.score, 100);
-    expect(score.measuredSteps, 1);
+    expect(score.evaluatedSteps, 1);
+    expect(score.takenSteps, 1);
+    expect(score.stepsText, '測った項目 1/5');
+  });
+
+  test('中央を測っていないと、窓際・隣室側は採点せず測った項目にも数えない', () {
+    // 窓際・隣室側は中央との差で採点する。以前は中央が無いと差を0とみなし、
+    // 減点0(=良い)で「測った項目」にも数えていた。
+    final score = scorer.score(
+      _inspection(
+        window: _m(70, high: 72),
+        knock: _knock(centroid: 900, t20: 0.03, lowShare: 0.4),
+        neighbor: _m(68),
+      ),
+    );
+    expect(score.components.map((c) => c.key), ['wall']);
+    expect(score.evaluatedSteps, 1);
+    expect(score.takenSteps, 3);
+    expect(score.stepsText, '測った項目 3/5(評価できたのは1)');
+    expect(score.notes, [InspectionScorer.needsAmbientNote]);
+  });
+
+  test('スコア順では、評価できた項目が無い記録を後ろへ並べる', () {
+    final none = scorer.score(_inspection(window: _m(70)));
+    final low = scorer.score(_inspection(ambient: _m(60)));
+    final high = scorer.score(_inspection(ambient: _m(38)));
+    // 評価なしの記録は score が 100 のままなので、点だけで並べると先頭に来ていた。
+    expect(none.score, 100);
+    final sorted = [none, low, high]..sort(InspectionScore.compareByScore);
+    expect(sorted, [high, low, none]);
+  });
+
+  test('窓際だけ測ったときは点を出さない', () {
+    final score = scorer.score(_inspection(window: _m(70)));
+    expect(score.isEvaluated, isFalse);
+    // 以前は評価できた数を「0/5項目を計測」と出し、測ったのに測っていないように読めた。
+    expect(score.takenSteps, 1);
+    expect(score.evaluatedSteps, 0);
+    expect(score.stepsText, '測った項目 1/5(評価できたのは0)');
+    expect(score.scoreText, '—');
+    expect(score.grade, '—');
+    expect(score.notes, [InspectionScorer.needsAmbientNote]);
+  });
+
+  test('中央を測っていれば、窓際・隣室側は中央との差で採点し、案内は出さない', () {
+    final score = scorer.score(
+      _inspection(ambient: _m(38), window: _m(48), neighbor: _m(44)),
+    );
+    expect(score.evaluatedSteps, 3);
+    expect(score.notes, isEmpty);
+    expect(score.components.firstWhere((c) => c.key == 'window').penalty, 20);
+    expect(score.components.firstWhere((c) => c.key == 'neighbor').penalty, 12);
+  });
+
+  test('手叩きで残響が出なかったときは採点せず、測り直しを案内する', () {
+    // 以前は「測定できず」で減点0(=最良)、測った項目にも数えていた。
+    final score = scorer.score(
+      _inspection(
+        ambient: _m(38),
+        clap: _knock(centroid: 900, t20: null, rt60: null),
+      ),
+    );
+    expect(score.rt60, isNull);
+    expect(score.components.map((c) => c.key), ['ambient']);
+    expect(score.evaluatedSteps, 1);
+    expect(score.takenSteps, 2);
+    expect(score.notes, [InspectionScorer.clapRetryNote]);
+  });
+
+  test('ノックの判定できずは、これまでどおり5点減点で測った項目に数える', () {
+    final score = scorer.score(
+      _inspection(knock: _knock(centroid: 200, t20: 0.3, snr: 5)),
+    );
+    expect(score.components.single.penalty, 5);
+    expect(score.evaluatedSteps, 1);
+    expect(score.notes, isEmpty);
+  });
+
+  test('壁の判定の文は、遮音や壁の厚さを言い切らない目安の言い方にする', () {
+    for (final w in [WallEstimate.heavy, WallEstimate.medium, WallEstimate.light]) {
+      expect(w.label, endsWith('に近い音'));
+      expect(w.description, contains('目安'));
+      expect(w.description, contains('確かめたものではありません'));
+      expect(w.description, isNot(contains('遮音性は高め')));
+      expect(w.description, isNot(contains('通りやすい構造')));
+    }
   });
 
   test('残響が長い部屋は響きで減点される', () {

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 import 'package:clock/clock.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import 'firebase_options.dart';
 import 'data/ad_service.dart';
 import 'data/favorites_repository.dart';
 import 'data/prompt_generator.dart';
@@ -19,6 +21,8 @@ const appStoreUrl = 'https://apps.apple.com/jp/app/id6794500656';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 計測は失敗してもアプリを止めない作りなので、ここで待って問題ない。
+  await AppInsights.initialize(options: DefaultFirebaseOptions.currentPlatform);
   // タイトル画面は固定高さのColumnで、横向きだと収まりきらない。
   // 他の画面も縦向き前提のレイアウトなので縦に固定する（Info.plistも同様に更新済み）。
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
@@ -54,6 +58,7 @@ class EtudeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorObservers: AppInsights.navigatorObservers,
       title: 'エチュードメーカー',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
@@ -521,7 +526,7 @@ class _GeneratorScreenState extends State<GeneratorScreen> {
               child: const Icon(Icons.bookmark_rounded),
             ),
             onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
+              MaterialPageRoute(settings: const RouteSettings(name: 'favorites'), 
                 builder: (_) => FavoritesScreen(
                   prompts: _favorites,
                   onRemove: _toggleFavorite,
@@ -1051,7 +1056,7 @@ class PromptCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 FilledButton.icon(
                   onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
+                    MaterialPageRoute(settings: const RouteSettings(name: 'role_draw'), 
                       builder: (_) => RoleDrawScreen(prompt: prompt),
                     ),
                   ),
@@ -1366,7 +1371,7 @@ class _RoleDrawScreenState extends State<RoleDrawScreen> {
             const SizedBox(height: 10),
             FilledButton.icon(
               onPressed: () => Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
+                MaterialPageRoute(settings: const RouteSettings(name: 'performance'), 
                   builder: (_) => PerformanceScreen(prompt: widget.prompt),
                 ),
               ),
@@ -1454,7 +1459,7 @@ class _PerformanceScreenState extends State<PerformanceScreen> {
     _timer?.cancel();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
+      MaterialPageRoute(settings: const RouteSettings(name: 'reflection'), 
         builder: (_) => ReflectionScreen(prompt: widget.prompt),
       ),
     );
@@ -1744,7 +1749,7 @@ class ReflectionScreen extends StatelessWidget {
               const SizedBox(height: 20),
               FilledButton.icon(
                 onPressed: () => Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
+                  MaterialPageRoute(settings: const RouteSettings(name: 'role_draw'), 
                     builder: (_) => RoleDrawScreen(prompt: prompt),
                   ),
                 ),
@@ -2237,7 +2242,7 @@ class _FavoriteCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(
+                      MaterialPageRoute(settings: const RouteSettings(name: 'role_draw'), 
                         builder: (_) => RoleDrawScreen(prompt: prompt),
                       ),
                     ),
