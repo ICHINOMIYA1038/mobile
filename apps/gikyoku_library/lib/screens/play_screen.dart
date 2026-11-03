@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app_scope.dart';
 import '../catalog/models.dart';
 import '../theme.dart';
+import 'log_edit_screen.dart';
 
 class PlayScreen extends StatelessWidget {
   const PlayScreen({super.key, required this.play});
@@ -56,6 +57,13 @@ class PlayScreen extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(child: _Stat('上演時間', play.minutesLabel)),
             ],
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            key: const Key('log-this-play'),
+            onPressed: () => LogEditScreen.open(context, play: play),
+            icon: const Icon(Icons.theater_comedy_outlined),
+            label: const Text('この作品を観た'),
           ),
           if (play.readUrl != null) ...[
             const SizedBox(height: 16),

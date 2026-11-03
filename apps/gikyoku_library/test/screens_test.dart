@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gikyoku_library/app_scope.dart';
 import 'package:gikyoku_library/catalog/models.dart';
 import 'package:gikyoku_library/catalog/shortlist.dart';
+import 'package:gikyoku_library/catalog/theater_log.dart';
 import 'package:gikyoku_library/screens/search_screen.dart';
 import 'package:gikyoku_library/screens/shortlist_screen.dart';
 import 'package:gikyoku_library/theme.dart';
@@ -21,6 +22,7 @@ final _catalog = Catalog(
 Widget _wrap(Widget child, Shortlist s) => AppScope(
   catalog: _catalog,
   shortlist: s,
+  log: TheaterLog(),
   child: MaterialApp(theme: buildTheme(), home: Scaffold(body: child)),
 );
 
