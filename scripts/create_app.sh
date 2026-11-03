@@ -136,9 +136,10 @@ awk '/^name:/{print; print "resolution: workspace"; next} {print}' pubspec.yaml 
 mv pubspec.yaml.tmp pubspec.yaml
 
 # --- 計測 ------------------------------------------------------------------
+# 共有の pubspec.lock の版を上げないよう、app_insights と同じ指定にする（上げると Swift パッケージの解決が失敗する）
 flutter pub add \
-  firebase_core \
-  firebase_crashlytics \
+  'firebase_core:^4.13.0' \
+  'firebase_crashlytics:^5.2.7' \
   'app_insights:{"path":"../../packages/app_insights"}'
 
 # 未登録なら iOS / Android アプリを Firebase 側に作ってから設定ファイルを配る。
