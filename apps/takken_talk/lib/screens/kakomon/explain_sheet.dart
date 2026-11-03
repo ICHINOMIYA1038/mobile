@@ -21,7 +21,10 @@ Future<void> showExplainSheet(
   List<Term> glossary = const [],
 }) {
   final state = AppScope.read(context);
-  final thread = ExplainThread.of(questionId)..load(state.api);
+  // 上限の知らせは持ち越さない（日付が変わった・別の画面で Pro になったことがある）。まだ上限なら送ったときにサーバーが止める
+  final thread = ExplainThread.of(questionId)
+    ..limit = null
+    ..load(state.api);
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -69,6 +72,12 @@ class ExplainThread extends ChangeNotifier {
   ExplainThread._(this.questionId);
   static final _cache = <String, ExplainThread>{};
   static ExplainThread of(String questionId) => _cache.putIfAbsent(questionId, () => ExplainThread._(questionId));
+
+  /// 学習データを削除したら、覚えている会話と回数を捨てる（サーバーではもう消えている）
+  static void reset() {
+    _cache.clear();
+    left = null;
+  }
 
   final String questionId;
   final List<ExplainMsg> msgs = [];
@@ -243,11 +252,14 @@ class _ExplainPanelState extends State<_ExplainPanel> {
     });
   }
 
-  Future<void> _ask([String? message]) {
+  Future<void> _ask([String? message]) async {
     FocusScope.of(context).unfocus();
+    final typed = _draft.text;
     _draft.clear();
     _pin = true;
-    return _t.ask(widget.api, message: message, graded: widget.graded, onTurn: widget.onTurn);
+    await _t.ask(widget.api, message: message, graded: widget.graded, onTurn: widget.onTurn);
+    // 上限で送れなかったときは、書いた文を入力欄に戻す
+    if (mounted && _t.limit != null && _draft.text.isEmpty) _draft.text = typed;
   }
 
   @override

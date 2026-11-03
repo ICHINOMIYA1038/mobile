@@ -9,6 +9,8 @@ import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/readable.dart';
 import 'common/parts.dart';
+import 'kakomon/explain_sheet.dart';
+import 'pro/mock_draft.dart';
 import 'pro_screen.dart';
 
 /// 設定（サイトの /takken/settings）: 試験日・呼び名・進め方・アカウント・学習データ。
@@ -134,11 +136,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _wipe() async {
+    final wasPro = AppScope.read(context).me?['pro'] == true;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('学習データを削除しますか', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-        content: const Text('会話・進捗・試験日をすべて削除します。元に戻せません。'),
+        content: Text('会話・進捗・試験日をすべて削除します。元に戻せません。${wasPro ? '\n\nPro の課金は止まりません。削除すると Pro も外れるので、Pro の画面の「購入を復元」で戻してください。解約は App Store のサブスクリプションの画面でできます。' : ''}'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('やめる')),
           TextButton(
@@ -154,14 +157,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _busy = true);
     try {
       await state.api.deleteMe();
+      ExplainThread.reset();
+      await MockDraft.clear();
       await state.afterAccountChange();
       await _load();
       _toast('学習データを削除しました');
+      if (wasPro && mounted) await _offerRestore();
     } catch (e) {
       _toast(errorText(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Pro だった人は新しい匿名の学習者になって Pro が外れる。課金は続いているので、戻し方を見せる
+  Future<void> _offerRestore() async {
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Pro を戻しますか', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        content: const Text('Pro の課金は続いています。Pro の画面の「購入を復元」を押すと、また使えるようになります。', style: TextStyle(height: 1.6)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('あとで')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Pro の画面へ')),
+        ],
+      ),
+    );
+    if (go == true && mounted) await ProScreen.show(context, reason: 'after_delete');
   }
 
   @override

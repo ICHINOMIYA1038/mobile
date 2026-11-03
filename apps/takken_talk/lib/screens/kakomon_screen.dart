@@ -22,10 +22,21 @@ class _KakomonScreenState extends State<KakomonScreen> {
   /// 章ごと（「学ぶ」のカリキュラムの順）・回ごと・科目ごと
   String _by = 'chapter';
 
+  /// タブが見えているか。隠れ→見えを「タブを開いた」とみなして数え直す（ほかの画面で解いた分・データの削除を映す）
+  bool _visible = false;
+
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final visible = Visibility.of(context);
+    if (visible && !_visible && _data != null) _load();
+    _visible = visible;
   }
 
   Future<void> _load() async {

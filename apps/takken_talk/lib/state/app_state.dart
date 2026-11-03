@@ -3,6 +3,9 @@ import 'package:flutter/widgets.dart';
 import '../api/client.dart';
 import '../models/core.dart';
 
+/// 日本時間の日付。1日の回数の区切りはサーバーも日本時間
+String jstDay([DateTime? now]) => (now ?? DateTime.now()).toUtc().add(const Duration(hours: 9)).toIso8601String().substring(0, 10);
+
 /// アプリ全体の状態。いくつもの画面で共有するもの（自分・章の一覧・あとで復習・図のお気に入り・今日の回数）だけを持つ。
 /// 画面ごとのデータは各画面が API から取る。
 class AppState extends ChangeNotifier {
@@ -64,6 +67,16 @@ class AppState extends ChangeNotifier {
       if (quiet) rethrow;
     }
     notifyListeners();
+  }
+
+  /// 裏で取り直す（アプリに戻ったときなど）。失敗しても今の表示のままにする
+  Future<void> refreshQuietly() async {
+    final before = error;
+    try {
+      await refresh(quiet: true);
+    } catch (_) {
+      error = before;
+    }
   }
 
   /// 会話・AIに聞くの返答の最後（done）で届く今日の回数を映す

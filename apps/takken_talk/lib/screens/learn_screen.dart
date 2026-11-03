@@ -70,6 +70,10 @@ class _LearnScreenState extends State<LearnScreen> {
   /// 1日の上限（429/503）。出ているあいだは送れない
   String? _limitMessage;
 
+  /// 止まったときの日付と Pro か。日付が変わる・Pro になると、開き直さなくても送れるように戻す
+  String? _limitDay;
+  bool _limitWasPro = false;
+
   /// 直前の○×の結果。返答の候補を変える（次に何かを送ったら消える）
   String? _lastGrade;
 
@@ -96,6 +100,15 @@ class _LearnScreenState extends State<LearnScreen> {
     super.initState();
     _scroll.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final state = AppScope.of(context);
+    if (_limitMessage == null) return;
+    final becamePro = !_limitWasPro && state.me?['pro'] == true;
+    if (becamePro || _limitDay != jstDay()) WidgetsBinding.instance.addPostFrameCallback((_) => _resumeAfterLimit());
   }
 
   @override
@@ -238,9 +251,9 @@ class _LearnScreenState extends State<LearnScreen> {
 
   // ---------- 送る ----------
 
-  /// 上限で止まっていた会話を、Pro になったら続けられるように戻す（書きかけの文は入力欄に残っている）
-  void _resumeAfterPro() {
-    if (_disposed) return;
+  /// 上限で止まっていた会話を、続けられるように戻す（書きかけの文は入力欄に残っている）
+  void _resumeAfterLimit() {
+    if (_disposed || _limitMessage == null) return;
     setState(() => _limitMessage = null);
     if (_items.isEmpty) _send(const {'start': true});
   }
@@ -281,6 +294,8 @@ class _LearnScreenState extends State<LearnScreen> {
           if (body['message'] != null && _input.text.isEmpty) _input.text = body['message'] as String;
         }
         _limitMessage = e.message ?? '今日はもう話せません。';
+        _limitDay = jstDay();
+        _limitWasPro = state.me?['pro'] == true;
         Funnel.capReached('learn', e.code);
       } else {
         reply.error = e.message ?? '送れませんでした。もう一度試してください。';
@@ -577,7 +592,7 @@ class _LearnScreenState extends State<LearnScreen> {
                 _limitMessage!,
                 tone: Palette.warning,
                 soft: Palette.warningSoft,
-                action: pro ? null : ('Pro で増やす', () => openProFromCap(context, onPro: _resumeAfterPro)),
+                action: pro ? null : ('Pro で増やす', () => openProFromCap(context, onPro: _resumeAfterLimit)),
               ),
             );
           }

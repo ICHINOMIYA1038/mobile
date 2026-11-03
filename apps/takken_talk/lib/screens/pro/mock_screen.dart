@@ -9,6 +9,7 @@ import '../../theme.dart';
 import '../../widgets/readable.dart';
 import '../common/parts.dart';
 import '../pro_screen.dart';
+import 'mock_draft.dart';
 import 'mock_result_screen.dart';
 
 /// 模擬試験（Pro だけ。POST /pro/mock で始め、`POST /pro/mock/<id>` で答えを出す。サイトの src/lib/server/pro.ts）。
@@ -33,6 +34,7 @@ String mockDate(Object? ms) {
 
 class _MockIntroScreenState extends State<MockIntroScreen> {
   List<Map<String, dynamic>>? _history;
+  MockDraft? _draft;
   bool _starting = false;
 
   ApiClient get _api => AppScope.read(context).api;
@@ -41,6 +43,25 @@ class _MockIntroScreenState extends State<MockIntroScreen> {
   void initState() {
     super.initState();
     _loadHistory();
+    _loadDraft();
+  }
+
+  Future<void> _loadDraft() async {
+    final d = await MockDraft.load(_api.userId);
+    if (mounted) setState(() => _draft = d);
+  }
+
+  Future<void> _resume(MockDraft d) async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MockExamScreen(exam: d.exam, draft: d), settings: const RouteSettings(name: 'pro_mock_exam')));
+    if (mounted) {
+      _loadHistory();
+      _loadDraft();
+    }
+  }
+
+  Future<void> _discard() async {
+    await MockDraft.clear();
+    if (mounted) setState(() => _draft = null);
   }
 
   Future<void> _loadHistory() async {
@@ -60,7 +81,10 @@ class _MockIntroScreenState extends State<MockIntroScreen> {
       if (!mounted) return;
       setState(() => _starting = false);
       await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => MockExamScreen(exam: d), settings: const RouteSettings(name: 'pro_mock_exam')));
-      if (mounted) _loadHistory();
+      if (mounted) {
+        _loadHistory();
+        _loadDraft();
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _starting = false);
@@ -79,6 +103,7 @@ class _MockIntroScreenState extends State<MockIntroScreen> {
   @override
   Widget build(BuildContext context) {
     final history = _history;
+    final draft = _draft;
     return Scaffold(
       appBar: AppBar(title: const Text('模擬試験')),
       body: ListView(
@@ -88,6 +113,10 @@ class _MockIntroScreenState extends State<MockIntroScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (draft != null) ...[
+                  _DraftCard(draft: draft, onResume: () => _resume(draft), onDiscard: _discard),
+                  const SizedBox(height: 16),
+                ],
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -148,6 +177,38 @@ class _MockIntroScreenState extends State<MockIntroScreen> {
   }
 }
 
+/// 途中で終わった模擬試験の続き。時間はアプリを閉じているあいだも進む
+class _DraftCard extends StatelessWidget {
+  const _DraftCard({required this.draft, required this.onResume, required this.onDiscard});
+  final MockDraft draft;
+  final VoidCallback onResume;
+  final VoidCallback onDiscard;
+
+  @override
+  Widget build(BuildContext context) {
+    final left = draft.leftSeconds(DateTime.now());
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('途中の模擬試験があります', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Palette.ink)),
+            const SizedBox(height: 4),
+            Text(
+              left > 0 ? '${draft.answeredCount}問答えています。残り時間は約${(left / 60).ceil()}分です。' : '${draft.answeredCount}問答えています。時間が過ぎたので、ここまでの答えで採点します。',
+              style: const TextStyle(fontSize: 14, height: 1.7, color: Palette.ink),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(key: const ValueKey('mock_resume'), onPressed: onResume, child: Text(left > 0 ? '続きから解く' : '採点する')),
+            TextButton(key: const ValueKey('mock_discard'), onPressed: onDiscard, child: const Text('この試験をやめる')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _HistoryRow extends StatelessWidget {
   const _HistoryRow({required this.h, required this.onTap});
   final Map<String, dynamic> h;
@@ -181,12 +242,16 @@ class _HistoryRow extends StatelessWidget {
 }
 
 /// 試験の本体。1問ずつ○×を選ぶ。前へ・次へで行き来でき、「見直し」で番号の一覧から飛べる。
-/// 時間が 0 になったら、そこまでの答えで自動で出す。戻るボタンでは「やめますか」と聞く（答えは残らない）。
+/// 時間が 0 になったら、そこまでの答えで自動で出す。戻るボタンでは「やめますか」と聞く（やめると答えは残らない）。
+/// 答えは選ぶたびに MockDraft として端末に残し、アプリが終了しても入口から続けられる。
 class MockExamScreen extends StatefulWidget {
-  const MockExamScreen({super.key, required this.exam});
+  const MockExamScreen({super.key, required this.exam, this.draft});
 
   /// POST /pro/mock の返り値（id・seconds・passLine・questions）
   final Map<String, dynamic> exam;
+
+  /// 途中から続けるときの記録
+  final MockDraft? draft;
 
   @override
   State<MockExamScreen> createState() => _MockExamScreenState();
@@ -196,8 +261,8 @@ class _MockExamScreenState extends State<MockExamScreen> {
   late final String _id = widget.exam['id'] as String;
   late final int _limit = (widget.exam['seconds'] as num?)?.toInt() ?? 1800;
   late final List<Map<String, dynamic>> _qs = ((widget.exam['questions'] as List?) ?? const []).map((q) => (q as Map).cast<String, dynamic>()).toList();
-  final Map<String, bool?> _answers = {};
-  final _started = DateTime.now();
+  late final Map<String, bool?> _answers = {...?widget.draft?.answers};
+  late final DateTime _started = widget.draft == null ? DateTime.now() : DateTime.fromMillisecondsSinceEpoch(widget.draft!.startedAtMs);
   Timer? _timer;
   int _pos = 0;
   bool _submitting = false;
@@ -210,6 +275,13 @@ class _MockExamScreenState extends State<MockExamScreen> {
   @override
   void initState() {
     super.initState();
+    // 続きからのときは、まだ答えていない最初の問題へ
+    if (widget.draft != null) {
+      final next = _qs.indexWhere((q) => _answers[q['id']] == null);
+      if (next > 0) _pos = next;
+    } else {
+      _saveDraft();
+    }
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() {});
@@ -227,6 +299,13 @@ class _MockExamScreenState extends State<MockExamScreen> {
     super.dispose();
   }
 
+  void _saveDraft() {
+    final userId = AppScope.read(context).api.userId;
+    if (userId == null) return;
+    // 保存に失敗しても試験は止めない
+    MockDraft(userId: userId, exam: widget.exam, startedAtMs: _started.millisecondsSinceEpoch, answers: _answers).save().catchError((_) {});
+  }
+
   void _go(int to) => setState(() => _pos = to.clamp(0, _qs.length - 1));
 
   /// 選んだら少し置いて次へ（最後の問題では進まない）。戻って選び直せる
@@ -234,6 +313,7 @@ class _MockExamScreenState extends State<MockExamScreen> {
     if (_timeUp || _submitting) return;
     final at = _pos;
     setState(() => _answers[_qs[at]['id'] as String] = a);
+    _saveDraft();
     if (at < _qs.length - 1) {
       Future<void>.delayed(const Duration(milliseconds: 280), () {
         if (mounted && _pos == at) _go(at + 1);
@@ -242,7 +322,7 @@ class _MockExamScreenState extends State<MockExamScreen> {
   }
 
   Future<void> _submit({bool auto = false}) async {
-    if (_submitting) return;
+    if (!mounted || _submitting) return;
     if (!auto) {
       final rest = _qs.length - _answered;
       final ok = await showDialog<bool>(
@@ -268,6 +348,7 @@ class _MockExamScreenState extends State<MockExamScreen> {
     try {
       final r = await AppScope.read(context).api.submitMock(_id, answers, _elapsed.clamp(0, _limit));
       _timer?.cancel();
+      await MockDraft.clear();
       AppInsights.logEvent('mock_finish', parameters: {'score': (r['score'] as num?)?.toInt() ?? 0, 'total': (r['total'] as num?)?.toInt() ?? _qs.length, 'passed': r['passed'] == true ? 1 : 0, 'auto': auto ? 1 : 0});
       if (!mounted) return;
       await Navigator.of(context).pushReplacement(MaterialPageRoute<void>(builder: (_) => MockResultScreen(result: r), settings: const RouteSettings(name: 'pro_mock_result')));
@@ -276,6 +357,12 @@ class _MockExamScreenState extends State<MockExamScreen> {
       setState(() => _submitting = false);
       if (e.code == 'pro_required') {
         await ProScreen.show(context, reason: 'mock');
+      } else if (e.status == 404) {
+        // サーバーにこの試験がもう無い（送り直しても通らない）
+        await MockDraft.clear();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('この模擬試験の記録が見つかりませんでした。もう一度始めてください。')));
+        Navigator.of(context).pop();
       } else {
         _sendFailed(e);
       }
@@ -302,7 +389,9 @@ class _MockExamScreenState extends State<MockExamScreen> {
         ],
       ),
     );
-    if (quit == true && mounted) Navigator.of(context).pop();
+    if (quit != true) return;
+    await MockDraft.clear();
+    if (mounted) Navigator.of(context).pop();
   }
 
   /// 見直し: 番号の一覧（答えた・まだ）。押すとその問題へ

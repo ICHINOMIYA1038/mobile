@@ -26,12 +26,16 @@ class ApiException implements Exception {
 /// サイト（shikaku.pairof.jp）の /api/v1 との通信。仕様はサイトのリポジトリの docs/app-api.md。
 /// トークンは匿名の学習者のもの。SharedPreferences に保存し、Authorization: Bearer で送る。
 class ApiClient {
-  ApiClient({String? baseUrl, http.Client? client})
+  ApiClient({String? baseUrl, http.Client? client, this.sseIdleTimeout = const Duration(seconds: 200)})
       : baseUrl = baseUrl ?? AppConfig.apiBase,
         _http = client ?? http.Client();
 
   final String baseUrl;
   final http.Client _http;
+
+  /// 返答の途中で何も届かなくなったら打ち切る時間。切断の通知が来ない切れ方だと、ストリームは終わらない。
+  /// サーバーは AI の呼び出しを 60 秒で打ち切って 2 回までやり直すので、最長の 3 分より長くする
+  final Duration sseIdleTimeout;
   String? _token;
   String? userId;
 
@@ -215,7 +219,7 @@ class ApiClient {
       throw ApiException(res.statusCode, parsed?['error']?.toString() ?? 'http_${res.statusCode}', parsed?['message']?.toString());
     }
     var buffer = '';
-    await for (final chunk in res.stream.transform(utf8.decoder)) {
+    await for (final chunk in res.stream.transform(utf8.decoder).timeout(sseIdleTimeout)) {
       buffer += chunk;
       while (true) {
         final idx = buffer.indexOf('\n\n');

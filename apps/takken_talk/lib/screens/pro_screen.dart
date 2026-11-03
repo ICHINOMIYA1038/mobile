@@ -19,7 +19,7 @@ import '../widgets/readable.dart';
 class ProScreen extends StatefulWidget {
   const ProScreen({super.key, required this.reason});
 
-  /// どこから開いたか（cap = 今日の上限に達した / home_cap = ホームで残り0回 / settings = 設定から / analysis・mock = 学ぶの「Pro の学習ツール」から）
+  /// どこから開いたか（cap = 今日の上限に達した / home_cap = ホームで残り0回 / settings = 設定から / after_delete = 学習データの削除のあと / analysis・mock = 学ぶの「Pro の学習ツール」から）
   final String reason;
 
   static Future<void> show(BuildContext context, {required String reason}) {
@@ -133,10 +133,18 @@ class _ProScreenState extends State<ProScreen> {
   Future<void> _restore() async {
     setState(() => _busy = true);
     try {
-      await PurchaseService.restore(_userId);
+      final info = await PurchaseService.restore(_userId);
+      // 購入が無いと分かっているなら、サーバーの反映を待たない
+      if (info != null && !info.activeSubscriptions.contains(AppConfig.proProductId)) {
+        if (mounted) await _tell('復元できる購入が見つかりませんでした', 'この Apple ID で購入した Pro が見つかりませんでした。購入した Apple ID でサインインしているか確かめてください。');
+        return;
+      }
       final ok = await _waitForPro();
       if (!mounted) return;
-      await _tell(ok ? 'Pro を復元しました' : '復元できる購入が見つかりませんでした', ok ? '広告が出なくなり、1日に AI と話せる回数が増えました。苦手分析と模擬試験も使えます。' : 'この Apple ID で購入した Pro が見つかりませんでした。購入した Apple ID でサインインしているか確かめてください。');
+      await _tell(
+        ok ? 'Pro を復元しました' : '購入を確認しました',
+        ok ? '広告が出なくなり、1日に AI と話せる回数が増えました。苦手分析と模擬試験も使えます。' : 'Pro への切り替えに数分かかることがあります。少し待ってから、もう一度「購入を復元」を押してください。',
+      );
     } catch (e, st) {
       AppInsights.recordError(e, st, reason: 'restore');
       if (mounted) await _tell('復元できませんでした', _why(e));
@@ -153,8 +161,11 @@ class _ProScreenState extends State<ProScreen> {
     final freeCap = (state.me?['freeCap'] as num?)?.toInt() ?? 40;
     final proCap = (state.me?['proCap'] as num?)?.toInt() ?? 100;
     final pro = _pro;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Pro')),
+    // 購入の確認中に閉じると、Pro になったことを呼び出し元（上限で止まった会話など）が受け取れない
+    return PopScope(
+      canPop: !_busy,
+      child: Scaffold(
+      appBar: AppBar(title: const Text('Pro'), automaticallyImplyLeading: !_busy),
       body: Readable(
         child: ListView(
           padding: const EdgeInsets.all(20),
@@ -247,6 +258,7 @@ class _ProScreenState extends State<ProScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
