@@ -51,9 +51,9 @@ void main() {
   testWidgets('しおりを押すと候補に入り、2 作品で比較表が出る。再起動しても残る', (tester) async {
     final s = Shortlist();
     await tester.pumpWidget(_wrap(const SearchScreen(), s));
-    await tester.tap(find.byTooltip('候補に入れる').first);
+    await tester.tap(find.byTooltip('気になる').first);
     await tester.pump();
-    await tester.tap(find.byTooltip('候補に入れる').first);
+    await tester.tap(find.byTooltip('気になる').first);
     await tester.pump();
     expect(s.ids.length, 2);
 

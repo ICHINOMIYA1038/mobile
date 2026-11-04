@@ -17,7 +17,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final repository = CatalogRepository();
     await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: Shortlist(), log: TheaterLog(), auth: AuthService()));
-    await tester.tap(find.text('台本をさがす'));
+    await tester.tap(find.text('台本'));
     await tester.pumpAndSettle();
     await Future<void>.delayed(const Duration(seconds: 4));
     await tester.pumpAndSettle();

@@ -50,7 +50,7 @@ class PlayCard extends StatelessWidget {
                 builder: (context, _) {
                   final on = shortlist.contains(play.id);
                   return IconButton(
-                    tooltip: on ? '候補から外す' : '候補に入れる',
+                    tooltip: on ? '気になるから外す' : '気になる',
                     icon: Icon(on ? Icons.bookmark : Icons.bookmark_border, color: on ? Palette.vermilion : Palette.inkSoft),
                     onPressed: () => shortlist.toggle(play.id),
                   );
