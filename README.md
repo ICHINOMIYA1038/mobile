@@ -73,6 +73,27 @@ Crashlytics）、ストア提出用のfastlaneひな形の配線まで済ませ�
 **ストアのプライバシー申告とプライバシーポリシーには、計測している項目の記載が要ります。**
 書くべき内容は [`docs/analytics.md`](docs/analytics.md) にまとめてあります。
 
+## 資格シリーズの試作アプリ
+
+次の10本は、`packages/shikaku_trial` の画面を共有する iOS 試作版です。教材と API は別リポジトリ `pairof-shikaku` の `feat/qualification-series` にあります。
+
+| 資格ID | 資格 |
+| --- | --- |
+| `fp2` | FP2級 |
+| `fp3` | FP3級 |
+| `itpassport` | ITパスポート |
+| `sg` | 情報セキュリティマネジメント |
+| `fe` | 基本情報技術者 |
+| `kanrigyo` | 管理業務主任者 |
+| `chintai` | 賃貸不動産経営管理士 |
+| `denko2` | 第二種電気工事士（学科） |
+| `boki3` | 日商簿記3級 |
+| `mankan` | マンション管理士 |
+
+新しい資格を同じ試作構成で追加するときは、`scripts/generate_qualification_trials.py` の `EXAMS` に資格名・アイコン文字・色を追加し、`python3 -B scripts/generate_qualification_trials.py --create <資格ID>` を実行します。生成済みの設定は `--check` で確認できます。開発用 API には `--dart-define=API_BASE=<開発サーバーURL>` で接続します。
+
+この10本は調査とコード作成の段階に限り、Firebase へのアプリ登録と計測を行っていません。そのため `scripts/insights-exempt.txt` に理由を記録しています。ストア提出に進む前に、`AGENTS.md` の新規アプリ手順に沿って計測、提出資料、署名を確認してください。
+
 ## 計測
 
 ダウンロード数はストアのコンソール、アプリ内の利用状況は Firebase Analytics、

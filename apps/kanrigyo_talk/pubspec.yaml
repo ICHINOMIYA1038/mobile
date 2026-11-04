@@ -1,0 +1,17 @@
+name: kanrigyo_talk
+resolution: workspace
+description: "管理業務主任者の無料学習アプリ試作版"
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shikaku_trial:
+    path: ../../packages/shikaku_trial
+
+flutter:
+  uses-material-design: true
