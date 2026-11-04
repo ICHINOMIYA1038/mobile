@@ -112,6 +112,19 @@ void main() {
     });
   });
 
+  test('公開の停止をサーバーから読む', () async {
+    var banned = false;
+    final client = MockClient((req) async {
+      if (req.url.path.endsWith('/session')) return _json({'id': 'u1', 'displayName': null, 'banned': banned});
+      return _authRoutes(req);
+    });
+    final auth = await signedIn(client);
+    expect(auth.user!.banned, isFalse);
+    banned = true;
+    await auth.refreshProfile();
+    expect(auth.user!.banned, isTrue);
+  });
+
   group('同期', () {
     TheaterLogEntry entry(String id, {String note = '', List<String> photos = const []}) => TheaterLogEntry(id: id, title: '舞台$id', watchedOn: DateTime(2026, 11, 3), note: note, seat: 'C-1', price: 3000, photos: photos, author: '作者');
     Map<String, dynamic> row(String id, {String note = '', bool deleted = false, String updatedAt = '2026-11-04T00:00:00.000Z', bool hidden = false}) => {

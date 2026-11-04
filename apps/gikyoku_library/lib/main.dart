@@ -54,6 +54,7 @@ class _AppState extends State<App> {
     widget.log.onDirty = _sync.run;
     _lifecycle = AppLifecycleListener(onResume: _sync.run);
     _sync.run();
+    widget.auth.refreshProfile();
     widget.repository.refresh().then((fresh) {
       if (fresh != null && mounted) setState(() => _catalog = fresh);
     });

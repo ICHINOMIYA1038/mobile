@@ -36,9 +36,12 @@ class Pkce {
 }
 
 class AccountUser {
-  const AccountUser(this.id, this.displayName);
+  const AccountUser(this.id, this.displayName, {this.banned = false});
   final String id;
   final String? displayName;
+
+  /// 運営が公開を止めている
+  final bool banned;
 }
 
 class SignInCancelled implements Exception {}
@@ -95,7 +98,7 @@ class AuthService extends ChangeNotifier {
     final res = await _http.post(Uri.parse('$apiUrl/session'), headers: {'authorization': 'Bearer $_access'}).timeout(const Duration(seconds: 20));
     if (res.statusCode != 200) throw StateError('サーバーに接続できませんでした（${res.statusCode}）');
     final j = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
-    await _setUser(AccountUser(j['id'] as String, j['displayName'] as String?));
+    await _setUser(AccountUser(j['id'] as String, j['displayName'] as String?, banned: j['banned'] == true));
   }
 
   Future<void> _setUser(AccountUser u) async {
@@ -128,6 +131,20 @@ class AuthService extends ChangeNotifier {
       return null;
     }
     return _access;
+  }
+
+  /// 公開の停止など、サーバーの状態を読み直す。失敗しても今の状態のまま
+  Future<void> refreshProfile() async {
+    final token = await accessToken();
+    if (token == null) return;
+    try {
+      final res = await _http.post(Uri.parse('$apiUrl/session'), headers: {'authorization': 'Bearer $token'}).timeout(const Duration(seconds: 20));
+      if (res.statusCode != 200) return;
+      final j = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+      await _setUser(AccountUser(j['id'] as String, j['displayName'] as String?, banned: j['banned'] == true));
+    } catch (_) {
+      // 次の起動で読み直す
+    }
   }
 
   Future<void> setDisplayName(String name) async {
