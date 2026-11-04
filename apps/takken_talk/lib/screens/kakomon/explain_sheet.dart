@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../api/client.dart';
+import '../../funnel.dart';
 import '../../models/core.dart';
 import '../../state/app_state.dart';
 import '../../theme.dart';
@@ -18,7 +21,10 @@ Future<void> showExplainSheet(
   List<Term> glossary = const [],
 }) {
   final state = AppScope.read(context);
-  final thread = ExplainThread.of(questionId)..load(state.api);
+  // 上限の知らせは持ち越さない（日付が変わった・別の画面で Pro になったことがある）。まだ上限なら送ったときにサーバーが止める
+  final thread = ExplainThread.of(questionId)
+    ..limit = null
+    ..load(state.api);
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
@@ -66,6 +72,12 @@ class ExplainThread extends ChangeNotifier {
   ExplainThread._(this.questionId);
   static final _cache = <String, ExplainThread>{};
   static ExplainThread of(String questionId) => _cache.putIfAbsent(questionId, () => ExplainThread._(questionId));
+
+  /// 学習データを削除したら、覚えている会話と回数を捨てる（サーバーではもう消えている）
+  static void reset() {
+    _cache.clear();
+    left = null;
+  }
 
   final String questionId;
   final List<ExplainMsg> msgs = [];
@@ -137,10 +149,12 @@ class ExplainThread extends ChangeNotifier {
         }
         notifyListeners();
       }
+      if (reply.error == null && reply.text.isNotEmpty) unawaited(Funnel.chatCompleted('explain'));
     } on ApiException catch (e) {
       if (e.isOverCap) {
         msgs.removeRange(msgs.length - 2, msgs.length);
         limit = e.message ?? '今日はもう話せません。';
+        Funnel.capReached('explain', e.code);
         askedWith = null;
       } else {
         reply.error = e.message ?? '送れませんでした。もう一度試してください。';
@@ -152,6 +166,12 @@ class ExplainThread extends ChangeNotifier {
       if (msgs.contains(reply) && reply.text.isEmpty && reply.error == null) reply.error = '解説を作れませんでした。もう一度押してみてください。';
       notifyListeners();
     }
+  }
+
+  /// Pro になったら、上限で止まっていた送信を戻す
+  void clearLimit() {
+    limit = null;
+    notifyListeners();
   }
 
   /// 失敗した1往復を消して、同じ頼みをもう一度
@@ -232,11 +252,14 @@ class _ExplainPanelState extends State<_ExplainPanel> {
     });
   }
 
-  Future<void> _ask([String? message]) {
+  Future<void> _ask([String? message]) async {
     FocusScope.of(context).unfocus();
+    final typed = _draft.text;
     _draft.clear();
     _pin = true;
-    return _t.ask(widget.api, message: message, graded: widget.graded, onTurn: widget.onTurn);
+    await _t.ask(widget.api, message: message, graded: widget.graded, onTurn: widget.onTurn);
+    // 上限で送れなかったときは、書いた文を入力欄に戻す
+    if (mounted && _t.limit != null && _draft.text.isEmpty) _draft.text = typed;
   }
 
   @override
@@ -368,7 +391,7 @@ class _ExplainPanelState extends State<_ExplainPanel> {
                         if (t.limit != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 8),
-                            child: CapNotice(t.limit!),
+                            child: CapNotice(t.limit!, onPro: t.clearLimit),
                           ),
                       ],
                     ),

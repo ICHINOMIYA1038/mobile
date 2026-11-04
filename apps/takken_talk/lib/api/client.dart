@@ -26,12 +26,16 @@ class ApiException implements Exception {
 /// サイト（shikaku.pairof.jp）の /api/v1 との通信。仕様はサイトのリポジトリの docs/app-api.md。
 /// トークンは匿名の学習者のもの。SharedPreferences に保存し、Authorization: Bearer で送る。
 class ApiClient {
-  ApiClient({String? baseUrl, http.Client? client})
+  ApiClient({String? baseUrl, http.Client? client, this.sseIdleTimeout = const Duration(seconds: 200)})
       : baseUrl = baseUrl ?? AppConfig.apiBase,
         _http = client ?? http.Client();
 
   final String baseUrl;
   final http.Client _http;
+
+  /// 返答の途中で何も届かなくなったら打ち切る時間。切断の通知が来ない切れ方だと、ストリームは終わらない。
+  /// サーバーは AI の呼び出しを 60 秒で打ち切って 2 回までやり直すので、最長の 3 分より長くする
+  final Duration sseIdleTimeout;
   String? _token;
   String? userId;
 
@@ -56,7 +60,8 @@ class ApiClient {
   }
 
   Future<void> _createUser() async {
-    final res = await _http.post(Uri.parse('$baseUrl/api/v1/users'), headers: {'content-type': 'application/json'});
+    // 初回起動はここで止まると読み込みの表示から進めないので、打ち切って再試行の画面を出す
+    final res = await _http.post(Uri.parse('$baseUrl/api/v1/users'), headers: {'content-type': 'application/json'}).timeout(const Duration(seconds: 30));
     if (res.statusCode != 201) throw ApiException(res.statusCode, 'create_user_failed');
     final j = jsonDecode(res.body) as Map<String, dynamic>;
     await _saveToken(j['token'] as String, j['userId'] as String);
@@ -86,7 +91,7 @@ class ApiClient {
     final req = http.Request(method, Uri.parse('$baseUrl$path'))..headers.addAll(_headers);
     if (body != null) req.body = jsonEncode(body);
     final streamed = await _http.send(req).timeout(timeout);
-    final res = await http.Response.fromStream(streamed);
+    final res = await http.Response.fromStream(streamed).timeout(timeout);
     if (res.statusCode == 401 && !retried) {
       await forgetUser();
       await _createUser();
@@ -214,7 +219,7 @@ class ApiClient {
       throw ApiException(res.statusCode, parsed?['error']?.toString() ?? 'http_${res.statusCode}', parsed?['message']?.toString());
     }
     var buffer = '';
-    await for (final chunk in res.stream.transform(utf8.decoder)) {
+    await for (final chunk in res.stream.transform(utf8.decoder).timeout(sseIdleTimeout)) {
       buffer += chunk;
       while (true) {
         final idx = buffer.indexOf('\n\n');

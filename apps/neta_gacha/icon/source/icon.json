@@ -1,0 +1,18 @@
+{
+ "bg": "#FF6B4A",
+ "decor": "<circle cx=\"110\" cy=\"110\" r=\"70\" fill=\"#FFD166\" opacity=\"0.55\"/><circle cx=\"914\" cy=\"110\" r=\"60\" fill=\"#9AE6B4\" opacity=\"0.55\"/><circle cx=\"40\" cy=\"990\" r=\"64\" fill=\"#FFADAD\" opacity=\"0.55\"/><circle cx=\"984\" cy=\"990\" r=\"64\" fill=\"#A0C4FF\" opacity=\"0.55\"/>",
+ "big": {
+  "text": "ネタ",
+  "color": "#FFFFFF",
+  "size": 440,
+  "baseline": 640
+ },
+ "band": {
+  "text": "配信のお題",
+  "color": "#3D2B8F",
+  "text_color": "#FFFFFF",
+  "size": 120,
+  "y": 736,
+  "h": 200
+ }
+}

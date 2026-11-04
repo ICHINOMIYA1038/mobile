@@ -1,11 +1,15 @@
+import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'firebase_options.dart';
 import 'theme/app_colors.dart';
 import 'ui/screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 計測は失敗してもアプリを止めない作りなので、ここで待って問題ない。
+  await AppInsights.initialize(options: DefaultFirebaseOptions.currentPlatform);
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -42,6 +46,7 @@ class NetaMakerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorObservers: AppInsights.navigatorObservers,
       title: 'ネタメーカー',
       debugShowCheckedModeBanner: false,
       // 「魔女の羊皮紙・アンティーク占い師の手帳」という世界観を常に保つため、

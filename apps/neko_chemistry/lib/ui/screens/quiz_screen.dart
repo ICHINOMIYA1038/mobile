@@ -84,7 +84,7 @@ class _QuizScreenState extends State<QuizScreen> {
             if (c.isFinished) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
+                  MaterialPageRoute(settings: const RouteSettings(name: 'result'), 
                     builder: (_) =>
                         ResultScreen(controller: c, accessory: _accessory),
                   ),

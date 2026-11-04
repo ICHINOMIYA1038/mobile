@@ -49,7 +49,7 @@ class InspectionPdf {
     final doc = pw.Document(theme: theme);
     const scorer = InspectionScorer();
     final scored = [for (final i in inspections) (i, scorer.score(i))]
-      ..sort((a, b) => b.$2.score.compareTo(a.$2.score));
+      ..sort((a, b) => InspectionScore.compareByScore(a.$2, b.$2));
 
     doc.addPage(
       pw.MultiPage(
@@ -102,7 +102,7 @@ class InspectionPdf {
         for (final (i, s) in rows)
           [
             i.name,
-            '${s.score}',
+            s.scoreText,
             s.grade,
             for (final k in keys) mark(s, k),
             s.wall.label,
@@ -134,13 +134,13 @@ class InspectionPdf {
                 ),
               ),
               pw.Text(
-                '${s.score}点 ・ ${s.grade} ${s.gradeLabel}',
+                '${s.isEvaluated ? '${s.score}点 ・ ${s.grade} ' : ''}${s.gradeLabel}',
                 style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
               ),
             ],
           ),
           pw.Text(
-            '${_date(i.createdAt)} ・ ${s.measuredSteps}/${InspectionStep.values.length}項目計測'
+            '${_date(i.createdAt)} ・ ${s.stepsText}'
             '${i.memo.isNotEmpty ? ' ・ ${i.memo}' : ''}',
             style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
           ),
@@ -156,6 +156,8 @@ class InspectionPdf {
                 ),
               ],
             ),
+          for (final note in s.notes)
+            pw.Text(note, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
           if (s.weakest != null) ...[
             pw.SizedBox(height: 6),
             pw.Text(

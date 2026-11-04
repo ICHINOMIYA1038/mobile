@@ -4,15 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import '../api/client.dart';
+import '../funnel.dart';
 import '../models/core.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
+import '../widgets/cap_notice.dart';
 import '../widgets/figure/figure_view.dart';
 import '../widgets/question_card.dart';
 import '../widgets/readable.dart';
 import '../widgets/rich_text.dart';
 import 'common/parts.dart';
-import 'pro_screen.dart';
 import 'learn/chapter_sheet.dart';
 import 'learn/learn_models.dart';
 import 'learn/message_report.dart';
@@ -69,6 +70,10 @@ class _LearnScreenState extends State<LearnScreen> {
   /// 1日の上限（429/503）。出ているあいだは送れない
   String? _limitMessage;
 
+  /// 止まったときの日付と Pro か。日付が変わる・Pro になると、開き直さなくても送れるように戻す
+  String? _limitDay;
+  bool _limitWasPro = false;
+
   /// 直前の○×の結果。返答の候補を変える（次に何かを送ったら消える）
   String? _lastGrade;
 
@@ -95,6 +100,15 @@ class _LearnScreenState extends State<LearnScreen> {
     super.initState();
     _scroll.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final state = AppScope.of(context);
+    if (_limitMessage == null) return;
+    final becamePro = !_limitWasPro && state.me?['pro'] == true;
+    if (becamePro || _limitDay != jstDay()) WidgetsBinding.instance.addPostFrameCallback((_) => _resumeAfterLimit());
   }
 
   @override
@@ -237,6 +251,13 @@ class _LearnScreenState extends State<LearnScreen> {
 
   // ---------- 送る ----------
 
+  /// 上限で止まっていた会話を、続けられるように戻す（書きかけの文は入力欄に残っている）
+  void _resumeAfterLimit() {
+    if (_disposed || _limitMessage == null) return;
+    setState(() => _limitMessage = null);
+    if (_items.isEmpty) _send(const {'start': true});
+  }
+
   /// 1ターン送る。shown は自分の吹き出しに出す文（カードで答えたときは出さない）
   Future<void> _send(Map<String, Object?> body, {String? shown, Object? pinTo}) async {
     if (_busy || _chapter == null) return;
@@ -262,6 +283,7 @@ class _LearnScreenState extends State<LearnScreen> {
       }
       if (_disposed) return;
       if (reply.segments.isEmpty && reply.error == null) reply.error = '返答を受け取れませんでした。もう一度送ってください。';
+      if (reply.error == null && body['start'] != true) unawaited(Funnel.chatCompleted('learn'));
     } on ApiException catch (e) {
       if (_disposed) return;
       if (e.isOverCap) {
@@ -272,6 +294,9 @@ class _LearnScreenState extends State<LearnScreen> {
           if (body['message'] != null && _input.text.isEmpty) _input.text = body['message'] as String;
         }
         _limitMessage = e.message ?? '今日はもう話せません。';
+        _limitDay = jstDay();
+        _limitWasPro = state.me?['pro'] == true;
+        Funnel.capReached('learn', e.code);
       } else {
         reply.error = e.message ?? '送れませんでした。もう一度試してください。';
       }
@@ -567,7 +592,7 @@ class _LearnScreenState extends State<LearnScreen> {
                 _limitMessage!,
                 tone: Palette.warning,
                 soft: Palette.warningSoft,
-                action: pro ? null : ('Pro で増やす', () => ProScreen.show(context, reason: 'cap')),
+                action: pro ? null : ('Pro で増やす', () => openProFromCap(context, onPro: _resumeAfterLimit)),
               ),
             );
           }

@@ -11,6 +11,7 @@ import 'screens/review_screen.dart';
 import 'screens/settings_screen.dart';
 import 'state/app_state.dart';
 import 'theme.dart';
+import 'widgets/refresh_on_resume.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,7 +77,7 @@ class _RootState extends State<_Root> {
         ),
       );
     }
-    return const Shell();
+    return const RefreshOnResume(child: Shell());
   }
 }
 

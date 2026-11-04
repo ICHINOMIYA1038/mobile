@@ -1,17 +1,21 @@
 import 'dart:async';
 
+import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'firebase_options.dart';
 import 'data/notification_service.dart';
 import 'data/progress_repository.dart';
 import 'ui/screens/onboarding_screen.dart';
 import 'ui/theme.dart';
 import 'ui/widgets/app_shell.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 計測は失敗してもアプリを止めない作りなので、ここで待って問題ない。
+  await AppInsights.initialize(options: DefaultFirebaseOptions.currentPlatform);
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -42,6 +46,7 @@ class NekoChemistryApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorObservers: AppInsights.navigatorObservers,
       title: '猫と学ぶ高校化学',
       debugShowCheckedModeBanner: false,
       // 時刻ピッカー等の標準ウィジェットを日本語にする。

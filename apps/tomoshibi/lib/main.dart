@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:app_insights/app_insights.dart';
 import 'package:app_links/app_links.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import 'firebase_options.dart';
 import 'navigation_policy.dart';
 import 'purchase_service.dart';
 
@@ -23,7 +25,10 @@ const _startUrl = String.fromEnvironment(
   defaultValue: _homeUrl,
 );
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 計測は失敗してもアプリを止めない作りなので、ここで待って問題ない。
+  await AppInsights.initialize(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const TomoshibiApp());
 }
 
@@ -46,6 +51,7 @@ class TomoshibiApp extends StatelessWidget {
     return MaterialApp(
       title: 'TOMOSHIBI小屋',
       debugShowCheckedModeBanner: false,
+      navigatorObservers: AppInsights.navigatorObservers,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFFC8482D),

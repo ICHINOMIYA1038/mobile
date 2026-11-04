@@ -48,3 +48,7 @@ app.*.map.json
 ios/fastlane/frame_assets/fonts/
 ios/fastlane/screenshots/*/*.png
 ios/fastlane/report.xml
+
+# ストア画像の合成ツールの素材と作業ファイル（tool/screenshots.sh で撮り直せる）
+/tool/store_compose/raw/
+/tool/store_compose/build/

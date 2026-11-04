@@ -124,3 +124,17 @@ ATT（トラッキング許可）のダイアログは表示していません�
 - 画面内・通知・共有ハッシュタグの「配信ネタガチャ」をストア名「ネタガチャ」に統一
 - ストア文言の「NGワード」は実装（6テーマのオン/オフ）と違っていたので「テーマ非表示」に修正
 
+## 2026-10-24 追記: 計測（Firebase）を入れた
+
+- `app_insights` を配線した（Firebase Analytics・Crashlytics。Firebase の `ichinomiya-apps` にアプリを登録済み）。計測のために ATT は求めない（IDFA を使わない）
+- プライバシーポリシーを更新した: nullstead.com の `/apps/neta-gacha/privacy`（nullstead-web）。「いかなる情報も収集しない」「分析SDKは組み込んでいない」などの記述を直した
+- アプリ側の `PrivacyInfo.xcprivacy` は変えない（Firebase の SDK が自分のマニフェストで収集データを申告する。sound_shield と同じ扱い）
+
+**審査に出す前にやること（オーナー）**
+1. App Store Connect →「App のプライバシー」に次を足す（[docs/analytics.md](../../../docs/analytics.md) の表のとおり。すべて「ユーザーに紐付けない」「トラッキング: いいえ」）:
+   - 識別子 → デバイスID: 分析（広告の「サードパーティ広告」と両方にチェック）
+   - 使用状況データ → 製品の操作: 分析
+   - 診断 → クラッシュデータ・パフォーマンスデータ: 分析
+2. AdMob の管理画面で、このアプリを Firebase にリンクする（広告収益が GA4 に入る。任意）
+3. プライバシーポリシーの更新（nullstead-web）が本番に出ていることを確かめる
+

@@ -52,6 +52,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
   /// タブが見えているか。IndexedStack は見えないタブを Visibility で隠すので、隠れ→見えを「タブを開いた」とみなす
   bool _visible = false;
 
+  /// _graded を覚え始めた日。日付が変わったら、アプリを開いたままでも解き直せるようにする
+  String _gradedDay = jstDay();
+
   @override
   void initState() {
     super.initState();
@@ -61,9 +64,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    AppScope.of(context); // アプリに戻って取り直したときにも、日付を確かめる
     final visible = Visibility.of(context);
-    if (visible && !_visible && _lists != null) _load();
+    final opened = visible && !_visible;
+    final newDay = _gradedDay != jstDay();
     _visible = visible;
+    if (!opened && !newDay) return;
+    // タブを開き直したら、前に答えた問題もまた解ける（まちがえた問題が、前の結果のまま残らないように）
+    _graded.clear();
+    _gradedDay = jstDay();
+    if (_lists != null) _load();
   }
 
   Future<void> _load() async {

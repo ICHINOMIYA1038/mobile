@@ -1,0 +1,18 @@
+{
+ "bg": "#FFF4E4",
+ "decor": "<polygon points=\"772,480 512,630 252,480 252,180 512,30 772,180\" fill=\"none\" stroke=\"#F3C99A\" stroke-width=\"26\" opacity=\"0.6\"/><circle cx=\"512\" cy=\"330\" r=\"165\" fill=\"none\" stroke=\"#F3C99A\" stroke-width=\"18\" opacity=\"0.6\"/>",
+ "big": {
+  "text": "化学",
+  "color": "#7A3E14",
+  "size": 420,
+  "baseline": 640
+ },
+ "band": {
+  "text": "猫と510問",
+  "color": "#F08A3C",
+  "text_color": "#FFFFFF",
+  "size": 120,
+  "y": 736,
+  "h": 200
+ }
+}

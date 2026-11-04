@@ -84,7 +84,7 @@ void main() {
     await tester.tap(find.text('設定').last);
     await settle(tester, 3);
     await shot(tester, 'p06_settings');
-    await tester.tap(find.text('1日に AI と話せる回数を増やす'));
+    await tester.tap(find.text('広告をなくす・AI と話せる回数を増やす'));
     await settle(tester, 15);
     await shot(tester, 'p07_pro');
     expect(tester.takeException(), isNull);

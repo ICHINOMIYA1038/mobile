@@ -12,6 +12,10 @@ import 'measuring_screen.dart';
 class CalibrationScreen extends StatefulWidget {
   const CalibrationScreen({super.key});
 
+  static const resetNoticeText =
+      '音の大きさの計算を直したため、以前の校正は使えなくなりました。校正を初期値(±0dB)に戻しました。'
+      '手持ちの騒音計に合わせる場合は、もう一度校正してください。';
+
   @override
   State<CalibrationScreen> createState() => _CalibrationScreenState();
 }
@@ -19,6 +23,18 @@ class CalibrationScreen extends StatefulWidget {
 class _CalibrationScreenState extends State<CalibrationScreen> {
   MeasurementResult? _measured;
   final TextEditingController _reference = TextEditingController();
+
+  /// 1.1.2 で古い校正値を戻したことを、この画面を開いたこの回だけ知らせる。
+  bool? _showResetNotice;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_showResetNotice != null) return;
+    final calibration = AppScope.of(context).calibration;
+    _showResetNotice = calibration.resetNoticePending;
+    if (_showResetNotice!) calibration.dismissResetNotice();
+  }
 
   @override
   void dispose() {
@@ -96,8 +112,30 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
             return ListView(
               padding: const EdgeInsets.all(24),
               children: [
+                if (_showResetNotice ?? false) ...[
+                  Card(
+                    color: scheme.primaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.info_outline, color: scheme.onPrimaryContainer),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              CalibrationScreen.resetNoticeText,
+                              style: TextStyle(color: scheme.onPrimaryContainer),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
                 Text(
-                  'iPhoneのマイクは機種ごとの差が小さいため、既定値でもおおよその目安になります。'
+                  'マイクの感度は機種によって数dB違うことがあります。既定値のままの数字は、同じ端末で測った値どうしを比べる目安です。'
                   '手持ちの騒音計に合わせたい場合は、同じ音を両方で測って差を保存してください。'
                   '校正は騒音計の表示と3段階判定のほか、内見診断の「室内の静けさ」の判定と'
                   '対策の予測値にも反映されます(窓・壁・ドアの差分評価には影響しません)。',

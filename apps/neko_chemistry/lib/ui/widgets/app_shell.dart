@@ -1,3 +1,4 @@
+import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 
 import '../screens/accessory_screen.dart';
@@ -33,13 +34,19 @@ class _AppShellState extends State<AppShell> {
     const SettingsScreen(),
   ];
 
+  /// タブの切り替えは画面遷移にならないので、GA4 の画面名を自分で送る。
+  static const _tabNames = ['home', 'progress', 'accessory', 'glossary', 'settings'];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_index],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (index) => setState(() => _index = index),
+        onDestinationSelected: (index) {
+          setState(() => _index = index);
+          AppInsights.logScreen(_tabNames[index]);
+        },
         indicatorColor: nekoOrange.withValues(alpha: 0.15),
         destinations: const [
           NavigationDestination(
