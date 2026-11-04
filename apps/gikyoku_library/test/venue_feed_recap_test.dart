@@ -84,6 +84,20 @@ void main() {
       });
     });
 
+    testWidgets('未ログインのサイトのコメントには通報だけ出す', (tester) async {
+      await tester.runAsync(() async {
+        await tester.pumpWidget(_scope(TheaterLog(), FeedScreen(api: api([{...row, 'id': 'c1', 'authorId': '', 'rating': null, 'watchedMonth': null}]))));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        await tester.pump();
+        expect(find.text('面白かった'), findsOneWidget);
+        await tester.tap(find.byKey(const Key('review-menu-c1')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        expect(find.text('通報する'), findsOneWidget);
+        expect(find.text('この人をブロック'), findsNothing);
+      });
+    });
+
     testWidgets('空のときは正直に空と伝え、記録へ案内する', (tester) async {
       await tester.runAsync(() async {
         await tester.pumpWidget(_scope(TheaterLog(), FeedScreen(api: api([]))));

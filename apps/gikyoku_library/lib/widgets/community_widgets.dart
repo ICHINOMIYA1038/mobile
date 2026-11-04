@@ -132,7 +132,11 @@ class ReviewTile extends StatelessWidget {
                   tooltip: 'この感想の操作',
                   icon: const Icon(Icons.more_horiz, size: 18),
                   onSelected: (v) => v == 'report' ? _report(context) : _block(context),
-                  itemBuilder: (_) => const [PopupMenuItem(value: 'report', child: Text('通報する')), PopupMenuItem(value: 'block', child: Text('この人をブロック'))],
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(value: 'report', child: Text('通報する')),
+                    // 未ログインで書かれたサイトのコメントには、ブロックする相手がいない
+                    if (r.authorId.isNotEmpty) const PopupMenuItem(value: 'block', child: Text('この人をブロック')),
+                  ],
                 )
               else
                 const SizedBox(height: 40, width: 8),
