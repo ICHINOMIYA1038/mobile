@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gikyoku_library/account/auth_service.dart';
 import 'package:gikyoku_library/catalog/catalog_repository.dart';
 import 'package:gikyoku_library/catalog/shortlist.dart';
 import 'package:gikyoku_library/catalog/theater_log.dart';
@@ -15,7 +16,7 @@ void main() {
     const hold = Duration(seconds: 7);
     final repository = CatalogRepository();
     final shortlist = Shortlist();
-    await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: shortlist, log: TheaterLog()));
+    await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: shortlist, log: TheaterLog(), auth: AuthService()));
     await tester.tap(find.text('台本をさがす'));
     await tester.pumpAndSettle();
     await tester.pumpAndSettle();

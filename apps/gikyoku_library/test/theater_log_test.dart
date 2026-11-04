@@ -8,6 +8,8 @@ import 'package:gikyoku_library/screens/log_screen.dart';
 import 'package:gikyoku_library/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'test_support.dart';
+
 final _catalog = Catalog(
   generatedAt: DateTime.utc(2026, 11, 4),
   categories: const [],
@@ -62,6 +64,8 @@ void main() {
         catalog: one,
         shortlist: Shortlist(),
         log: log,
+        auth: offlineAuth(),
+        sync: offlineSync(offlineAuth(), log),
         child: MaterialApp(theme: buildTheme(), home: const LogScreen()),
       ),
     );
@@ -83,6 +87,8 @@ void main() {
         catalog: _catalog,
         shortlist: Shortlist(),
         log: log,
+        auth: offlineAuth(),
+        sync: offlineSync(offlineAuth(), log),
         child: MaterialApp(theme: buildTheme(), home: const LogScreen()),
       ),
     );

@@ -7,6 +7,7 @@ import '../catalog/models.dart';
 import '../catalog/theater_log.dart';
 import '../theme.dart';
 import '../widgets/log_calendar.dart';
+import 'account_screen.dart';
 import 'log_edit_screen.dart';
 import 'log_stats_screen.dart';
 import 'play_screen.dart';
@@ -69,6 +70,7 @@ class _LogScreenState extends State<LogScreen> {
                         child: Text('観劇ノート', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
                       ),
                       IconButton(key: const Key('log-calendar-toggle'), tooltip: _calendar ? '一覧で見る' : 'カレンダーで見る', onPressed: () => setState(() => _calendar = !_calendar), icon: Icon(_calendar ? Icons.view_agenda_outlined : Icons.calendar_month_outlined)),
+                      IconButton(key: const Key('open-account'), tooltip: 'アカウント', onPressed: () => AccountScreen.open(context), icon: const Icon(Icons.person_outline)),
                       IconButton(key: const Key('log-stats'), tooltip: '集計', onPressed: () => LogStatsScreen.open(context), icon: const Icon(Icons.bar_chart)),
                     ],
                   ),
@@ -142,6 +144,11 @@ class _EntryCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(entry.title, style: const TextStyle(fontFamily: titleFont, fontSize: 17, fontWeight: FontWeight.w700, color: Palette.ink)),
               if (place.isNotEmpty) ...[const SizedBox(height: 2), Text(place, style: const TextStyle(fontSize: 13, color: Palette.inkSoft))],
+              if (entry.visibility == 'public')
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(entry.hidden ? '通報により公開を止めています' : '公開中', style: TextStyle(fontSize: 12, color: entry.hidden ? Palette.vermilion : Palette.inkSoft)),
+                ),
               if (entry.note.isNotEmpty) ...[const SizedBox(height: 8), Text(entry.note, maxLines: 3, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, height: 1.6, color: Palette.ink))],
               if (entry.photos.isNotEmpty) ...[
                 const SizedBox(height: 8),

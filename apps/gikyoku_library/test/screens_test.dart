@@ -9,6 +9,8 @@ import 'package:gikyoku_library/screens/shortlist_screen.dart';
 import 'package:gikyoku_library/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'test_support.dart';
+
 final _catalog = Catalog(
   generatedAt: DateTime.utc(2026, 11, 4),
   categories: const [Category(1, 'コメディ')],
@@ -19,10 +21,14 @@ final _catalog = Catalog(
   ],
 );
 
-Widget _wrap(Widget child, Shortlist s) => AppScope(
+Widget _wrap(Widget child, Shortlist s) => _scope(child, s, TheaterLog());
+
+Widget _scope(Widget child, Shortlist s, TheaterLog log) => AppScope(
   catalog: _catalog,
   shortlist: s,
-  log: TheaterLog(),
+  log: log,
+  auth: offlineAuth(),
+  sync: offlineSync(offlineAuth(), log),
   child: MaterialApp(theme: buildTheme(), home: Scaffold(body: child)),
 );
 
