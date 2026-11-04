@@ -2,6 +2,8 @@ import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'account/auth_service.dart';
+import 'account/log_sync.dart';
 import 'app_scope.dart';
 import 'catalog/catalog_repository.dart';
 import 'catalog/models.dart';
@@ -23,15 +25,18 @@ Future<void> main() async {
   await shortlist.load();
   final log = TheaterLog();
   await log.load();
-  runApp(App(repository: repository, catalog: catalog, shortlist: shortlist, log: log));
+  final auth = AuthService();
+  await auth.restore();
+  runApp(App(repository: repository, catalog: catalog, shortlist: shortlist, log: log, auth: auth));
 }
 
 class App extends StatefulWidget {
-  const App({super.key, required this.repository, required this.catalog, required this.shortlist, required this.log});
+  const App({super.key, required this.repository, required this.catalog, required this.shortlist, required this.log, required this.auth});
   final CatalogRepository repository;
   final Catalog catalog;
   final Shortlist shortlist;
   final TheaterLog log;
+  final AuthService auth;
 
   @override
   State<App> createState() => _AppState();
@@ -39,13 +44,24 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   late Catalog _catalog = widget.catalog;
+  late final LogSync _sync = LogSync(auth: widget.auth, log: widget.log);
+  late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
+    widget.log.onDirty = _sync.run;
+    _lifecycle = AppLifecycleListener(onResume: _sync.run);
+    _sync.run();
     widget.repository.refresh().then((fresh) {
       if (fresh != null && mounted) setState(() => _catalog = fresh);
     });
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
   }
 
   @override
@@ -53,6 +69,8 @@ class _AppState extends State<App> {
     catalog: _catalog,
     shortlist: widget.shortlist,
     log: widget.log,
+    auth: widget.auth,
+    sync: _sync,
     child: MaterialApp(
       title: '戯曲図書館',
       debugShowCheckedModeBanner: false,

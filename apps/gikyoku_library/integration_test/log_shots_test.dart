@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gikyoku_library/account/auth_service.dart';
 import 'package:gikyoku_library/catalog/catalog_repository.dart';
 import 'package:gikyoku_library/catalog/shortlist.dart';
 import 'package:gikyoku_library/catalog/theater_log.dart';
@@ -20,7 +21,7 @@ void main() {
     for (var i = 0; i < 6; i++) {
       await log.upsert(TheaterLogEntry(id: '$i', title: '動作確認の舞台 ${i + 1}', watchedOn: DateTime(now.year, now.month - i % 3, 3 + i * 4), group: '仮の劇団${i % 2 + 1}', venue: '仮の劇場${i % 3 + 1}', rating: 3 + i % 3, price: 3000 + i * 500, seat: 'C列${i + 1}番', showTime: 'soiree', note: '動作確認用の仮の感想です。'));
     }
-    await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: Shortlist(), log: log));
+    await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: Shortlist(), log: log, auth: AuthService()));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('log-search')), findsOneWidget);
     await Future<void>.delayed(hold);

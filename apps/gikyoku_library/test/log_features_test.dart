@@ -10,6 +10,8 @@ import 'package:gikyoku_library/screens/share_card_screen.dart';
 import 'package:gikyoku_library/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'test_support.dart';
+
 TheaterLogEntry _e(String id, DateTime d, {String title = '作品', String? venue, String? group, int? price, int? rating, String note = '', String? seat}) =>
     TheaterLogEntry(id: id, title: title, watchedOn: d, venue: venue, group: group, price: price, rating: rating, note: note, seat: seat);
 
@@ -60,6 +62,8 @@ void main() {
     catalog: Catalog(generatedAt: DateTime.utc(2026), categories: const [], plays: const []),
     shortlist: Shortlist(),
     log: log,
+    auth: offlineAuth(),
+    sync: offlineSync(offlineAuth(), log),
     child: MaterialApp(theme: buildTheme(), home: child),
   );
 

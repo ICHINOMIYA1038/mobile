@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app_scope.dart';
 import '../catalog/models.dart';
 import '../theme.dart';
+import '../widgets/community_widgets.dart';
 import 'log_edit_screen.dart';
 
 class PlayScreen extends StatelessWidget {
@@ -78,6 +79,7 @@ class PlayScreen extends StatelessWidget {
             const SizedBox(height: 8),
             OutlinedButton.icon(onPressed: () => _open('buy', Uri.parse(play.buyUrl!)), icon: const Icon(Icons.open_in_new), label: const Text('入手先を開く')),
           ],
+          ReviewsSection(postId: play.id),
           if (play.synopsis != null) _Section('あらすじ', Text(play.synopsis!, style: _body)),
           if (play.synopsis == null && play.aiDescription != null)
             _Section(
