@@ -8,3 +8,4 @@ sg_talk        # 資格シリーズ試作版。公開準備時に Firebase 登�
 fe_talk        # 資格シリーズ試作版。公開準備時に Firebase 登録と計測を判断
 kanrigyo_talk  # 資格シリーズ試作版。公開準備時に Firebase 登録と計測を判断
 chintai_talk   # 資格シリーズ試作版。公開準備時に Firebase 登録と計測を判断
+denko2_talk    # 資格シリーズ試作版。公開準備時に Firebase 登録と計測を判断
