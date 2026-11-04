@@ -17,7 +17,7 @@ void main() {
     final repository = CatalogRepository();
     final shortlist = Shortlist();
     await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: shortlist, log: TheaterLog(), auth: AuthService()));
-    await tester.tap(find.text('台本をさがす'));
+    await tester.tap(find.text('台本'));
     await tester.pumpAndSettle();
     await tester.pumpAndSettle();
 
@@ -29,9 +29,9 @@ void main() {
     expect(count, lessThan(1310));
     await Future<void>.delayed(hold);
 
-    await tester.tap(find.byTooltip('候補に入れる').first);
+    await tester.tap(find.byTooltip('気になる').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('候補に入れる').first);
+    await tester.tap(find.byTooltip('気になる').first);
     await tester.pumpAndSettle();
     expect(shortlist.ids.length, 2);
 
@@ -44,7 +44,7 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('候補'));
+    await tester.tap(find.byType(BackButton).evaluate().isEmpty ? find.byKey(const Key('open-shortlist')) : find.byType(BackButton));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('compare-table')), findsOneWidget);
     await Future<void>.delayed(hold);

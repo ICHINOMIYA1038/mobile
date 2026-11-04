@@ -11,6 +11,7 @@ import '../catalog/theater_log.dart';
 import '../theme.dart';
 import '../widgets/community_widgets.dart';
 import 'account_screen.dart';
+import 'venue_stamps_screen.dart';
 
 class LogEditScreen extends StatefulWidget {
   const LogEditScreen({super.key, this.entry, this.play});
@@ -135,6 +136,10 @@ class _LogEditScreenState extends State<LogEditScreen> {
       if (go != true || !mounted) return;
       await AccountScreen.open(context);
       if (!mounted || !scope.auth.signedIn) return;
+    }
+    if (scope.auth.user?.banned == true) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('運営の判断により、感想の公開を止めています。記録は引き続き使えます')));
+      return;
     }
     if (await CommunityRules.confirm(context) && mounted) setState(() => _public = true);
   }
@@ -261,7 +266,23 @@ class _LogEditScreenState extends State<LogEditScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          TextField(controller: _venue, decoration: const InputDecoration(labelText: '劇場', border: border)),
+          TextField(
+            key: const Key('log-venue'),
+            controller: _venue,
+            decoration: InputDecoration(
+              labelText: '劇場',
+              border: border,
+              suffixIcon: IconButton(
+                key: const Key('log-venue-pick'),
+                tooltip: '劇場を探す',
+                icon: const Icon(Icons.place_outlined),
+                onPressed: () async {
+                  final v = await VenuePickerSheet.open(context);
+                  if (v != null && mounted) setState(() => _venue.text = v.name);
+                },
+              ),
+            ),
+          ),
           _Suggestions(values: AppScope.of(context).log.recent((e) => e.venue), onPick: (v) => setState(() => _venue.text = v)),
           const SizedBox(height: 16),
           const Text('評価', style: TextStyle(fontSize: 13, color: Palette.inkSoft)),
@@ -289,7 +310,7 @@ class _LogEditScreenState extends State<LogEditScreen> {
             key: const Key('log-public'),
             contentPadding: EdgeInsets.zero,
             title: const Text('感想をみんなに公開する'),
-            subtitle: Text(_public ? '感想、評価、劇団、劇場、観た月と、公開の名前が見えます。座席とチケット代は見えません。' : '自分だけが見られます。', style: const TextStyle(fontSize: 12)),
+            subtitle: Text(_public ? 'アプリと戯曲図書館のサイトに、感想、評価、劇団、劇場、観た月、公開の名前が出ます。座席とチケット代は出ません。' : '自分だけが見られます。', style: const TextStyle(fontSize: 12)),
             value: _public,
             onChanged: _togglePublic,
           ),

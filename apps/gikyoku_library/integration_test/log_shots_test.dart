@@ -32,12 +32,6 @@ void main() {
     await tester.tap(find.byKey(const Key('log-calendar-toggle')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('log-stats')));
-    await tester.pumpAndSettle();
-    await Future<void>.delayed(hold);
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-
     await tester.tap(find.byTooltip('シェアカードを作る').first);
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('card-note')));

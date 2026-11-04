@@ -10,9 +10,10 @@ import 'catalog/models.dart';
 import 'catalog/shortlist.dart';
 import 'catalog/theater_log.dart';
 import 'firebase_options.dart';
+import 'screens/feed_screen.dart';
 import 'screens/log_screen.dart';
 import 'screens/search_screen.dart';
-import 'screens/shortlist_screen.dart';
+import 'screens/stamp_book_screen.dart';
 import 'theme.dart';
 
 Future<void> main() async {
@@ -53,6 +54,7 @@ class _AppState extends State<App> {
     widget.log.onDirty = _sync.run;
     _lifecycle = AppLifecycleListener(onResume: _sync.run);
     _sync.run();
+    widget.auth.refreshProfile();
     widget.repository.refresh().then((fresh) {
       if (fresh != null && mounted) setState(() => _catalog = fresh);
     });
@@ -93,7 +95,7 @@ class Shell extends StatefulWidget {
 }
 
 class _ShellState extends State<Shell> {
-  static const _names = ['log', 'search', 'shortlist'];
+  static const _names = ['log', 'feed', 'search', 'stamps'];
   int _tab = 0;
 
   @override
@@ -104,27 +106,20 @@ class _ShellState extends State<Shell> {
 
   @override
   Widget build(BuildContext context) {
-    final shortlist = AppScope.of(context).shortlist;
     return Scaffold(
-      body: IndexedStack(index: _tab, children: const [LogScreen(), SearchScreen(), ShortlistScreen()]),
-      bottomNavigationBar: ListenableBuilder(
-        listenable: shortlist,
-        builder: (context, _) => NavigationBar(
+      body: IndexedStack(index: _tab, children: const [LogScreen(), FeedScreen(), SearchScreen(), StampBookScreen()]),
+      bottomNavigationBar: NavigationBar(
           selectedIndex: _tab,
           onDestinationSelected: (i) {
             setState(() => _tab = i);
             AppInsights.logScreen(_names[i]);
           },
-          destinations: [
-            const NavigationDestination(icon: Icon(Icons.theater_comedy_outlined), selectedIcon: Icon(Icons.theater_comedy), label: '観劇ノート'),
-            const NavigationDestination(icon: Icon(Icons.search), label: '台本をさがす'),
-            NavigationDestination(
-              icon: Badge(isLabelVisible: shortlist.ids.isNotEmpty, label: Text('${shortlist.ids.length}'), child: const Icon(Icons.bookmark_border)),
-              selectedIcon: const Icon(Icons.bookmark),
-              label: '候補',
-            ),
+          destinations: const [
+            NavigationDestination(icon: Icon(Icons.local_activity_outlined), selectedIcon: Icon(Icons.local_activity), label: '半券帳'),
+            NavigationDestination(icon: Icon(Icons.forum_outlined), selectedIcon: Icon(Icons.forum), label: 'みんな'),
+            NavigationDestination(icon: Icon(Icons.search), label: '台本'),
+            NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified), label: 'スタンプ'),
           ],
-        ),
       ),
     );
   }

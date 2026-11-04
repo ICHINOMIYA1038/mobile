@@ -6,7 +6,7 @@ import '../app_scope.dart';
 import '../catalog/models.dart';
 import '../theme.dart';
 import '../widgets/community_widgets.dart';
-import 'log_edit_screen.dart';
+import 'quick_log_sheet.dart';
 
 class PlayScreen extends StatelessWidget {
   const PlayScreen({super.key, required this.play});
@@ -37,7 +37,7 @@ class PlayScreen extends StatelessWidget {
               final on = shortlist.contains(play.id);
               return IconButton(
                 key: const Key('shortlist-toggle'),
-                tooltip: on ? '候補から外す' : '候補に入れる',
+                tooltip: on ? '気になるから外す' : '気になる',
                 icon: Icon(on ? Icons.bookmark : Icons.bookmark_border, color: on ? Palette.vermilion : null),
                 onPressed: () => shortlist.toggle(play.id),
               );
@@ -62,7 +62,7 @@ class PlayScreen extends StatelessWidget {
           const SizedBox(height: 16),
           OutlinedButton.icon(
             key: const Key('log-this-play'),
-            onPressed: () => LogEditScreen.open(context, play: play),
+            onPressed: () => QuickLogSheet.open(context, play: play),
             icon: const Icon(Icons.theater_comedy_outlined),
             label: const Text('この作品を観た'),
           ),
