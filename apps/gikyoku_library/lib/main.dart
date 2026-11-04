@@ -10,6 +10,7 @@ import 'catalog/models.dart';
 import 'catalog/shortlist.dart';
 import 'catalog/theater_log.dart';
 import 'firebase_options.dart';
+import 'screens/feed_screen.dart';
 import 'screens/log_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/stamp_book_screen.dart';
@@ -93,7 +94,7 @@ class Shell extends StatefulWidget {
 }
 
 class _ShellState extends State<Shell> {
-  static const _names = ['log', 'search', 'stamps'];
+  static const _names = ['log', 'feed', 'search', 'stamps'];
   int _tab = 0;
 
   @override
@@ -105,7 +106,7 @@ class _ShellState extends State<Shell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _tab, children: const [LogScreen(), SearchScreen(), StampBookScreen()]),
+      body: IndexedStack(index: _tab, children: const [LogScreen(), FeedScreen(), SearchScreen(), StampBookScreen()]),
       bottomNavigationBar: NavigationBar(
           selectedIndex: _tab,
           onDestinationSelected: (i) {
@@ -114,6 +115,7 @@ class _ShellState extends State<Shell> {
           },
           destinations: const [
             NavigationDestination(icon: Icon(Icons.local_activity_outlined), selectedIcon: Icon(Icons.local_activity), label: '半券帳'),
+            NavigationDestination(icon: Icon(Icons.forum_outlined), selectedIcon: Icon(Icons.forum), label: 'みんな'),
             NavigationDestination(icon: Icon(Icons.search), label: '台本'),
             NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified), label: 'スタンプ'),
           ],

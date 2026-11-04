@@ -44,3 +44,41 @@ bool logMatches(TheaterLogEntry e, String query) {
   if (q.isEmpty) return true;
   return [e.title, e.author, e.group, e.venue, e.note].whereType<String>().any((v) => v.toLowerCase().contains(q));
 }
+
+/// 年間ふりかえりの中身。記録から計算するだけで、作った数字は入れない
+class YearRecap {
+  const YearRecap({required this.year, required this.count, required this.venueCount, required this.prefectureCount, required this.bestMonth, required this.bestMonthCount, this.topVenue, this.topGroup, required this.favorites, required this.noteCount});
+  final int year;
+  final int count;
+  final int venueCount;
+  final int prefectureCount;
+  final int bestMonth;
+  final int bestMonthCount;
+  final MapEntry<String, int>? topVenue;
+  final MapEntry<String, int>? topGroup;
+  final List<String> favorites;
+  final int noteCount;
+
+  factory YearRecap.of(Iterable<TheaterLogEntry> entries, int year, Map<String, String> prefectureOfVenue) {
+    final inYear = entries.where((e) => e.watchedOn.year == year).toList();
+    final s = LogStats.of(inYear, year);
+    var best = 0;
+    for (var m = 1; m < 12; m++) {
+      if (s.perMonth[m] > s.perMonth[best]) best = m;
+    }
+    final venues = inYear.map((e) => e.venue).whereType<String>().toSet();
+    final rated = inYear.where((e) => (e.rating ?? 0) >= 5).toList()..sort((a, b) => a.watchedOn.compareTo(b.watchedOn));
+    return YearRecap(
+      year: year,
+      count: inYear.length,
+      venueCount: venues.length,
+      prefectureCount: venues.map((v) => prefectureOfVenue[v]).whereType<String>().toSet().length,
+      bestMonth: best + 1,
+      bestMonthCount: s.perMonth[best],
+      topVenue: s.topVenues.isEmpty ? null : s.topVenues.first,
+      topGroup: s.topGroups.isEmpty ? null : s.topGroups.first,
+      favorites: rated.map((e) => e.title).toSet().take(3).toList(),
+      noteCount: inYear.where((e) => e.note.isNotEmpty).length,
+    );
+  }
+}

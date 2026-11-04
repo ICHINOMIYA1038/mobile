@@ -93,13 +93,23 @@ class Play {
   Uri get siteUrl => Uri.parse('https://gikyokutosyokan.com/posts/$id');
 }
 
+class Venue {
+  const Venue(this.id, this.name, this.prefecture);
+  final int id;
+  final String name;
+  final String prefecture;
+
+  factory Venue.fromJson(Map<String, dynamic> j) => Venue(j['id'] as int, j['name'] as String, j['prefecture'] as String);
+}
+
 class Catalog {
-  const Catalog({required this.generatedAt, required this.categories, required this.plays});
+  const Catalog({required this.generatedAt, required this.categories, required this.plays, this.venues = const []});
   static const supportedSchema = 1;
 
   final DateTime generatedAt;
   final List<Category> categories;
   final List<Play> plays;
+  final List<Venue> venues;
 
   factory Catalog.fromJson(Map<String, dynamic> j) {
     if (j['schemaVersion'] != supportedSchema) throw const FormatException('unsupported catalog schema');
@@ -107,6 +117,7 @@ class Catalog {
       generatedAt: DateTime.parse(j['generatedAt'] as String),
       categories: (j['categories'] as List).map((c) => Category.fromJson(c as Map<String, dynamic>)).toList(),
       plays: (j['plays'] as List).map((p) => Play.fromJson(p as Map<String, dynamic>)).toList(),
+      venues: ((j['venues'] as List?) ?? const []).map((v) => Venue.fromJson(v as Map<String, dynamic>)).toList(),
     );
   }
 }

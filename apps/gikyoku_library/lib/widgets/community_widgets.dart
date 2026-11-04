@@ -37,6 +37,123 @@ class CommunityRules {
   }
 }
 
+/// 感想 1 件。他の人の感想には通報とブロックを出す
+class ReviewTile extends StatelessWidget {
+  const ReviewTile({super.key, required this.review, required this.api, required this.onBlocked, this.onOpenTitle});
+  final Review review;
+  final CommunityApi api;
+  final ValueChanged<String> onBlocked;
+  final VoidCallback? onOpenTitle;
+
+  void _say(BuildContext context, String text) {
+    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  Future<bool> _needLogin(BuildContext context) async {
+    final auth = AppScope.of(context).auth;
+    if (auth.signedIn) return true;
+    await AccountScreen.open(context);
+    return auth.signedIn;
+  }
+
+  Future<void> _report(BuildContext context) async {
+    if (!await _needLogin(context) || !context.mounted) return;
+    final reason = await showModalBottomSheet<String>(
+      context: context,
+      routeSettings: const RouteSettings(name: 'report'),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ListTile(title: Text('通報の理由', style: TextStyle(fontWeight: FontWeight.w700))),
+            for (final x in const ['中傷や差別', '個人情報', 'スパムや宣伝', 'その他の不適切な内容']) ListTile(title: Text(x), onTap: () => Navigator.pop(ctx, x)),
+          ],
+        ),
+      ),
+    );
+    if (reason == null) return;
+    try {
+      await api.report(review.id, reason);
+      AppInsights.logEvent('review_report');
+      if (context.mounted) _say(context, '通報しました。運営が確認します');
+    } on CommunityError catch (e) {
+      if (context.mounted) _say(context, e.message);
+    } catch (_) {
+      if (context.mounted) _say(context, '通信できませんでした');
+    }
+  }
+
+  Future<void> _block(BuildContext context) async {
+    if (!await _needLogin(context) || !context.mounted) return;
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('${review.authorName}さんをブロックしますか'),
+        content: const Text('この人の感想が表示されなくなります。'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('やめる')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('ブロック')),
+        ],
+      ),
+    );
+    if (yes != true) return;
+    try {
+      await api.block(review.authorId);
+      AppInsights.logEvent('user_block');
+      onBlocked(review.authorId);
+      if (context.mounted) _say(context, 'ブロックしました');
+    } on CommunityError catch (e) {
+      if (context.mounted) _say(context, e.message);
+    } catch (_) {
+      if (context.mounted) _say(context, '通信できませんでした');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = review;
+    final me = AppScope.of(context).auth.user?.id;
+    final place = [r.groupName, r.venueName, r.watchedMonth?.replaceAll('-', '.')].whereType<String>().join('／');
+    return Container(
+      key: Key('review-${r.id}'),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(12, 10, 4, 12),
+      decoration: BoxDecoration(color: Palette.card, border: Border.all(color: Palette.line), borderRadius: BorderRadius.circular(8)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(r.authorName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700))),
+              if (r.rating != null) Text('★' * r.rating!, style: const TextStyle(fontSize: 12, color: Palette.vermilion)),
+              if (r.authorId != me)
+                PopupMenuButton<String>(
+                  key: Key('review-menu-${r.id}'),
+                  tooltip: 'この感想の操作',
+                  icon: const Icon(Icons.more_horiz, size: 18),
+                  onSelected: (v) => v == 'report' ? _report(context) : _block(context),
+                  itemBuilder: (_) => const [PopupMenuItem(value: 'report', child: Text('通報する')), PopupMenuItem(value: 'block', child: Text('この人をブロック'))],
+                )
+              else
+                const SizedBox(height: 40, width: 8),
+            ],
+          ),
+          if (r.title != null)
+            InkWell(
+              onTap: onOpenTitle,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8, bottom: 4),
+                child: Text(r.title!, style: TextStyle(fontFamily: titleFont, fontSize: 16, fontWeight: FontWeight.w700, color: onOpenTitle == null ? Palette.ink : Palette.navy)),
+              ),
+            ),
+          Padding(padding: const EdgeInsets.only(right: 8), child: Text(r.note, style: const TextStyle(fontSize: 14, height: 1.7))),
+          if (place.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4, right: 8), child: Text(place, style: const TextStyle(fontSize: 12, color: Palette.inkSoft))),
+        ],
+      ),
+    );
+  }
+}
+
 /// 作品ページの「みんなの感想」
 class ReviewsSection extends StatefulWidget {
   const ReviewsSection({super.key, required this.postId, this.api});
@@ -67,125 +184,26 @@ class _ReviewsSectionState extends State<ReviewsSection> {
     }
   }
 
-  Future<bool> _needLogin() async {
-    final auth = AppScope.of(context).auth;
-    if (auth.signedIn) return true;
-    await AccountScreen.open(context);
-    return auth.signedIn;
-  }
-
-  void _say(String text) {
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-  }
-
-  Future<void> _report(Review r) async {
-    if (!await _needLogin() || !mounted) return;
-    final reason = await showModalBottomSheet<String>(
-      context: context,
-      routeSettings: const RouteSettings(name: 'report'),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const ListTile(title: Text('通報の理由', style: TextStyle(fontWeight: FontWeight.w700))),
-            for (final x in const ['中傷や差別', '個人情報', 'スパムや宣伝', 'その他の不適切な内容']) ListTile(title: Text(x), onTap: () => Navigator.pop(ctx, x)),
-          ],
-        ),
-      ),
-    );
-    if (reason == null) return;
-    try {
-      await _api.report(r.id, reason);
-      AppInsights.logEvent('review_report');
-      _say('通報しました。運営が確認します');
-    } on CommunityError catch (e) {
-      _say(e.message);
-    } catch (_) {
-      _say('通信できませんでした');
-    }
-  }
-
-  Future<void> _block(Review r) async {
-    if (!await _needLogin() || !mounted) return;
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('${r.authorName}さんをブロックしますか'),
-        content: const Text('この人の感想が表示されなくなります。'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('やめる')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('ブロック')),
-        ],
-      ),
-    );
-    if (yes != true) return;
-    try {
-      await _api.block(r.authorId);
-      AppInsights.logEvent('user_block');
-      if (mounted) setState(() => _reviews = _reviews?.where((x) => x.authorId != r.authorId).toList());
-      _say('ブロックしました');
-    } on CommunityError catch (e) {
-      _say(e.message);
-    } catch (_) {
-      _say('通信できませんでした');
-    }
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final me = AppScope.of(context).auth.user?.id;
-    return Padding(
-      padding: const EdgeInsets.only(top: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('みんなの感想', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.vermilion)),
-          const SizedBox(height: 6),
-          if (_failed)
-            const Text('感想を読み込めませんでした。', style: TextStyle(fontSize: 14, color: Palette.inkSoft))
-          else if (_reviews == null)
-            const Text('読み込み中です…', style: TextStyle(fontSize: 14, color: Palette.inkSoft))
-          else if (_reviews!.isEmpty)
-            const Text('まだ感想がありません。観たら最初の感想を残してみませんか。', style: TextStyle(fontSize: 14, height: 1.6, color: Palette.inkSoft))
-          else
-            for (final r in _reviews!)
-              Container(
-                key: Key('review-${r.id}'),
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.fromLTRB(12, 10, 4, 12),
-                decoration: BoxDecoration(color: Palette.card, border: Border.all(color: Palette.line), borderRadius: BorderRadius.circular(8)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: Text(r.authorName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700))),
-                        if (r.rating != null) Text('★' * r.rating!, style: const TextStyle(fontSize: 12, color: Palette.vermilion)),
-                        if (r.authorId != me)
-                          PopupMenuButton<String>(
-                            key: Key('review-menu-${r.id}'),
-                            tooltip: 'この感想の操作',
-                            icon: const Icon(Icons.more_horiz, size: 18),
-                            onSelected: (v) => v == 'report' ? _report(r) : _block(r),
-                            itemBuilder: (_) => const [PopupMenuItem(value: 'report', child: Text('通報する')), PopupMenuItem(value: 'block', child: Text('この人をブロック'))],
-                          )
-                        else
-                          const SizedBox(height: 40, width: 8),
-                      ],
-                    ),
-                    Padding(padding: const EdgeInsets.only(right: 8), child: Text(r.note, style: const TextStyle(fontSize: 14, height: 1.7))),
-                    if (r.groupName != null || r.venueName != null || r.watchedMonth != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4, right: 8),
-                        child: Text([r.groupName, r.venueName, r.watchedMonth?.replaceAll('-', '.')].whereType<String>().join('／'), style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
-                      ),
-                  ],
-                ),
-              ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 24),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('みんなの感想', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.vermilion)),
+        const SizedBox(height: 6),
+        if (_failed)
+          const Text('感想を読み込めませんでした。', style: TextStyle(fontSize: 14, color: Palette.inkSoft))
+        else if (_reviews == null)
+          const Text('読み込み中です…', style: TextStyle(fontSize: 14, color: Palette.inkSoft))
+        else if (_reviews!.isEmpty)
+          const Text('まだ感想がありません。観たら最初の感想を残してみませんか。', style: TextStyle(fontSize: 14, height: 1.6, color: Palette.inkSoft))
+        else
+          for (final r in _reviews!)
+            ReviewTile(review: r, api: _api, onBlocked: (id) => setState(() => _reviews = _reviews?.where((x) => x.authorId != id).toList())),
+      ],
+    ),
+  );
 }
 
 /// 公演を探して選ぶ。無ければ登録する

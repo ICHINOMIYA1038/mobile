@@ -5,6 +5,8 @@ import '../catalog/achievements.dart';
 import '../catalog/log_stats.dart';
 import '../theme.dart';
 import 'log_stats_screen.dart';
+import 'recap_screen.dart';
+import 'venue_stamps_screen.dart';
 
 class StampBookScreen extends StatelessWidget {
   const StampBookScreen({super.key});
@@ -25,6 +27,19 @@ class StampBookScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
               const Text('スタンプ帳', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
+              const SizedBox(height: 12),
+              if (log.entries.isNotEmpty) ...[
+                FilledButton.icon(
+                  key: const Key('open-recap'),
+                  style: FilledButton.styleFrom(backgroundColor: Palette.navy, minimumSize: const Size.fromHeight(46)),
+                  onPressed: () => RecapScreen.open(context),
+                  icon: const Icon(Icons.auto_awesome),
+                  label: Text('$year年のふりかえりを見る'),
+                ),
+                const SizedBox(height: 12),
+              ],
+              const VenueStampSummary(),
+              const SizedBox(height: 16),
               const SizedBox(height: 4),
               Text('${items.length} 個のうち $done 個', key: const Key('stamp-count'), style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 14),
