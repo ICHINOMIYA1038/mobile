@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_scope.dart';
-import '../catalog/models.dart';
+import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import '../screens/play_screen.dart';
 import '../theme.dart';
 

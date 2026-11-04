@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gikyoku_library/catalog/catalog_repository.dart';
+import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
