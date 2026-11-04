@@ -665,6 +665,31 @@ class _ReviewState extends State<_Review> {
                 },
               ),
           ],
+          if (_string(loaded['itemSet']).isNotEmpty) ...[
+            Text('四択の復習', style: Theme.of(context).textTheme.titleLarge),
+            if (_list(loaded['items']).isEmpty)
+              const Text('問題はありません。')
+            else
+              Card(
+                child: ListTile(
+                  title: const Text('まちがえた四択を解く'),
+                  subtitle: Text('${_list(loaded['items']).length}問'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => _ItemSet(
+                          api: widget.api,
+                          keyName: _string(loaded['itemSet']),
+                          title: 'まちがえた四択',
+                        ),
+                      ),
+                    );
+                    if (mounted) setState(() => data = widget.api.review());
+                  },
+                ),
+              ),
+          ],
         ],
       );
     },
