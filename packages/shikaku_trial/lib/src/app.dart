@@ -172,10 +172,14 @@ class _Home extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 8),
-              const Card(
+              Card(
                 child: Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Text('試作版です。教材と学習機能を確認しています。'),
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    _string(data['curriculumNote']).isNotEmpty
+                        ? _string(data['curriculumNote'])
+                        : '試作版です。教材と学習機能を確認しています。',
+                  ),
                 ),
               ),
               Text('${chapters.length}章から選んで学習できます。'),
