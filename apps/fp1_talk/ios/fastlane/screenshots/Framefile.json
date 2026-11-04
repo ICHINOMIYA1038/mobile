@@ -1,0 +1,74 @@
+{
+  "default": {
+    "background": "../frame_assets/background.png",
+    "padding": "5%",
+    "stack_title": true,
+    "title_below_image": false,
+    "title": {
+      "font": "../frame_assets/fonts/HiraginoSansW6.ttc",
+      "color": "#12332F",
+      "font_size": 88
+    },
+    "keyword": {
+      "font": "../frame_assets/fonts/HiraginoSansW3.ttc",
+      "color": "#2F5D62",
+      "font_size": 44
+    }
+  },
+  "data": [
+    {
+      "filter": "01_question",
+      "title": {
+        "text": "説明を聞いたら\nすぐ○×で確かめる"
+      },
+      "keyword": {
+        "text": "AI の先生が論点を順に説明"
+      }
+    },
+    {
+      "filter": "02_explain",
+      "title": {
+        "text": "過去問の「なぜ？」を\nAI に聞ける"
+      },
+      "keyword": {
+        "text": "わかるまで何度でも聞き直せる"
+      }
+    },
+    {
+      "filter": "03_kakomon",
+      "title": {
+        "text": "過去問を\n章ごと・回ごとに"
+      },
+      "keyword": {
+        "text": "平成27年〜令和7年の肢から1,763問"
+      }
+    },
+    {
+      "filter": "04_figure",
+      "title": {
+        "text": "411枚の図解で\nひと目でわかる"
+      },
+      "keyword": {
+        "text": "会話の中でも、ライブラリでも"
+      }
+    },
+    {
+      "filter": "05_home",
+      "title": {
+        "text": "配点の大きい順に\n進めばいい"
+      },
+      "keyword": {
+        "text": "本試験50問の内訳つき"
+      }
+    },
+    {
+      "filter": "06_choice",
+      "title": {
+        "text": "選んで答えながら\n会話で進む"
+      },
+      "keyword": {
+        "text": "わからなければ言い換えてくれる"
+      }
+    }
+  ]
+}
