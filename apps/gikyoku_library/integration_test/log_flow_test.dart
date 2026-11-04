@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gikyoku_library/account/auth_service.dart';
 import 'package:gikyoku_library/catalog/catalog_repository.dart';
 import 'package:gikyoku_library/catalog/shortlist.dart';
 import 'package:gikyoku_library/catalog/theater_log.dart';
@@ -17,7 +18,7 @@ void main() {
     final repository = CatalogRepository();
     final log = TheaterLog();
     await log.upsert(TheaterLogEntry(id: 'x', title: '動作確認の舞台', watchedOn: DateTime(2026, 9, 12), group: '動作確認の劇団', venue: '動作確認の劇場', rating: 3, note: '自由入力の記録の表示を確かめるための仮の文です。'));
-    await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: Shortlist(), log: log));
+    await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: Shortlist(), log: log, auth: AuthService()));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('log-add')));

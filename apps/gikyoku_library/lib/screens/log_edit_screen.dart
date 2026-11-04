@@ -3,11 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../account/community_api.dart';
 import '../app_scope.dart';
 import '../catalog/log_photos.dart';
 import '../catalog/models.dart';
 import '../catalog/theater_log.dart';
 import '../theme.dart';
+import '../widgets/community_widgets.dart';
+import 'account_screen.dart';
 
 class LogEditScreen extends StatefulWidget {
   const LogEditScreen({super.key, this.entry, this.play});
@@ -32,6 +35,9 @@ class _LogEditScreenState extends State<LogEditScreen> {
   late final _seat = TextEditingController(text: widget.entry?.seat);
   late final _price = TextEditingController(text: widget.entry?.price?.toString());
   late String? _showTime = widget.entry?.showTime;
+  late bool _public = widget.entry?.visibility == 'public';
+  late int? _productionId = widget.entry?.productionId;
+  String? _productionLabel;
   late final List<String> _photos = [...?widget.entry?.photos];
   // 保存せずに閉じたら消す写真
   final List<String> _added = [];
@@ -86,6 +92,9 @@ class _LogEditScreenState extends State<LogEditScreen> {
         seat: _text(_seat),
         price: int.tryParse(_price.text.replaceAll(RegExp(r'[,，円\s]'), '')),
         photos: _photos,
+        productionId: _productionId,
+        visibility: _public ? 'public' : 'private',
+        hidden: old?.hidden ?? false,
       ),
     );
     _saved = true;
@@ -105,6 +114,45 @@ class _LogEditScreenState extends State<LogEditScreen> {
     setState(() {
       _photos.add(name);
       _added.add(name);
+    });
+  }
+
+  Future<void> _togglePublic(bool on) async {
+    if (!on) return setState(() => _public = false);
+    final scope = AppScope.of(context);
+    if (!scope.auth.signedIn) {
+      final go = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('公開にはログインが必要です'),
+          content: const Text('感想を公開するにはログインしてください。'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('やめる')),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('ログイン')),
+          ],
+        ),
+      );
+      if (go != true || !mounted) return;
+      await AccountScreen.open(context);
+      if (!mounted || !scope.auth.signedIn) return;
+    }
+    if (await CommunityRules.confirm(context) && mounted) setState(() => _public = true);
+  }
+
+  Future<void> _pickProduction() async {
+    final picked = await showModalBottomSheet<Production>(
+      context: context,
+      isScrollControlled: true,
+      routeSettings: const RouteSettings(name: 'production_pick'),
+      builder: (_) => ProductionPicker(initialQuery: _play?.title ?? _title?.text ?? '', postId: _play?.id),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _productionId = picked.id;
+      _productionLabel = picked.label;
+      if (_title != null && _title!.text.trim().isEmpty) _title!.text = picked.title;
+      if (picked.groupName != null) _group.text = picked.groupName!;
+      if (picked.venueName != null) _venue.text = picked.venueName!;
     });
   }
 
@@ -175,6 +223,16 @@ class _LogEditScreenState extends State<LogEditScreen> {
             },
           ),
           const SizedBox(height: 16),
+          if (AppScope.of(context).auth.signedIn)
+            ListTile(
+              key: const Key('log-production'),
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.confirmation_number_outlined),
+              title: Text(_productionLabel ?? (_productionId == null ? '公演を選ぶ、または登録する' : '公演を選択済み')),
+              subtitle: const Text('同じ公演を観た人の感想とつながります', style: TextStyle(fontSize: 12)),
+              trailing: _productionId == null ? const Icon(Icons.chevron_right) : IconButton(tooltip: '公演を外す', icon: const Icon(Icons.close), onPressed: () => setState(() { _productionId = null; _productionLabel = null; })),
+              onTap: _pickProduction,
+            ),
           ListTile(
             key: const Key('log-date'),
             contentPadding: EdgeInsets.zero,
@@ -227,7 +285,14 @@ class _LogEditScreenState extends State<LogEditScreen> {
             maxLength: 2000,
             decoration: const InputDecoration(labelText: 'ひとこと・感想', alignLabelWithHint: true, border: border),
           ),
-          const Text('この試作では、記録は端末の中だけに保存されます。', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
+          SwitchListTile(
+            key: const Key('log-public'),
+            contentPadding: EdgeInsets.zero,
+            title: const Text('感想をみんなに公開する'),
+            subtitle: Text(_public ? '感想、評価、劇団、劇場、観た月と、公開の名前が見えます。座席とチケット代は見えません。' : '自分だけが見られます。', style: const TextStyle(fontSize: 12)),
+            value: _public,
+            onChanged: _togglePublic,
+          ),
           const SizedBox(height: 8),
           ExpansionTile(
             key: const Key('log-details'),
