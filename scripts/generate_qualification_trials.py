@@ -8,7 +8,6 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE = ROOT / 'apps/fp1_talk'
 EXAMS = {
     'fp2': ('FP2級', 'FP2', '#155E75'),
     'fp3': ('FP3級', 'FP3', '#0F766E'),
@@ -176,9 +175,5 @@ if __name__ == '__main__':
     elif len(sys.argv) == 3 and sys.argv[1] == '--create' and sys.argv[2] in EXAMS:
         generate(sys.argv[2])
         validate([sys.argv[2]])
-    elif not sys.argv[1:]:
-        for exam in EXAMS:
-            generate(exam)
-        validate()
     else:
         raise SystemExit('Usage: generate_qualification_trials.py [--check | --create <exam>]')
