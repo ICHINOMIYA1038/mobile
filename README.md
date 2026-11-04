@@ -75,7 +75,19 @@ Crashlytics）、ストア提出用のfastlaneひな形の配線まで済ませ�
 
 ## 資格シリーズの試作アプリ
 
-FP2級・FP3級・ITパスポート・情報セキュリティマネジメント・基本情報技術者・管理業務主任者・賃貸不動産経営管理士・第二種電気工事士（学科）・日商簿記3級の9本は、`packages/shikaku_trial` の画面を共有する iOS 試作版です。教材と API は別リポジトリ `pairof-shikaku` の `feat/qualification-series` にあります。
+次の9本は、`packages/shikaku_trial` の画面を共有する iOS 試作版です。教材と API は別リポジトリ `pairof-shikaku` の `feat/qualification-series` にあります。
+
+| 資格ID | 資格 |
+| --- | --- |
+| `fp2` | FP2級 |
+| `fp3` | FP3級 |
+| `itpassport` | ITパスポート |
+| `sg` | 情報セキュリティマネジメント |
+| `fe` | 基本情報技術者 |
+| `kanrigyo` | 管理業務主任者 |
+| `chintai` | 賃貸不動産経営管理士 |
+| `denko2` | 第二種電気工事士（学科） |
+| `boki3` | 日商簿記3級 |
 
 新しい資格を同じ試作構成で追加するときは、`scripts/generate_qualification_trials.py` の `EXAMS` に資格名・アイコン文字・色を追加し、`python3 -B scripts/generate_qualification_trials.py --create <資格ID>` を実行します。生成済みの設定は `--check` で確認できます。開発用 API には `--dart-define=API_BASE=<開発サーバーURL>` で接続します。
 
