@@ -11,6 +11,7 @@ import '../catalog/theater_log.dart';
 import '../theme.dart';
 import '../widgets/community_widgets.dart';
 import 'account_screen.dart';
+import 'venue_stamps_screen.dart';
 
 class LogEditScreen extends StatefulWidget {
   const LogEditScreen({super.key, this.entry, this.play});
@@ -261,7 +262,23 @@ class _LogEditScreenState extends State<LogEditScreen> {
             ),
           ],
           const SizedBox(height: 16),
-          TextField(controller: _venue, decoration: const InputDecoration(labelText: '劇場', border: border)),
+          TextField(
+            key: const Key('log-venue'),
+            controller: _venue,
+            decoration: InputDecoration(
+              labelText: '劇場',
+              border: border,
+              suffixIcon: IconButton(
+                key: const Key('log-venue-pick'),
+                tooltip: '劇場を探す',
+                icon: const Icon(Icons.place_outlined),
+                onPressed: () async {
+                  final v = await VenuePickerSheet.open(context);
+                  if (v != null && mounted) setState(() => _venue.text = v.name);
+                },
+              ),
+            ),
+          ),
           _Suggestions(values: AppScope.of(context).log.recent((e) => e.venue), onPick: (v) => setState(() => _venue.text = v)),
           const SizedBox(height: 16),
           const Text('評価', style: TextStyle(fontSize: 13, color: Palette.inkSoft)),

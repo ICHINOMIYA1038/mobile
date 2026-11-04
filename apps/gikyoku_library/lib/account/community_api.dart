@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'auth_service.dart';
 
 class Review {
-  const Review({required this.id, required this.authorId, required this.authorName, required this.note, this.rating, this.groupName, this.venueName, this.watchedMonth});
+  const Review({required this.id, required this.authorId, required this.authorName, required this.note, this.rating, this.groupName, this.venueName, this.watchedMonth, this.title, this.postId});
   final String id;
   final String authorId;
   final String authorName;
@@ -14,6 +14,8 @@ class Review {
   final String? groupName;
   final String? venueName;
   final String? watchedMonth;
+  final String? title;
+  final int? postId;
 
   factory Review.fromJson(Map<String, dynamic> j) => Review(
     id: j['id'] as String,
@@ -24,6 +26,8 @@ class Review {
     groupName: j['groupName'] as String?,
     venueName: j['venueName'] as String?,
     watchedMonth: j['watchedMonth'] as String?,
+    title: j['title'] as String?,
+    postId: j['postId'] as int?,
   );
 }
 
@@ -77,6 +81,12 @@ class CommunityApi {
 
   Future<List<Review>> reviews({int? postId, int? productionId}) async {
     final r = await _http.get(_u('/reviews', {'postId': ?postId?.toString(), 'productionId': ?productionId?.toString()}), headers: await _headers()).timeout(_timeout);
+    _check(r);
+    return ((_json(r) as Map<String, dynamic>)['reviews'] as List).map((e) => Review.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<List<Review>> feed() async {
+    final r = await _http.get(_u('/feed'), headers: await _headers()).timeout(_timeout);
     _check(r);
     return ((_json(r) as Map<String, dynamic>)['reviews'] as List).map((e) => Review.fromJson(e as Map<String, dynamic>)).toList();
   }

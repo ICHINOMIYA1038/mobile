@@ -72,6 +72,8 @@ class TheaterLogEntry {
     'hidden': hidden ?? this.hidden,
   });
 
+  TheaterLogEntry copyWithVenue(String name) => TheaterLogEntry.fromJson({...toJson(), 'venue': name});
+
   static String _ymd(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   /// サーバーへ送る形。写真と作者名は送らない

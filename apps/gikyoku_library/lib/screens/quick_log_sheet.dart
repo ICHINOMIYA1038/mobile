@@ -9,6 +9,7 @@ import '../theme.dart';
 import '../widgets/ticket_stub.dart';
 import 'log_edit_screen.dart';
 import 'share_card_screen.dart';
+import 'venue_stamps_screen.dart';
 
 /// 3 秒で記録する。作品名と星だけ。細かいことはあとから
 class QuickLogSheet extends StatefulWidget {
@@ -247,7 +248,33 @@ class _StubStampedScreenState extends State<StubStampedScreen> with SingleTicker
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text('スタンプ獲得「${a.title}」', key: Key('earned-${a.id}'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFFE9A23B))),
                       ),
-                    const SizedBox(height: 12),
+                    if (widget.entry.venue == null) ...[
+                      FilledButton.icon(
+                        key: const Key('stamped-venue'),
+                        style: FilledButton.styleFrom(backgroundColor: Palette.vermilion),
+                        onPressed: () async {
+                          final venue = await VenuePickerSheet.open(context);
+                          if (venue == null || !context.mounted) return;
+                          final before = log.entries;
+                          await log.upsert(widget.entry.copyWithVenue(venue.name));
+                          if (!context.mounted) return;
+                          final nav = Navigator.of(context);
+                          nav.pop();
+                          nav.push(
+                            PageRouteBuilder<void>(
+                              opaque: false,
+                              barrierColor: Colors.black87,
+                              settings: const RouteSettings(name: 'venue_stamped'),
+                              pageBuilder: (_, _, _) => VenueStampedScreen(venue: venue, isNew: !before.any((e) => e.venue == venue.name), earned: newlyEarned(before, log.entries)),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.place),
+                        label: const Text('劇場スタンプを押す'),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
