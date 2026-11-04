@@ -1,4 +1,4 @@
-import 'models.dart';
+import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 
 /// 人数・時間の範囲。max が null なら上限なし
 class Range {

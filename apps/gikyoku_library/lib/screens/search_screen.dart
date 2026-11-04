@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../app_scope.dart';
 import '../catalog/filter.dart';
-import '../catalog/models.dart';
+import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import '../theme.dart';
 import '../widgets/play_card.dart';
 import 'about_screen.dart';
@@ -59,7 +59,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   Row(
                     children: [
                       const Expanded(
-                        child: Text('台本をさがす', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
+                        child: Text('戯曲図書館', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
                       ),
                       ListenableBuilder(
                         listenable: AppScope.of(context).shortlist,
@@ -72,7 +72,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     ],
                   ),
                   const SizedBox(height: 2),
-                  const Text('戯曲図書館の作品を、人数と時間から', style: TextStyle(fontSize: 13, color: Palette.inkSoft)),
+                  const Text('上演する台本を、人数と時間から探す', style: TextStyle(fontSize: 13, color: Palette.inkSoft)),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _controller,

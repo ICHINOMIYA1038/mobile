@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gikyoku_library/account/auth_service.dart';
-import 'package:gikyoku_library/catalog/catalog_repository.dart';
+import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import 'package:gikyoku_library/catalog/shortlist.dart';
-import 'package:gikyoku_library/catalog/theater_log.dart';
 import 'package:gikyoku_library/main.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,9 +14,7 @@ void main() {
     const hold = Duration(seconds: 7);
     final repository = CatalogRepository();
     final shortlist = Shortlist();
-    await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: shortlist, log: TheaterLog(), auth: AuthService()));
-    await tester.tap(find.text('台本'));
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: shortlist));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('3〜5人'));

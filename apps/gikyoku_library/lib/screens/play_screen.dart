@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../app_scope.dart';
-import '../catalog/models.dart';
+import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import '../theme.dart';
-import '../widgets/community_widgets.dart';
-import 'quick_log_sheet.dart';
 
 class PlayScreen extends StatelessWidget {
   const PlayScreen({super.key, required this.play});
@@ -59,13 +57,6 @@ class PlayScreen extends StatelessWidget {
               Expanded(child: _Stat('上演時間', play.minutesLabel)),
             ],
           ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            key: const Key('log-this-play'),
-            onPressed: () => QuickLogSheet.open(context, play: play),
-            icon: const Icon(Icons.theater_comedy_outlined),
-            label: const Text('この作品を観た'),
-          ),
           if (play.readUrl != null) ...[
             const SizedBox(height: 16),
             FilledButton.icon(
@@ -79,7 +70,6 @@ class PlayScreen extends StatelessWidget {
             const SizedBox(height: 8),
             OutlinedButton.icon(onPressed: () => _open('buy', Uri.parse(play.buyUrl!)), icon: const Icon(Icons.open_in_new), label: const Text('入手先を開く')),
           ],
-          ReviewsSection(postId: play.id),
           if (play.synopsis != null) _Section('あらすじ', Text(play.synopsis!, style: _body)),
           if (play.synopsis == null && play.aiDescription != null)
             _Section(

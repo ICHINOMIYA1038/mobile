@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gikyoku_library/app_scope.dart';
-import 'package:gikyoku_library/catalog/models.dart';
+import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import 'package:gikyoku_library/catalog/shortlist.dart';
-import 'package:gikyoku_library/catalog/theater_log.dart';
 import 'package:gikyoku_library/screens/search_screen.dart';
 import 'package:gikyoku_library/screens/shortlist_screen.dart';
 import 'package:gikyoku_library/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'test_support.dart';
 
 final _catalog = Catalog(
   generatedAt: DateTime.utc(2026, 11, 4),
@@ -21,14 +18,9 @@ final _catalog = Catalog(
   ],
 );
 
-Widget _wrap(Widget child, Shortlist s) => _scope(child, s, TheaterLog());
-
-Widget _scope(Widget child, Shortlist s, TheaterLog log) => AppScope(
+Widget _wrap(Widget child, Shortlist s) => AppScope(
   catalog: _catalog,
   shortlist: s,
-  log: log,
-  auth: offlineAuth(),
-  sync: offlineSync(offlineAuth(), log),
   child: MaterialApp(theme: buildTheme(), home: Scaffold(body: child)),
 );
 

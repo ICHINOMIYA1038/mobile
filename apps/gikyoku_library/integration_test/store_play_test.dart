@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gikyoku_library/account/auth_service.dart';
-import 'package:gikyoku_library/catalog/catalog_repository.dart';
+import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import 'package:gikyoku_library/catalog/shortlist.dart';
-import 'package:gikyoku_library/catalog/theater_log.dart';
 import 'package:gikyoku_library/main.dart';
 import 'package:gikyoku_library/widgets/play_card.dart';
 import 'package:integration_test/integration_test.dart';
@@ -16,9 +14,7 @@ void main() {
   testWidgets('作品詳細を開いて止める', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final repository = CatalogRepository();
-    await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: Shortlist(), log: TheaterLog(), auth: AuthService()));
-    await tester.tap(find.text('台本'));
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), shortlist: Shortlist()));
     await Future<void>.delayed(const Duration(seconds: 4));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'エダニク');

@@ -1,0 +1,23 @@
+name: gikyoku_catalog
+description: 戯曲図書館の作品カタログ（モデル、同梱データ、更新）。戯曲図書館と観劇記録のアプリで共有する
+publish_to: 'none'
+resolution: workspace
+version: 0.1.0
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.6.0
+  path_provider: ^2.1.5
+  shared_preferences: ^2.5.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  assets:
+    - assets/catalog.json

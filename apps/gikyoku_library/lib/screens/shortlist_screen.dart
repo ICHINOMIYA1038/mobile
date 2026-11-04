@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../app_scope.dart';
-import '../catalog/models.dart';
+import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import '../theme.dart';
 import '../widgets/play_card.dart';
 
