@@ -23,6 +23,8 @@ void main() {
 
     await tester.tap(find.byKey(const Key('log-add')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('quick-more')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('log-title')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('log-title')), 'エダニク');

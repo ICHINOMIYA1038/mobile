@@ -4,6 +4,7 @@ import 'package:gikyoku_library/app_scope.dart';
 import 'package:gikyoku_library/catalog/models.dart';
 import 'package:gikyoku_library/catalog/shortlist.dart';
 import 'package:gikyoku_library/catalog/theater_log.dart';
+import 'package:gikyoku_library/screens/log_edit_screen.dart';
 import 'package:gikyoku_library/screens/log_screen.dart';
 import 'package:gikyoku_library/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -66,10 +67,10 @@ void main() {
         log: log,
         auth: offlineAuth(),
         sync: offlineSync(offlineAuth(), log),
-        child: MaterialApp(theme: buildTheme(), home: const LogScreen()),
+        child: MaterialApp(theme: buildTheme(), home: const _WithEditor()),
       ),
     );
-    await tester.tap(find.byKey(const Key('log-add')));
+    await tester.tap(find.byKey(const Key('open-editor')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('log-title')), '一つ');
     await tester.pumpAndSettle();
@@ -89,12 +90,11 @@ void main() {
         log: log,
         auth: offlineAuth(),
         sync: offlineSync(offlineAuth(), log),
-        child: MaterialApp(theme: buildTheme(), home: const LogScreen()),
+        child: MaterialApp(theme: buildTheme(), home: const _WithEditor()),
       ),
     );
-    expect(find.textContaining('観た舞台を記録しましょう'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('log-add')));
+    await tester.tap(find.byKey(const Key('open-editor')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('log-save')));
     await tester.pump();
@@ -120,4 +120,15 @@ void main() {
     expect(find.byKey(const Key('log-to-play')), findsOneWidget);
     expect(find.textContaining('これまで 1 本'), findsOneWidget);
   });
+}
+
+/// 編集画面を開くボタンつきの半券帳
+class _WithEditor extends StatelessWidget {
+  const _WithEditor();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: const LogScreen(),
+    bottomNavigationBar: TextButton(key: const Key('open-editor'), onPressed: () => LogEditScreen.open(context), child: const Text('編集')),
+  );
 }

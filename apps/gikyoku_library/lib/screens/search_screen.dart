@@ -7,6 +7,7 @@ import '../catalog/models.dart';
 import '../theme.dart';
 import '../widgets/play_card.dart';
 import 'about_screen.dart';
+import 'shortlist_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -58,13 +59,20 @@ class _SearchScreenState extends State<SearchScreen> {
                   Row(
                     children: [
                       const Expanded(
-                        child: Text('戯曲図書館', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
+                        child: Text('台本をさがす', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
+                      ),
+                      ListenableBuilder(
+                        listenable: AppScope.of(context).shortlist,
+                        builder: (context, _) {
+                          final n = AppScope.of(context).shortlist.ids.length;
+                          return TextButton.icon(key: const Key('open-shortlist'), onPressed: () => ShortlistScreen.open(context), icon: const Icon(Icons.bookmark_border, size: 18), label: Text(n == 0 ? '気になる' : '気になる $n'));
+                        },
                       ),
                       IconButton(tooltip: 'このアプリについて', icon: const Icon(Icons.info_outline, color: Palette.inkSoft), onPressed: () => AboutScreen.open(context)),
                     ],
                   ),
                   const SizedBox(height: 2),
-                  const Text('上演する台本を、人数と時間から探す', style: TextStyle(fontSize: 13, color: Palette.inkSoft)),
+                  const Text('戯曲図書館の作品を、人数と時間から', style: TextStyle(fontSize: 13, color: Palette.inkSoft)),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _controller,

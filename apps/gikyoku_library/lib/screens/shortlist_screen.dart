@@ -16,6 +16,13 @@ String shortlistShareText(List<Play> plays) => [
 class ShortlistScreen extends StatelessWidget {
   const ShortlistScreen({super.key});
 
+  static Future<void> open(BuildContext context) => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => Scaffold(appBar: AppBar(), body: const ShortlistScreen()),
+      settings: const RouteSettings(name: 'shortlist'),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final scope = AppScope.of(context);
@@ -34,7 +41,7 @@ class ShortlistScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     const Expanded(
-                      child: Text('候補', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
+                      child: Text('気になる作品', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
                     ),
                     if (plays.isNotEmpty)
                       Builder(
@@ -55,7 +62,7 @@ class ShortlistScreen extends StatelessWidget {
               if (plays.isEmpty)
                 const Padding(
                   padding: EdgeInsets.all(32),
-                  child: Text('気になる作品のしおりを押すと、ここに集まります。人数と時間を比べて、部員や劇団の仲間に共有できます。', style: TextStyle(height: 1.7, color: Palette.inkSoft)),
+                  child: Text('作品のしおりを押すと、ここに集まります。人数と時間を比べて、部員や劇団の仲間に共有できます。', style: TextStyle(height: 1.7, color: Palette.inkSoft)),
                 )
               else ...[
                 if (plays.length >= 2) _CompareTable(plays: plays),
