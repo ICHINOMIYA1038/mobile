@@ -1,3 +1,10 @@
 # 計測（app_insights）のチェックから外すアプリ。1行に1つ、# の後ろに理由。
 doremi_scan     # 2026-10 時点で対応保留（オーナーの判断）
 korokoro_slope  # 2026-10 時点で対応保留（オーナーの判断）
+fp2_talk       # 資格シリーズ試作版。公開準備時に Firebase 登録と計測を判断
+fp3_talk       # 資格シリーズ試作版。公開準備時に Firebase 登録と計測を判断
+itpassport_talk # 資格シリーズ試作版。公開準備時に Firebase 登録と計測を判断
+sg_talk        # 資格シリーズ試作版。公開準備時に Firebase 登録と計測を判断
+fe_talk        # 資格シリーズ試作版。公開準備時に Firebase 登録と計測を判断
+kanrigyo_talk  # 資格シリーズ試作版。公開準備時に Firebase 登録と計測を判断
+chintai_talk   # 資格シリーズ試作版。公開準備時に Firebase 登録と計測を判断

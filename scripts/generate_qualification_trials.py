@@ -14,6 +14,9 @@ EXAMS = {
     'fp3': ('FP3級', 'FP3', '#0F766E'),
     'itpassport': ('ITパスポート', 'IT', '#4338CA'),
     'sg': ('情報セキュリティマネジメント', 'SG', '#9A3412'),
+    'fe': ('基本情報技術者', 'FE', '#1D4ED8'),
+    'kanrigyo': ('管理業務主任者', 'KG', '#7C3AED'),
+    'chintai': ('賃貸不動産経営管理士', 'CH', '#B45309'),
 }
 
 
@@ -89,6 +92,12 @@ def generate(slug: str) -> None:
     plist.pop('SKAdNetworkItems', None)
     with plist_path.open('wb') as file:
         plistlib.dump(plist, file, sort_keys=False)
+    framework_plist = target / 'ios/Flutter/AppFrameworkInfo.plist'
+    with framework_plist.open('rb') as file:
+        framework = plistlib.load(file)
+    framework['MinimumOSVersion'] = '15.0'
+    with framework_plist.open('wb') as file:
+        plistlib.dump(framework, file, sort_keys=False)
 
     (target / 'pubspec.yaml').write_text(
         f'name: {app}\n'
@@ -127,11 +136,11 @@ def generate(slug: str) -> None:
     create_icon(target, code, color)
 
 
-def validate() -> None:
+def validate(slugs=None) -> None:
     forbidden = ('fp1', 'FP1', 'GADApplicationIdentifier', 'SKAdNetworkItems',
                  'Products.storekit', 'firebase', 'purchases', 'RevenueCat',
                  'google_mobile_ads')
-    for slug in EXAMS:
+    for slug in (slugs or EXAMS):
         target = ROOT / 'apps' / f'{slug}_talk'
         if not target.exists():
             raise SystemExit(f'Missing: {target}')
@@ -145,6 +154,12 @@ def validate() -> None:
             plist = plistlib.load(file)
         if plist['CFBundleDisplayName'] != f'pAIrOf {EXAMS[slug][0]}':
             raise SystemExit(f'Wrong display name: {slug}')
+        if plist.get('CFBundleDevelopmentRegion') != 'ja_JP' or plist.get('CFBundleLocalizations') != ['ja']:
+            raise SystemExit(f'Wrong localization: {slug}')
+        with (target / 'ios/Flutter/AppFrameworkInfo.plist').open('rb') as file:
+            framework = plistlib.load(file)
+        if framework.get('MinimumOSVersion') != '15.0':
+            raise SystemExit(f'Wrong framework deployment target: {slug}')
         project = (target / 'ios/Runner.xcodeproj/project.pbxproj').read_text()
         if f'PRODUCT_BUNDLE_IDENTIFIER = jp.pairof.{slug}.talk;' not in project:
             raise SystemExit(f'Wrong bundle ID: {slug}')
@@ -158,9 +173,12 @@ if __name__ == '__main__':
     import sys
     if sys.argv[1:] == ['--check']:
         validate()
+    elif len(sys.argv) == 3 and sys.argv[1] == '--create' and sys.argv[2] in EXAMS:
+        generate(sys.argv[2])
+        validate([sys.argv[2]])
     elif not sys.argv[1:]:
         for exam in EXAMS:
             generate(exam)
         validate()
     else:
-        raise SystemExit('Usage: generate_qualification_trials.py [--check]')
+        raise SystemExit('Usage: generate_qualification_trials.py [--check | --create <exam>]')
