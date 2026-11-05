@@ -118,6 +118,7 @@ class _EntryCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TicketStub(
+          showSeal: true,
           entry: entry,
           onTap: () => LogEditScreen.open(context, entry: entry),
           trailing: IconButton(

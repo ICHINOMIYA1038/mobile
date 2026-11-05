@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../catalog/log_photos.dart';
 import '../catalog/theater_log.dart';
 import '../theme.dart';
+import 'pon_stamp.dart';
 
 /// 切り込みのある半券の形
 class StubClipper extends CustomClipper<Path> {
@@ -48,17 +49,20 @@ const _stubColors = [Color(0xFF1F2F4A), Color(0xFF7A2A2A), Color(0xFF23504A), Co
 Color stubColorOf(String id) => _stubColors[id.codeUnits.fold(0, (a, b) => a + b) % _stubColors.length];
 
 class TicketStub extends StatelessWidget {
-  const TicketStub({super.key, required this.entry, this.onTap, this.trailing});
+  const TicketStub({super.key, required this.entry, this.onTap, this.trailing, this.showSeal = false});
   final TheaterLogEntry entry;
   final VoidCallback? onTap;
   final Widget? trailing;
+
+  /// 押された印を右下に残す（半券帳で並べて眺めるとき）
+  final bool showSeal;
 
   @override
   Widget build(BuildContext context) {
     final color = stubColorOf(entry.id);
     final d = entry.watchedOn;
     final place = [entry.group, entry.venue].whereType<String>().join('／');
-    return ClipPath(
+    final stub = ClipPath(
       clipper: const StubClipper(),
       child: Material(
         color: Palette.card,
@@ -85,7 +89,7 @@ class TicketStub extends StatelessWidget {
                   ),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                      padding: EdgeInsets.fromLTRB(16, 12, showSeal ? 50 : 8, 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -111,6 +115,25 @@ class TicketStub extends StatelessWidget {
           ),
         ),
       ),
+    );
+    if (!showSeal) return stub;
+    return Stack(
+      children: [
+        stub,
+        Positioned(
+          right: (trailing == null ? 8 : 46) + (entry.photos.isEmpty ? 0 : 70),
+          bottom: 6,
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: 0.82,
+              child: Transform.rotate(
+                angle: -0.2,
+                child: PonSeal(key: Key('stub-seal-${entry.id}'), size: 44, label: '観劇済', fontSize: 9.5),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
