@@ -57,8 +57,8 @@ void main() {
     expect(logMatches(e, ' '), isTrue);
   });
 
-  Widget wrap(TheaterLog log, Widget child) => AppScope(
-    catalog: Catalog(generatedAt: DateTime.utc(2026), categories: const [], plays: const []),
+  Widget wrap(TheaterLog log, Widget child, {List<Venue> venues = const []}) => AppScope(
+    catalog: Catalog(generatedAt: DateTime.utc(2026), categories: const [], plays: const [], venues: venues),
     log: log,
     auth: offlineAuth(),
     sync: offlineSync(offlineAuth(), log),
@@ -90,5 +90,34 @@ void main() {
     await tester.tap(find.byKey(const Key('card-note')));
     await tester.pump();
     expect(find.text('人に見せない感想'), findsOneWidget);
+  });
+
+  testWidgets('シェアカードは形を選べて、劇場の一覧にある劇場ならスタンプも押す', (tester) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final e = _e('a', DateTime(2026, 11, 4), title: '見せる題名', venue: '本多劇場', seat: 'C列12番', rating: 4);
+    await tester.pumpWidget(wrap(TheaterLog(), ShareCardScreen(entry: e), venues: const [Venue(1, '本多劇場', '東京都')]));
+    await tester.pump();
+    expect(find.byKey(const Key('card-venue-seal')), findsOneWidget);
+    expect(find.text('観劇済'), findsOneWidget);
+    expect(find.byKey(const Key('card-seat-text')), findsNothing);
+    final story = tester.getSize(find.byType(LogShareCard));
+    expect(story.height / story.width, closeTo(16 / 9, 0.01));
+    await tester.tap(find.byKey(const Key('card-format-square')));
+    await tester.pump();
+    final square = tester.getSize(find.byType(LogShareCard));
+    expect(square.height, closeTo(square.width, 0.5));
+    await tester.tap(find.byKey(const Key('card-seat')));
+    await tester.pump();
+    expect(find.byKey(const Key('card-seat-text')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('劇場の一覧にない劇場なら、劇場のスタンプは押さない', (tester) async {
+    final e = _e('a', DateTime(2026, 11, 4), title: '題名', venue: '一覧にない劇場');
+    await tester.pumpWidget(wrap(TheaterLog(), ShareCardScreen(entry: e)));
+    await tester.pump();
+    expect(find.byKey(const Key('card-venue-seal')), findsNothing);
   });
 }
