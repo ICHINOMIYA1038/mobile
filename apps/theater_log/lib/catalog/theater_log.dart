@@ -159,7 +159,7 @@ class TheaterLogEntry {
   );
 }
 
-/// 観劇ノート。試作の段階では端末の中だけに保存する
+/// 観劇の記録。端末に保存し、ログイン中はサーバーと同期する
 class TheaterLog extends ChangeNotifier {
   static const _key = 'theater_log';
   final List<TheaterLogEntry> _entries = [];
