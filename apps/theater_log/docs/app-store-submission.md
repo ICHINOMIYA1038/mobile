@@ -8,7 +8,7 @@
 | Bundle ID | `com.gikyokutosyokan.theaterlog` |
 | ログインの戻り先 | `gikyokutheaterlog://auth-callback`（戯曲 ID の許可リストに登録済み） |
 | Firebase のアプリ登録 | 済（`ichinomiya-apps`） |
-| アプリの名前 | ゲキタビ（ストアは「ゲキタビ - 観劇の半券と劇場めぐり」） |
+| アプリの名前 | ゲキポン（ストアの名前は「ゲキポン - 全国の劇場にスタンプを押そう」、サブタイトルは「観た舞台を半券に残す観劇記録」） |
 | ASC のアプリ登録、TestFlight | 済（App ID 6830914655、内部グループ「開発」） |
 | ストアの資料、プライバシー申告 | 未 |
 
