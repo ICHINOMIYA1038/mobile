@@ -156,7 +156,7 @@ class _FirstStub extends StatelessWidget {
         const SizedBox(height: 28),
         const Text('観た舞台が、半券になって\nたまっていきます', textAlign: TextAlign.center, style: TextStyle(fontFamily: titleFont, fontSize: 21, fontWeight: FontWeight.w700, height: 1.5, color: Palette.navy)),
         const SizedBox(height: 10),
-        const Text('作品名と星だけ、3 秒で記録できます。', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Palette.inkSoft)),
+        const Text('作品名と星だけ、3 秒で記録できます。\n行った劇場には、スタンプも押せます。', textAlign: TextAlign.center, style: TextStyle(fontSize: 14, color: Palette.inkSoft)),
         const SizedBox(height: 20),
         FilledButton(
           key: const Key('first-stub'),

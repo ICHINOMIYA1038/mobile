@@ -68,7 +68,7 @@ class _AppState extends State<App> {
     auth: widget.auth,
     sync: _sync,
     child: MaterialApp(
-      title: 'ゲキタビ',
+      title: 'ゲキポン',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
       locale: const Locale('ja'),

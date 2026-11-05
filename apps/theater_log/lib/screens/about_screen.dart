@@ -31,7 +31,7 @@ class AboutScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
           const Text(
-            'ゲキタビは、観た舞台を半券にして集め、劇場をめぐる旅を記録するアプリです。戯曲図書館が運営しています。'
+            'ゲキポンは、観た舞台を記録するアプリです。記録は半券になってたまり、行った劇場にはスタンプを押せます。戯曲図書館が運営しています。'
             '劇場スタンプは、このアプリの楽しみ方で、各劇場とは関係ありません。',
             style: TextStyle(fontSize: 15, height: 1.75, color: Palette.ink),
           ),

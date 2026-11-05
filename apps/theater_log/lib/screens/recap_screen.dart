@@ -113,7 +113,7 @@ class RecapCard extends StatelessWidget {
                   line('いちばん観た月', '${r.bestMonth}月（${r.bestMonthCount} 本）'),
                   if (r.favorites.isNotEmpty) line('★5 をつけた舞台', r.favorites.join('、')),
                   const Spacer(),
-                  const Align(alignment: Alignment.bottomRight, child: Text('ゲキタビ', style: TextStyle(fontFamily: titleFont, fontSize: 12, color: paper))),
+                  const Align(alignment: Alignment.bottomRight, child: Text('ゲキポン', style: TextStyle(fontFamily: titleFont, fontSize: 12, color: paper))),
                 ],
               ),
       ),

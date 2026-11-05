@@ -99,7 +99,7 @@ class LogShareCard extends StatelessWidget {
                     if (e.rating != null) ...[const SizedBox(height: 6), Text('★' * e.rating!, style: const TextStyle(fontSize: 16, color: Color(0xFFE9A23B)))],
                     if (withNote && e.note.isNotEmpty) ...[const SizedBox(height: 8), Flexible(child: Text(e.note, overflow: TextOverflow.fade, style: const TextStyle(fontSize: 13, height: 1.6, color: Palette.paper)))],
                     const Spacer(),
-                    const Align(alignment: Alignment.bottomRight, child: Text('ゲキタビ', style: TextStyle(fontFamily: titleFont, fontSize: 12, color: Palette.paper))),
+                    const Align(alignment: Alignment.bottomRight, child: Text('ゲキポン', style: TextStyle(fontFamily: titleFont, fontSize: 12, color: Palette.paper))),
                   ],
                 ),
               ),
