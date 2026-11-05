@@ -1,12 +1,16 @@
 import 'dart:math' as math;
 
+import 'package:app_insights/app_insights.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../app_scope.dart';
 import '../account/community_api.dart';
 import '../catalog/achievements.dart';
 import '../catalog/productions.dart';
+import '../catalog/ticket_scan.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import '../catalog/theater_log.dart';
 import '../theme.dart';
@@ -32,15 +36,20 @@ class QuickLogSheet extends StatefulWidget {
   );
 
   @override
-  State<QuickLogSheet> createState() => _QuickLogSheetState();
+  State<QuickLogSheet> createState() => QuickLogSheetState();
 }
 
-class _QuickLogSheetState extends State<QuickLogSheet> {
+class QuickLogSheetState extends State<QuickLogSheet> {
   late final _title = TextEditingController(text: widget.play?.title);
   late Play? _play = widget.play;
   CurrentProduction? _production;
   int? _rating;
   int _daysAgo = 0;
+
+  /// チケットから読み取った内容。記録に入れる
+  TicketScan? _scan;
+  bool _scanning = false;
+  String? _scanError;
 
   void _rowsChanged() => setState(() {});
 
@@ -57,7 +66,67 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
     super.dispose();
   }
 
-  DateTime get _watchedOn => DateUtils.dateOnly(DateTime.now()).subtract(Duration(days: _daysAgo));
+  DateTime get _watchedOn => _scan?.date ?? DateUtils.dateOnly(DateTime.now()).subtract(Duration(days: _daysAgo));
+
+  Future<void> _scanTicket(ImageSource source) async {
+    final scope = AppScope.of(context);
+    setState(() => _scanError = null);
+    final XFile? picked;
+    try {
+      picked = await ImagePicker().pickImage(source: source, maxWidth: 2400, imageQuality: 90);
+    } catch (_) {
+      if (mounted) setState(() => _scanError = 'カメラや写真を開けませんでした');
+      return;
+    }
+    if (picked == null || !mounted) return;
+    await scanPath(picked.path, scope);
+  }
+
+  /// 選んだ写真を読み取る。テストからも呼ぶ
+  @visibleForTesting
+  Future<void> scanPath(String path, AppScope scope) async {
+    setState(() => _scanning = true);
+    try {
+      final lines = await TicketScanner.recognize(path);
+      final scan = parseTicket(lines, venues: scope.catalog.venues, productions: ProductionStore.instance.rows, today: DateUtils.dateOnly(DateTime.now()));
+      if (!mounted) return;
+      AppInsights.logEvent('ticket_scan', parameters: {'production': scan.production == null ? 0 : 1, 'date': scan.date == null ? 0 : 1, 'venue': scan.venue == null ? 0 : 1});
+      setState(() {
+        if (scan.isEmpty) {
+          _scanError = 'うまく読み取れませんでした。明るい場所で、チケット全体が写るように撮ってください';
+          return;
+        }
+        _scan = scan;
+        if (scan.production != null) {
+          _production = scan.production;
+          _title.text = scan.production!.title;
+          _play = null;
+        }
+      });
+    } catch (_) {
+      if (mounted) setState(() => _scanError = 'うまく読み取れませんでした');
+    } finally {
+      if (mounted) setState(() => _scanning = false);
+    }
+  }
+
+  Future<void> _chooseScanSource() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      useRootNavigator: true,
+      builder: (c) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(padding: EdgeInsets.fromLTRB(20, 16, 20, 4), child: Text('チケットの写真は、この端末の中だけで読み取ります。保存も送信もしません。', style: TextStyle(fontSize: 12, color: Palette.inkSoft))),
+            ListTile(key: const Key('scan-camera'), leading: const Icon(Icons.photo_camera_outlined), title: const Text('チケットを撮る'), onTap: () => Navigator.pop(c, ImageSource.camera)),
+            ListTile(key: const Key('scan-library'), leading: const Icon(Icons.photo_library_outlined), title: const Text('写真やスクリーンショットから選ぶ'), onTap: () => Navigator.pop(c, ImageSource.gallery)),
+          ],
+        ),
+      ),
+    );
+    if (source != null) await _scanTicket(source);
+  }
 
   void _select(CurrentProduction p) {
     HapticFeedback.selectionClick();
@@ -95,9 +164,12 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
       playId: play?.id,
       author: play?.author,
       group: production?.groupName,
-      venue: production == null || production.venueName.isEmpty ? null : production.venueName,
+      venue: production == null || production.venueName.isEmpty ? _scan?.venue?.name : production.venueName,
       productionId: production?.id,
       rating: _rating,
+      showTime: _scan?.showTime,
+      seat: _scan?.seat,
+      price: _scan?.price,
     );
   }
 
@@ -163,6 +235,9 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
               }),
               decoration: InputDecoration(
                 hintText: '公演名、劇団、劇場で探す',
+                suffixIcon: _scanning
+                    ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
+                    : IconButton(key: const Key('quick-scan'), tooltip: 'チケットから読み取る', icon: const Icon(Icons.document_scanner_outlined, color: Palette.vermilion), onPressed: _chooseScanSource),
                 filled: true,
                 fillColor: Palette.card,
                 border: OutlineInputBorder(
@@ -171,6 +246,21 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
                 ),
               ),
             ),
+            if (_scanError != null) Padding(key: const Key('scan-error'), padding: const EdgeInsets.only(top: 6), child: Text(_scanError!, style: const TextStyle(fontSize: 12, color: Palette.vermilion))),
+            if (_scan != null) _ScanSummary(scan: _scan!, watchedOn: _watchedOn, onClear: () => setState(() => _scan = null)),
+            if (_scan != null && production == null && _title.text.trim().isEmpty && _scan!.titleCandidates.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    const Padding(padding: EdgeInsets.only(top: 8), child: Text('題名はどれですか？', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.inkSoft))),
+                    for (final (i, t) in _scan!.titleCandidates.indexed)
+                      ActionChip(key: Key('scan-title-$i'), label: Text(t), onPressed: () => setState(() => _title.text = t)),
+                  ],
+                ),
+              ),
             if (production != null) _SelectedProduction(production: production, onClear: () => setState(() => _production = null)),
             if (q.isNotEmpty && !selected)
               ConstrainedBox(
@@ -244,7 +334,7 @@ class _QuickLogSheetState extends State<QuickLogSheet> {
               Wrap(
                 spacing: 8,
                 children: [
-                  for (var i = 0; i < days.length; i++)
+                  for (var i = 0; i < days.length && _scan?.date == null; i++)
                     ChoiceChip(
                       label: Text(days[i], style: TextStyle(color: _daysAgo == i ? Colors.white : Palette.ink)),
                       selected: _daysAgo == i,
@@ -355,6 +445,45 @@ class _ProductionTile extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// チケットから読み取った内容。記録の前に確かめられるように並べる
+class _ScanSummary extends StatelessWidget {
+  const _ScanSummary({required this.scan, required this.watchedOn, required this.onClear});
+  final TicketScan scan;
+  final DateTime watchedOn;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      if (scan.date != null) '${watchedOn.month}/${watchedOn.day}${scan.showTime == null ? '' : scan.showTime == 'matinee' ? ' 昼' : ' 夜'}',
+      if (scan.production == null && scan.venue != null) scan.venue!.name,
+      ?scan.seat,
+      if (scan.price != null) '${scan.price}円',
+    ];
+    return Container(
+      key: const Key('scan-summary'),
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.fromLTRB(12, 6, 2, 6),
+      decoration: BoxDecoration(color: const Color(0xFFFBEDEA), borderRadius: BorderRadius.circular(10)),
+      child: Row(
+        children: [
+          const Icon(Icons.document_scanner_outlined, size: 18, color: Palette.vermilion),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              items.isEmpty ? 'チケットから読み取りました' : 'チケットから: ${items.join('・')}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Palette.ink),
+            ),
+          ),
+          IconButton(key: const Key('scan-clear'), tooltip: '読み取った内容を外す', icon: const Icon(Icons.close, size: 18), onPressed: onClear),
+        ],
       ),
     );
   }

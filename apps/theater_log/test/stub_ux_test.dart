@@ -3,6 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:theater_log/app_scope.dart';
 import 'package:theater_log/catalog/achievements.dart';
 import 'package:theater_log/catalog/productions.dart';
+import 'package:theater_log/catalog/ticket_scan.dart';
+import 'package:theater_log/screens/quick_log_sheet.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import 'package:theater_log/catalog/theater_log.dart';
 import 'package:theater_log/screens/log_screen.dart';
@@ -15,8 +17,8 @@ import 'test_support.dart';
 
 TheaterLogEntry _e(String id, {int month = 1, String? venue, String note = '', int? playId}) => TheaterLogEntry(id: id, title: '舞台$id', watchedOn: DateTime(2026, month, 1), venue: venue, note: note, playId: playId);
 
-Widget _scope(TheaterLog log, Widget child) => AppScope(
-  catalog: Catalog(generatedAt: DateTime.utc(2026), categories: const [], plays: const [Play(id: 7, title: '赤鬼', author: '野田秀樹')]),
+Widget _scope(TheaterLog log, Widget child, {List<Venue> venues = const []}) => AppScope(
+  catalog: Catalog(generatedAt: DateTime.utc(2026), categories: const [], plays: const [Play(id: 7, title: '赤鬼', author: '野田秀樹')], venues: venues),
   log: log,
   auth: offlineAuth(),
   sync: offlineSync(offlineAuth(), log),
@@ -284,6 +286,65 @@ void main() {
       await tester.tap(find.byKey(const Key('production-hit-31')));
       await tester.pump();
       expect(find.byKey(const Key('production-date-note')), findsOneWidget);
+    });
+  });
+
+  group('チケットの読み取り', () {
+    Future<QuickLogSheetState> open(WidgetTester tester, TheaterLog log, List<String> lines) async {
+      TicketScanner.override = (_) async => lines;
+      addTearDown(() => TicketScanner.override = null);
+      tester.view.physicalSize = const Size(430, 932);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(_scope(log, const LogScreen(), venues: const [Venue(1, '本多劇場', '東京都')]));
+      await tester.tap(find.byKey(const Key('first-stub')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('quick-scan')), findsOneWidget);
+      return tester.state<QuickLogSheetState>(find.byType(QuickLogSheet));
+    }
+
+    testWidgets('公演が分かれば選び、日付、座席、金額も記録に入る', (tester) async {
+      ProductionStore.instance.rows = const [CurrentProduction(id: 51, title: '赤鬼', venueName: '本多劇場', groupName: '劇団甲', startDate: '2026-11-01', endDate: '2026-11-10')];
+      addTearDown(() => ProductionStore.instance.rows = const []);
+      final log = TheaterLog();
+      final sheet = await open(tester, log, ['赤鬼', '本多劇場', '2026年11月8日(日) 13:00開演', '1階 C列 12番', '¥7,800']);
+      final scope = AppScope.of(tester.element(find.byType(QuickLogSheet)));
+      await sheet.scanPath('/dev/null', scope);
+      await tester.pump();
+      expect(find.byKey(const Key('scan-summary')), findsOneWidget);
+      expect(find.byKey(const Key('production-selected')), findsOneWidget);
+      expect(find.textContaining('11/8 昼'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('quick-save')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 2));
+      final e = log.entries.single;
+      expect([e.title, e.venue, e.group, e.productionId], ['赤鬼', '本多劇場', '劇団甲', 51]);
+      expect(e.watchedOn, DateTime(2026, 11, 8));
+      expect([e.showTime, e.seat, e.price], ['matinee', '1階C列12番', 7800]);
+    });
+
+    testWidgets('公演が分からなければ、題名の候補から選べる', (tester) async {
+      final log = TheaterLog();
+      final sheet = await open(tester, log, ['電子チケット', '誰も知らない新作', '本多劇場', '2026.11.08 開演 18:30']);
+      await sheet.scanPath('/dev/null', AppScope.of(tester.element(find.byType(QuickLogSheet))));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('scan-title-0')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('quick-save')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 2));
+      final e = log.entries.single;
+      expect([e.title, e.venue, e.showTime], ['誰も知らない新作', '本多劇場', 'soiree']);
+    });
+
+    testWidgets('何も読めなければ、撮り直しの案内を出す', (tester) async {
+      final sheet = await open(tester, TheaterLog(), const []);
+      await sheet.scanPath('/dev/null', AppScope.of(tester.element(find.byType(QuickLogSheet))));
+      await tester.pump();
+      expect(find.byKey(const Key('scan-error')), findsOneWidget);
+      expect(find.byKey(const Key('scan-summary')), findsNothing);
     });
   });
 }
