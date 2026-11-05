@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:theater_log/app_scope.dart';
 import 'package:theater_log/catalog/achievements.dart';
+import 'package:theater_log/catalog/productions.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import 'package:theater_log/catalog/theater_log.dart';
 import 'package:theater_log/screens/log_screen.dart';
@@ -145,6 +146,144 @@ void main() {
       await tester.pumpWidget(_scope(log, const LogScreen()));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('stub-seal-a')), findsOneWidget);
+    });
+  });
+
+  group('公演の候補', () {
+    final day = DateTime(2026, 11, 6);
+    const akaoniA = CurrentProduction(id: 1, title: '赤鬼', venueName: '本多劇場', groupName: '劇団甲', prefecture: '東京都', startDate: '2026-11-01', endDate: '2026-11-10');
+    const akaoniB = CurrentProduction(id: 2, title: '赤鬼', venueName: 'ABCホール', groupName: '劇団乙', prefecture: '大阪府', startDate: '2026-12-01', endDate: '2026-12-05');
+    const edaniku = CurrentProduction(id: 3, title: 'エダニク', venueName: 'ザ・スズナリ', startDate: '2026-10-01', endDate: '2026-10-05', postId: 7);
+
+    test('同じ題名でも劇場ごとに別の候補になり、上演中が先に出る', () {
+      final hits = suggestProductions([akaoniB, akaoniA, edaniku], '赤鬼', day);
+      expect(hits.map((h) => h.production.id), [1, 2]);
+      expect(hits.every((h) => h.sharedTitle), isTrue);
+      expect(hits.first.running, isTrue);
+      expect(hits.last.running, isFalse);
+    });
+
+    test('ひらがなでも、全角でも、劇団名でも、劇場名でも探せる', () {
+      expect(suggestProductions([edaniku], 'えだにく', day).single.production.id, 3);
+      expect(suggestProductions([akaoniB], 'ａｂｃ', day).single.production.id, 2);
+      expect(suggestProductions([akaoniA], '劇団甲', day).single.production.id, 1);
+      expect(suggestProductions([edaniku], 'スズナリ', day).single.sharedTitle, isFalse);
+      expect(suggestProductions([akaoniA], '  ', day), isEmpty);
+      expect(suggestProductions([akaoniA], '別の題名', day), isEmpty);
+    });
+
+    test('期間の判定と表示', () {
+      expect(akaoniA.includes(day), isTrue);
+      expect(edaniku.includes(day), isFalse);
+      expect(akaoniA.dateLabel, '11/1〜11/10');
+      expect(const CurrentProduction(id: 9, title: 't', venueName: 'v', startDate: '2026-11-03').dateLabel, '11/3');
+      expect(const CurrentProduction(id: 9, title: 't', venueName: 'v').includes(day), isNull);
+    });
+
+    Future<void> openSheet(WidgetTester tester, TheaterLog log) async {
+      tester.view.physicalSize = const Size(430, 932);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(_scope(log, const LogScreen()));
+      await tester.tap(find.byKey(const Key('first-stub')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('題名を入れると公演名と劇場名が出て、選ぶと劇場と劇団が記録に入る', (tester) async {
+      final now = DateTime.now();
+      String ymd(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      ProductionStore.instance.rows = [
+        CurrentProduction(id: 11, title: '赤鬼', venueName: '本多劇場', groupName: '劇団甲', prefecture: '東京都', startDate: ymd(now.subtract(const Duration(days: 1))), endDate: ymd(now.add(const Duration(days: 1))), postId: 7),
+        CurrentProduction(id: 12, title: '赤鬼', venueName: 'ABCホール', groupName: '劇団乙', prefecture: '大阪府', startDate: ymd(now.add(const Duration(days: 20))), endDate: ymd(now.add(const Duration(days: 22)))),
+      ];
+      addTearDown(() => ProductionStore.instance.rows = const []);
+      final log = TheaterLog();
+      await openSheet(tester, log);
+
+      await tester.enterText(find.byKey(const Key('quick-title')), '赤鬼');
+      await tester.pump();
+      expect(find.byKey(const Key('production-hit-11')), findsOneWidget);
+      expect(find.byKey(const Key('production-hit-12')), findsOneWidget);
+      expect(find.text('本多劇場（東京都）'), findsOneWidget);
+      expect(find.text('ABCホール（大阪府）'), findsOneWidget);
+      expect(find.text('上演中'), findsOneWidget);
+      expect(find.byKey(const Key('production-shared-note')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('production-hit-11')));
+      await tester.pump();
+      expect(find.byKey(const Key('production-selected')), findsOneWidget);
+      expect(find.byKey(const Key('production-hit-12')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('quick-save')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 2));
+      final e = log.entries.single;
+      expect(e.title, '赤鬼');
+      expect(e.venue, '本多劇場');
+      expect(e.group, '劇団甲');
+      expect(e.productionId, 11);
+      expect(e.playId, 7);
+    });
+
+    testWidgets('題名を変えると選んだ公演は外れ、候補になくてもそのまま記録できる', (tester) async {
+      ProductionStore.instance.rows = const [CurrentProduction(id: 21, title: '赤鬼', venueName: '本多劇場')];
+      addTearDown(() => ProductionStore.instance.rows = const []);
+      final log = TheaterLog();
+      await openSheet(tester, log);
+      await tester.enterText(find.byKey(const Key('quick-title')), '赤鬼');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('production-hit-21')));
+      await tester.pump();
+      await tester.enterText(find.byKey(const Key('quick-title')), '自分だけの舞台');
+      await tester.pump();
+      expect(find.byKey(const Key('production-selected')), findsNothing);
+      expect(find.byKey(const Key('production-register')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('quick-save')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 2));
+      final e = log.entries.single;
+      expect(e.title, '自分だけの舞台');
+      expect(e.venue, isNull);
+      expect(e.productionId, isNull);
+    });
+
+    for (final (name, size, keyboard) in const [('iPhone 16', Size(393, 852), 336.0), ('iPhone SE', Size(375, 667), 216.0)]) {
+      testWidgets('$name でキーボードが開いても、候補が画面に収まる', (tester) async {
+        ProductionStore.instance.rows = [for (var i = 0; i < 8; i++) CurrentProduction(id: 40 + i, title: '赤鬼 第$i部', venueName: '劇場$i', groupName: '劇団', startDate: '2026-11-01', endDate: '2026-11-02')];
+        addTearDown(() => ProductionStore.instance.rows = const []);
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(_scope(TheaterLog(), const LogScreen()));
+        await tester.tap(find.byKey(const Key('first-stub')));
+        await tester.pumpAndSettle();
+        tester.view.viewInsets = FakeViewPadding(bottom: keyboard);
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byKey(const Key('quick-title')), '赤鬼');
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(find.byKey(const Key('production-hit-40')), findsOneWidget);
+        expect(find.byKey(const Key('quick-star-1')), findsNothing);
+        expect(find.byKey(const Key('quick-save')), findsOneWidget);
+        await tester.tap(find.byKey(const Key('production-hit-40')));
+        tester.view.viewInsets = FakeViewPadding.zero;
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('quick-star-1')), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('期間外の日を選ぶと、確かめる案内が出る', (tester) async {
+      ProductionStore.instance.rows = const [CurrentProduction(id: 31, title: '赤鬼', venueName: '本多劇場', startDate: '2020-01-01', endDate: '2020-01-02')];
+      addTearDown(() => ProductionStore.instance.rows = const []);
+      await openSheet(tester, TheaterLog());
+      await tester.enterText(find.byKey(const Key('quick-title')), '赤鬼');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('production-hit-31')));
+      await tester.pump();
+      expect(find.byKey(const Key('production-date-note')), findsOneWidget);
     });
   });
 }

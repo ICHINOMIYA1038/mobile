@@ -14,12 +14,16 @@ import 'account_screen.dart';
 import 'venue_stamps_screen.dart';
 
 class LogEditScreen extends StatefulWidget {
-  const LogEditScreen({super.key, this.entry, this.play});
+  const LogEditScreen({super.key, this.entry, this.play, this.draft, this.productionLabel});
   final TheaterLogEntry? entry;
   final Play? play;
 
-  static Future<void> open(BuildContext context, {TheaterLogEntry? entry, Play? play}) => Navigator.of(context).push(
-    MaterialPageRoute<void>(builder: (_) => LogEditScreen(entry: entry, play: play), fullscreenDialog: true, settings: const RouteSettings(name: 'log_edit')),
+  /// 入力の途中から続けるときの下書き。まだ保存されていない
+  final TheaterLogEntry? draft;
+  final String? productionLabel;
+
+  static Future<void> open(BuildContext context, {TheaterLogEntry? entry, Play? play, TheaterLogEntry? draft, String? productionLabel}) => Navigator.of(context).push(
+    MaterialPageRoute<void>(builder: (_) => LogEditScreen(entry: entry, play: play, draft: draft, productionLabel: productionLabel), fullscreenDialog: true, settings: const RouteSettings(name: 'log_edit')),
   );
 
   @override
@@ -27,18 +31,19 @@ class LogEditScreen extends StatefulWidget {
 }
 
 class _LogEditScreenState extends State<LogEditScreen> {
-  late final _group = TextEditingController(text: widget.entry?.group);
-  late final _venue = TextEditingController(text: widget.entry?.venue);
-  late final _note = TextEditingController(text: widget.entry?.note);
-  late DateTime _date = widget.entry?.watchedOn ?? DateUtils.dateOnly(DateTime.now());
-  late int? _rating = widget.entry?.rating;
+  TheaterLogEntry? get _seed => widget.entry ?? widget.draft;
+  late final _group = TextEditingController(text: _seed?.group);
+  late final _venue = TextEditingController(text: _seed?.venue);
+  late final _note = TextEditingController(text: _seed?.note);
+  late DateTime _date = _seed?.watchedOn ?? DateUtils.dateOnly(DateTime.now());
+  late int? _rating = _seed?.rating;
   late Play? _play = widget.play;
   late final _seat = TextEditingController(text: widget.entry?.seat);
   late final _price = TextEditingController(text: widget.entry?.price?.toString());
   late String? _showTime = widget.entry?.showTime;
   late bool _public = widget.entry?.visibility == 'public';
-  late int? _productionId = widget.entry?.productionId;
-  String? _productionLabel;
+  late int? _productionId = _seed?.productionId;
+  late String? _productionLabel = widget.productionLabel;
   late final List<String> _photos = [...?widget.entry?.photos];
   // 保存せずに閉じたら消す写真
   final List<String> _added = [];
@@ -183,7 +188,7 @@ class _LogEditScreenState extends State<LogEditScreen> {
   Widget build(BuildContext context) {
     final plays = AppScope.of(context).catalog.plays;
     const border = OutlineInputBorder();
-    final initialTitle = widget.entry?.title ?? widget.play?.title ?? '';
+    final initialTitle = _seed?.title ?? widget.play?.title ?? '';
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.entry == null ? '観劇を記録' : '記録を編集'),
