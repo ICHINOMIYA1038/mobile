@@ -8,8 +8,8 @@
 | Bundle ID | `com.gikyokutosyokan.theaterlog` |
 | ログインの戻り先 | `gikyokutheaterlog://auth-callback`（戯曲 ID の許可リストに登録済み） |
 | Firebase のアプリ登録 | 済（`ichinomiya-apps`） |
-| アプリの名前 | 未定。表示名は仮に「観劇記録」 |
-| ASC のアプリ登録、TestFlight | 未（名前が決まってから） |
+| アプリの名前 | ゲキタビ（ストアは「ゲキタビ - 観劇の半券と劇場めぐり」） |
+| ASC のアプリ登録、TestFlight | 済（App ID 6830914655、内部グループ「開発」） |
 | ストアの資料、プライバシー申告 | 未 |
 
 対応端末は iPhone のみ。サーバー側の確認は gikyoku_tosyokan の `scripts/test-app-api.mjs`。
