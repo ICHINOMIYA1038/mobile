@@ -7,6 +7,7 @@ import 'package:theater_log/catalog/theater_log.dart';
 import 'package:theater_log/screens/log_screen.dart';
 import 'package:theater_log/screens/stamp_book_screen.dart';
 import 'package:theater_log/theme.dart';
+import 'package:theater_log/widgets/pon_stamp.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'test_support.dart';
@@ -97,5 +98,53 @@ void main() {
     await tester.pumpWidget(_scope(log, const StampBookScreen()));
     expect(find.textContaining('のうち 1 個'), findsOneWidget);
     expect(find.text('初日'), findsOneWidget);
+  });
+
+  group('ポンと押す', () {
+    Widget stamp({required VoidCallback onImpact, bool reduced = false}) => MediaQuery(
+      data: MediaQueryData(disableAnimations: reduced),
+      child: MaterialApp(
+        home: Center(
+          child: PonStamp(
+            delay: const Duration(milliseconds: 100),
+            onImpact: onImpact,
+            child: const PonSeal(size: 100, label: '観劇済'),
+          ),
+        ),
+      ),
+    );
+
+    testWidgets('押した瞬間に 1 回だけ合図し、「ポン！」は消える', (tester) async {
+      var impacts = 0;
+      await tester.pumpWidget(stamp(onImpact: () => impacts++));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(impacts, 0);
+      expect(find.byKey(const Key('pon-word')), findsNothing);
+      await tester.pump(const Duration(milliseconds: 220));
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(impacts, 1);
+      expect(find.byKey(const Key('pon-word')), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(impacts, 1);
+      expect(find.byKey(const Key('pon-word')), findsNothing);
+      expect(find.text('観劇済'), findsOneWidget);
+    });
+
+    testWidgets('動きを減らす設定では、動かさずに押された状態を見せる', (tester) async {
+      var impacts = 0;
+      await tester.pumpWidget(stamp(onImpact: () => impacts++, reduced: true));
+      await tester.pump();
+      expect(impacts, 1);
+      expect(find.byKey(const Key('pon-word')), findsNothing);
+      expect(find.text('観劇済'), findsOneWidget);
+    });
+
+    testWidgets('半券帳の半券に印が残る', (tester) async {
+      final log = TheaterLog();
+      await log.upsert(_e('a'));
+      await tester.pumpWidget(_scope(log, const LogScreen()));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('stub-seal-a')), findsOneWidget);
+    });
   });
 }

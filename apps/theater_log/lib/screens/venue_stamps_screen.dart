@@ -1,12 +1,12 @@
 import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../app_scope.dart';
 import '../catalog/achievements.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import '../catalog/venue_stamps.dart';
 import '../theme.dart';
+import '../widgets/pon_stamp.dart';
 
 /// スタンプ帳の先頭。都道府県の地図
 class VenueStampSummary extends StatelessWidget {
@@ -20,11 +20,19 @@ class VenueStampSummary extends StatelessWidget {
     final prefs = stamps.values.where((p) => p.count > 0).length;
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: Palette.card, border: Border.all(color: Palette.line), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: Palette.card,
+        border: Border.all(color: Palette.line),
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('劇場スタンプ $done / ${scope.catalog.venues.length}', key: const Key('venue-count'), style: const TextStyle(fontFamily: titleFont, fontSize: 18, fontWeight: FontWeight.w700)),
+          Text(
+            '劇場スタンプ $done / ${scope.catalog.venues.length}',
+            key: const Key('venue-count'),
+            style: const TextStyle(fontFamily: titleFont, fontSize: 18, fontWeight: FontWeight.w700),
+          ),
           Text('$prefs 都道府県に足あと', style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
           const SizedBox(height: 10),
           PrefectureMap(stamps: stamps, onTap: (p) => VenueListScreen.open(context, p)),
@@ -90,7 +98,10 @@ class _Tile extends StatelessWidget {
               fit: BoxFit.scaleDown,
               child: Padding(
                 padding: const EdgeInsets.all(2),
-                child: Text(label, style: TextStyle(fontSize: 10, fontWeight: on ? FontWeight.w700 : FontWeight.normal, color: on ? Colors.white : Palette.inkSoft)),
+                child: Text(
+                  label,
+                  style: TextStyle(fontSize: 10, fontWeight: on ? FontWeight.w700 : FontWeight.normal, color: on ? Colors.white : Palette.inkSoft),
+                ),
               ),
             ),
           ),
@@ -105,7 +116,10 @@ class VenueListScreen extends StatelessWidget {
   final PrefectureStamps stamps;
 
   static Future<void> open(BuildContext context, PrefectureStamps s) => Navigator.of(context).push(
-    MaterialPageRoute<void>(builder: (_) => VenueListScreen(stamps: s), settings: const RouteSettings(name: 'venue_list')),
+    MaterialPageRoute<void>(
+      builder: (_) => VenueListScreen(stamps: s),
+      settings: const RouteSettings(name: 'venue_list'),
+    ),
   );
 
   @override
@@ -169,7 +183,10 @@ class _VenuePickerSheetState extends State<VenuePickerSheet> {
               ),
               Expanded(
                 child: hits.isEmpty
-                    ? Padding(padding: const EdgeInsets.all(20), child: Text(q.isEmpty ? '劇場名を入れて探してください。' : '見つかりませんでした。一覧にない劇場は、記録の編集で自由に書けます。', style: const TextStyle(color: Palette.inkSoft, height: 1.6)))
+                    ? Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(q.isEmpty ? '劇場名を入れて探してください。' : '見つかりませんでした。一覧にない劇場は、記録の編集で自由に書けます。', style: const TextStyle(color: Palette.inkSoft, height: 1.6)),
+                      )
                     : ListView(
                         children: [
                           for (final v in hits)
@@ -202,12 +219,11 @@ class VenueStampedScreen extends StatefulWidget {
 }
 
 class _VenueStampedScreenState extends State<VenueStampedScreen> with SingleTickerProviderStateMixin {
-  late final _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 500))..forward();
+  late final _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 800))..forward();
 
   @override
   void initState() {
     super.initState();
-    HapticFeedback.heavyImpact();
     AppInsights.logEvent('venue_stamp', parameters: {'is_new': widget.isNew ? 1 : 0});
   }
 
@@ -224,26 +240,39 @@ class _VenueStampedScreenState extends State<VenueStampedScreen> with SingleTick
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          ScaleTransition(
-            scale: CurvedAnimation(parent: _c, curve: Curves.elasticOut),
-            child: Transform.rotate(
-              angle: -0.12,
-              child: Container(
-                width: 190,
-                height: 190,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Palette.vermilion, width: 5)),
-                child: Text(widget.venue.name, textAlign: TextAlign.center, maxLines: 4, overflow: TextOverflow.ellipsis, style: const TextStyle(fontFamily: titleFont, fontSize: 20, fontWeight: FontWeight.w800, height: 1.3, color: Palette.vermilion)),
-              ),
+          PonStamp(
+            delay: const Duration(milliseconds: 180),
+            child: PonSeal(size: 200, label: widget.venue.name, sub: widget.venue.prefecture, fontSize: 21),
+          ),
+          const SizedBox(height: 28),
+          FadeTransition(
+            opacity: CurvedAnimation(parent: _c, curve: const Interval(0.45, 1)),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  widget.isNew ? '${widget.venue.prefecture}の新しい劇場！' : 'また来ました',
+                  key: const Key('venue-stamp-message'),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
+                ),
+                for (final a in widget.earned)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'スタンプ獲得「${a.title}」',
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFFE9A23B)),
+                    ),
+                  ),
+                const SizedBox(height: 24),
+                FilledButton(
+                  key: const Key('venue-stamp-close'),
+                  style: FilledButton.styleFrom(backgroundColor: Palette.paper, foregroundColor: Palette.navy),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('閉じる'),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
-          Text(widget.isNew ? '${widget.venue.prefecture}の新しい劇場！' : 'また来ました', key: const Key('venue-stamp-message'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
-          for (final a in widget.earned)
-            Padding(padding: const EdgeInsets.only(top: 8), child: Text('スタンプ獲得「${a.title}」', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFFE9A23B)))),
-          const SizedBox(height: 24),
-          FilledButton(key: const Key('venue-stamp-close'), style: FilledButton.styleFrom(backgroundColor: Palette.paper, foregroundColor: Palette.navy), onPressed: () => Navigator.of(context).pop(), child: const Text('閉じる')),
         ],
       ),
     ),

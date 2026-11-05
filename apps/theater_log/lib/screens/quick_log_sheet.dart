@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -6,6 +8,7 @@ import '../catalog/achievements.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import '../catalog/theater_log.dart';
 import '../theme.dart';
+import '../widgets/pon_stamp.dart';
 import '../widgets/ticket_stub.dart';
 import 'log_edit_screen.dart';
 import 'share_card_screen.dart';
@@ -172,24 +175,14 @@ class StubStampedScreen extends StatefulWidget {
   State<StubStampedScreen> createState() => _StubStampedScreenState();
 }
 
-class _StubStampedScreenState extends State<StubStampedScreen> with SingleTickerProviderStateMixin {
-  late final _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..forward();
-  bool _hapticDone = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _c.addListener(() {
-      if (!_hapticDone && _c.value > 0.72) {
-        _hapticDone = true;
-        HapticFeedback.heavyImpact();
-      }
-    });
-  }
+class _StubStampedScreenState extends State<StubStampedScreen> with TickerProviderStateMixin {
+  late final _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..forward();
+  late final _shake = AnimationController(vsync: this, duration: const Duration(milliseconds: 260));
 
   @override
   void dispose() {
     _c.dispose();
+    _shake.dispose();
     super.dispose();
   }
 
@@ -198,9 +191,8 @@ class _StubStampedScreenState extends State<StubStampedScreen> with SingleTicker
     final log = AppScope.of(context).log;
     final year = widget.entry.watchedOn.year;
     final nth = log.countInYear(year);
-    final stubIn = CurvedAnimation(parent: _c, curve: const Interval(0, 0.45, curve: Curves.easeOutBack));
-    final stampIn = CurvedAnimation(parent: _c, curve: const Interval(0.5, 0.75, curve: Curves.easeIn));
-    final restIn = CurvedAnimation(parent: _c, curve: const Interval(0.75, 1));
+    final stubIn = CurvedAnimation(parent: _c, curve: const Interval(0, 0.4, curve: Curves.easeOutBack));
+    final restIn = CurvedAnimation(parent: _c, curve: const Interval(0.65, 1));
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
@@ -214,31 +206,31 @@ class _StubStampedScreenState extends State<StubStampedScreen> with SingleTicker
                 child: Text('$year年 $nth 本目', key: const Key('stamped-count'), style: const TextStyle(fontFamily: titleFont, fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white)),
               ),
               const SizedBox(height: 20),
-              SizedBox(
+              AnimatedBuilder(
+                animation: _shake,
+                builder: (_, child) => Transform.translate(
+                  // 押された勢いで半券が沈んで戻る
+                  offset: Offset(0, math.sin(_shake.value * math.pi * 2) * 7 * (1 - _shake.value)),
+                  child: child,
+                ),
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
                     ScaleTransition(scale: stubIn, child: TicketStub(entry: widget.entry)),
                     Positioned(
-                      right: 14,
-                      bottom: -22,
-                      child: AnimatedBuilder(
-                        animation: stampIn,
-                        builder: (_, child) => Opacity(
-                          opacity: stampIn.value,
-                          child: Transform.scale(scale: 2.4 - 1.4 * stampIn.value, child: Transform.rotate(angle: -0.22, child: child)),
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(border: Border.all(color: Palette.vermilion, width: 3), borderRadius: BorderRadius.circular(6), color: const Color(0x22FFFFFF)),
-                          child: const Text('観劇済', style: TextStyle(fontFamily: titleFont, fontSize: 22, fontWeight: FontWeight.w800, color: Palette.vermilion)),
-                        ),
+                      right: 6,
+                      bottom: -44,
+                      child: PonStamp(
+                        delay: const Duration(milliseconds: 420),
+                        wordAt: const Offset(-128, 58),
+                        onImpact: () => _shake.forward(from: 0),
+                        child: PonSeal(size: 100, label: '観劇済', sub: '${widget.entry.watchedOn.month}.${widget.entry.watchedOn.day}', fontSize: 21),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 36),
+              const SizedBox(height: 60),
               FadeTransition(
                 opacity: restIn,
                 child: Column(
