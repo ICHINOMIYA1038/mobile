@@ -5,6 +5,7 @@ import '../app_scope.dart';
 import '../catalog/achievements.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import '../catalog/venue_stamps.dart';
+import '../catalog/seal_lines.dart';
 import '../theme.dart';
 import '../widgets/pon_stamp.dart';
 
@@ -242,7 +243,7 @@ class _VenueStampedScreenState extends State<VenueStampedScreen> with SingleTick
         children: [
           PonStamp(
             delay: const Duration(milliseconds: 180),
-            child: PonSeal(size: 200, label: widget.venue.name, sub: widget.venue.prefecture, fontSize: 21),
+            child: PonSeal(size: 200, label: sealLines(widget.venue.name).join('\n'), sub: widget.venue.prefecture, fontSize: 21),
           ),
           const SizedBox(height: 28),
           FadeTransition(

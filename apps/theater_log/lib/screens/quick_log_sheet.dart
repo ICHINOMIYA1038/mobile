@@ -216,7 +216,7 @@ class _StubStampedScreenState extends State<StubStampedScreen> with TickerProvid
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    ScaleTransition(scale: stubIn, child: TicketStub(entry: widget.entry)),
+                    ScaleTransition(scale: stubIn, child: TicketStub(entry: widget.entry, textInset: 96)),
                     Positioned(
                       right: 6,
                       bottom: -44,
