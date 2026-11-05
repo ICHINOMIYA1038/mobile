@@ -24,18 +24,25 @@ class PonSeal extends StatelessWidget {
       alignment: Alignment.center,
       padding: EdgeInsets.all(size * 0.05),
       decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Palette.paper, width: math.max(1, size * 0.018))),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontFamily: titleFont, fontSize: fontSize ?? size * 0.2, height: 1.15, fontWeight: FontWeight.w800, color: Palette.paper),
+      // 長い名前でも切らずに、丸の内側に収まるまで縮める
+      child: SizedBox(
+        width: size * 0.66,
+        height: size * 0.62,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                softWrap: false,
+                style: TextStyle(fontFamily: titleFont, fontSize: fontSize ?? size * 0.2, height: 1.15, fontWeight: FontWeight.w800, color: Palette.paper),
+              ),
+              if (sub != null) Text(sub!, softWrap: false, style: TextStyle(fontSize: (fontSize ?? size * 0.2) * 0.62, height: 1.3, fontWeight: FontWeight.w700, color: Palette.paper)),
+            ],
           ),
-          if (sub != null) Text(sub!, style: TextStyle(fontSize: size * 0.125, height: 1.2, fontWeight: FontWeight.w700, color: Palette.paper)),
-        ],
+        ),
       ),
     ),
   );
