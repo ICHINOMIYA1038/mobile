@@ -9,6 +9,7 @@ import 'app_scope.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import 'catalog/theater_log.dart';
 import 'firebase_options.dart';
+import 'catalog/productions.dart';
 import 'pon_sound.dart';
 import 'screens/feed_screen.dart';
 import 'screens/log_screen.dart';
@@ -48,6 +49,7 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     PonSound.prepare();
+    ProductionStore.instance.load();
     widget.log.onDirty = _sync.run;
     _lifecycle = AppLifecycleListener(onResume: _sync.run);
     _sync.run();
