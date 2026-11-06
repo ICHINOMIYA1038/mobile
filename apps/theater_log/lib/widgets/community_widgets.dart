@@ -26,7 +26,10 @@ class CommunityRules {
           style: TextStyle(height: 1.6),
         ),
         actions: [
-          TextButton(onPressed: () => launchUrl(Uri.parse('https://gikyokutosyokan.com/support/tos'), mode: LaunchMode.externalApplication), child: const Text('利用規約')),
+          TextButton(
+            onPressed: () => launchUrl(Uri.parse('https://gikyokutosyokan.com/support/tos'), mode: LaunchMode.externalApplication),
+            child: const Text('利用規約'),
+          ),
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('やめる')),
           TextButton(key: const Key('rules-agree'), onPressed: () => Navigator.pop(ctx, true), child: const Text('同意する')),
         ],
@@ -65,7 +68,9 @@ class ReviewTile extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const ListTile(title: Text('通報の理由', style: TextStyle(fontWeight: FontWeight.w700))),
+            const ListTile(
+              title: Text('通報の理由', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
             for (final x in const ['中傷や差別', '個人情報', 'スパムや宣伝', 'その他の不適切な内容']) ListTile(title: Text(x), onTap: () => Navigator.pop(ctx, x)),
           ],
         ),
@@ -114,18 +119,56 @@ class ReviewTile extends StatelessWidget {
     final r = review;
     final me = AppScope.of(context).auth.user?.id;
     final place = [r.groupName, r.venueName, r.watchedMonth?.replaceAll('-', '.')].whereType<String>().join('／');
+    // 枠で囲まず、線で区切った読み物として並べる。公演名を先に、書いた人は最後に小さく
     return Container(
       key: Key('review-${r.id}'),
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(12, 10, 4, 12),
-      decoration: BoxDecoration(color: Palette.card, border: Border.all(color: Palette.line), borderRadius: BorderRadius.circular(8)),
+      padding: const EdgeInsets.fromLTRB(2, 16, 0, 10),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Palette.line)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (r.title != null)
+            InkWell(
+              onTap: onOpenTitle,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  r.title!,
+                  style: const TextStyle(fontFamily: titleFont, fontSize: 17, height: 1.4, fontWeight: FontWeight.w700, color: Palette.ink),
+                ),
+              ),
+            ),
           Row(
             children: [
-              Expanded(child: Text(r.authorName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700))),
-              if (r.rating != null) Text('★' * r.rating!, style: const TextStyle(fontSize: 12, color: Palette.vermilion)),
+              if (r.rating != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Text('★' * r.rating!, style: const TextStyle(fontSize: 13, color: Palette.vermilion)),
+                ),
+              if (place.isNotEmpty)
+                Expanded(
+                  child: Text(
+                    place,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: Palette.inkSoft),
+                  ),
+                )
+              else
+                const Spacer(),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8, right: 4),
+            child: Text(r.note, style: const TextStyle(fontSize: 15, height: 1.8, color: Palette.ink)),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(r.authorName, style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
+              ),
               if (r.authorId != me)
                 PopupMenuButton<String>(
                   key: Key('review-menu-${r.id}'),
@@ -142,16 +185,16 @@ class ReviewTile extends StatelessWidget {
                 const SizedBox(height: 40, width: 8),
             ],
           ),
-          if (r.title != null)
-            InkWell(
-              onTap: onOpenTitle,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8, bottom: 4),
-                child: Text(r.title!, style: TextStyle(fontFamily: titleFont, fontSize: 16, fontWeight: FontWeight.w700, color: onOpenTitle == null ? Palette.ink : Palette.navy)),
+          if (onOpenTitle != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                style: TextButton.styleFrom(foregroundColor: Palette.moegi, padding: EdgeInsets.zero, minimumSize: const Size(0, 30)),
+                onPressed: onOpenTitle,
+                icon: const Icon(Icons.menu_book_outlined, size: 15),
+                label: const Text('この作品の台本', style: TextStyle(fontSize: 12)),
               ),
             ),
-          Padding(padding: const EdgeInsets.only(right: 8), child: Text(r.note, style: const TextStyle(fontSize: 14, height: 1.7))),
-          if (place.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4, right: 8), child: Text(place, style: const TextStyle(fontSize: 12, color: Palette.inkSoft))),
         ],
       ),
     );
@@ -197,9 +240,19 @@ class _ProductionPickerState extends State<ProductionPicker> {
   Future<void> _search() async {
     try {
       final rows = await _api.productions(query: _q.text.trim().isEmpty ? null : _q.text, postId: _q.text.trim().isEmpty ? widget.postId : null);
-      if (mounted) setState(() { _rows = rows; _error = null; });
+      if (mounted) {
+        setState(() {
+          _rows = rows;
+          _error = null;
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() { _rows = const []; _error = '公演を読み込めませんでした'; });
+      if (mounted) {
+        setState(() {
+          _rows = const [];
+          _error = '公演を読み込めませんでした';
+        });
+      }
     }
   }
 
@@ -245,9 +298,17 @@ class _ProductionPickerState extends State<ProductionPicker> {
                 controller: _q,
                 textInputAction: TextInputAction.search,
                 onSubmitted: (_) => _search(),
-                decoration: InputDecoration(labelText: _creating ? '公演名（必須）' : '公演名・劇団・劇場で探す', border: border, suffixIcon: _creating ? null : IconButton(tooltip: '探す', icon: const Icon(Icons.search), onPressed: _search)),
+                decoration: InputDecoration(
+                  labelText: _creating ? '公演名（必須）' : '公演名・劇団・劇場で探す',
+                  border: border,
+                  suffixIcon: _creating ? null : IconButton(tooltip: '探す', icon: const Icon(Icons.search), onPressed: _search),
+                ),
               ),
-              if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: const TextStyle(color: Palette.vermilion))),
+              if (_error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(_error!, style: const TextStyle(color: Palette.vermilion)),
+                ),
               if (!_creating) ...[
                 for (final p in _rows ?? const <Production>[])
                   ListTile(
@@ -256,19 +317,41 @@ class _ProductionPickerState extends State<ProductionPicker> {
                     subtitle: Text([p.groupName, p.venueName, p.startDate, if (p.status == 'pending') '確認待ち'].whereType<String>().join('／')),
                     onTap: () => Navigator.pop(context, p),
                   ),
-                if (_rows != null && _rows!.isEmpty && _error == null) const Padding(padding: EdgeInsets.all(12), child: Text('見つかりませんでした。', style: TextStyle(color: Palette.inkSoft))),
+                if (_rows != null && _rows!.isEmpty && _error == null)
+                  const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Text('見つかりませんでした。', style: TextStyle(color: Palette.inkSoft)),
+                  ),
                 TextButton.icon(key: const Key('production-new'), onPressed: () => setState(() => _creating = true), icon: const Icon(Icons.add), label: const Text('この公演を登録する')),
               ] else ...[
                 const SizedBox(height: 12),
-                TextField(controller: _group, decoration: const InputDecoration(labelText: '劇団・団体', border: border)),
+                TextField(
+                  controller: _group,
+                  decoration: const InputDecoration(labelText: '劇団・団体', border: border),
+                ),
                 const SizedBox(height: 12),
-                TextField(controller: _venue, decoration: const InputDecoration(labelText: '劇場', border: border)),
+                TextField(
+                  controller: _venue,
+                  decoration: const InputDecoration(labelText: '劇場', border: border),
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: TextField(controller: _start, keyboardType: TextInputType.datetime, decoration: const InputDecoration(labelText: '初日 2026-12-01', border: border))),
+                    Expanded(
+                      child: TextField(
+                        controller: _start,
+                        keyboardType: TextInputType.datetime,
+                        decoration: const InputDecoration(labelText: '初日 2026-12-01', border: border),
+                      ),
+                    ),
                     const SizedBox(width: 8),
-                    Expanded(child: TextField(controller: _end, keyboardType: TextInputType.datetime, decoration: const InputDecoration(labelText: '千秋楽', border: border))),
+                    Expanded(
+                      child: TextField(
+                        controller: _end,
+                        keyboardType: TextInputType.datetime,
+                        decoration: const InputDecoration(labelText: '千秋楽', border: border),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),

@@ -37,7 +37,7 @@ class PonSeal extends StatelessWidget {
                 label,
                 textAlign: TextAlign.center,
                 softWrap: false,
-                style: TextStyle(fontFamily: titleFont, fontSize: fontSize ?? size * 0.2, height: 1.15, fontWeight: FontWeight.w800, color: Palette.paper),
+                style: TextStyle(fontFamily: sealFont, fontSize: fontSize ?? size * 0.2, height: 1.15, fontWeight: FontWeight.w800, color: Palette.paper),
               ),
               if (sub != null) Text(sub!, softWrap: false, style: TextStyle(fontSize: (fontSize ?? size * 0.2) * 0.62, height: 1.3, fontWeight: FontWeight.w700, color: Palette.paper)),
             ],

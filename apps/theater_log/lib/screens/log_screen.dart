@@ -49,8 +49,6 @@ class _LogScreenState extends State<LogScreen> {
             : FloatingActionButton.extended(
                 key: const Key('log-add'),
                 heroTag: 'log-add',
-                backgroundColor: Palette.vermilion,
-                foregroundColor: Colors.white,
                 onPressed: () => QuickLogSheet.open(context),
                 icon: const Icon(Icons.local_activity),
                 label: const Text('観た！'),
@@ -72,7 +70,7 @@ class _LogScreenState extends State<LogScreen> {
                   child: Row(
                     children: [
                       const Expanded(
-                        child: Text('半券帳', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
+                        child: Text('半券帳', style: TextStyle(fontFamily: displayFont, fontSize: 30, height: 1.1, color: Palette.sumi)),
                       ),
                       IconButton(key: const Key('log-calendar-toggle'), tooltip: _calendar ? '一覧で見る' : 'カレンダーで見る', onPressed: () => setState(() => _calendar = !_calendar), icon: Icon(_calendar ? Icons.view_agenda_outlined : Icons.calendar_month_outlined)),
                       IconButton(key: const Key('open-account'), tooltip: 'アカウント', onPressed: () => AccountScreen.open(context), icon: const Icon(Icons.person_outline)),
@@ -81,7 +79,19 @@ class _LogScreenState extends State<LogScreen> {
                 ),
                 if (entries.isNotEmpty) Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                  child: Text('$year年は ${scope.log.countInYear(year)} 本／これまで ${entries.length} 本', key: const Key('log-count'), style: const TextStyle(fontWeight: FontWeight.w700, color: Palette.ink)),
+                  child: Text.rich(
+                    key: const Key('log-count'),
+                    TextSpan(
+                      style: const TextStyle(fontSize: 13, color: Palette.inkSoft),
+                      children: [
+                        TextSpan(text: '$year年 '),
+                        TextSpan(text: '${scope.log.countInYear(year)}', style: const TextStyle(fontFamily: displayFont, fontSize: 24, color: Palette.sumi)),
+                        const TextSpan(text: ' 本　これまで '),
+                        TextSpan(text: '${entries.length}', style: const TextStyle(fontFamily: displayFont, fontSize: 15, color: Palette.ink)),
+                        const TextSpan(text: ' 本'),
+                      ],
+                    ),
+                  ),
                 ),
                 if (_calendar) LogCalendar(entries: entries, onDay: (day) => _showDay(day, byId)),
                 if (!_calendar && entries.length >= 5)
@@ -131,7 +141,7 @@ class _EntryCard extends StatelessWidget {
         if (play != null)
           TextButton.icon(
             key: const Key('log-to-play'),
-            style: TextButton.styleFrom(foregroundColor: Palette.vermilion, padding: const EdgeInsets.only(left: 8), minimumSize: const Size(0, 32)),
+            style: TextButton.styleFrom(foregroundColor: Palette.moegi, padding: const EdgeInsets.only(left: 8), minimumSize: const Size(0, 32)),
             onPressed: () => launchUrl(play!.siteUrl, mode: LaunchMode.externalApplication),
             icon: const Icon(Icons.menu_book_outlined, size: 16),
             label: Text('この作品の台本（${play!.author}）', style: const TextStyle(fontSize: 13)),
@@ -161,7 +171,7 @@ class _FirstStub extends StatelessWidget {
         const SizedBox(height: 20),
         FilledButton(
           key: const Key('first-stub'),
-          style: FilledButton.styleFrom(backgroundColor: Palette.vermilion, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14)),
+          style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14)),
           onPressed: () => QuickLogSheet.open(context),
           child: const Text('最初の半券を切る', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
         ),

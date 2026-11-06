@@ -26,7 +26,7 @@ class StampBookScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
-              const Text('スタンプ帳', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
+              const Text('スタンプ帳', style: TextStyle(fontFamily: displayFont, fontSize: 30, height: 1.1, color: Palette.sumi)),
               const SizedBox(height: 12),
               if (log.entries.isNotEmpty) ...[
                 FilledButton.icon(

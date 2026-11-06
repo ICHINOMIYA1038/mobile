@@ -48,7 +48,7 @@ class _FeedScreenState extends State<FeedScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
-            const Text('みんなのひとこと', style: TextStyle(fontFamily: titleFont, fontSize: 26, fontWeight: FontWeight.w700, color: Palette.navy)),
+            const Text('みんなのひとこと', style: TextStyle(fontFamily: displayFont, fontSize: 30, height: 1.1, color: Palette.sumi)),
             const SizedBox(height: 12),
             if (_failed)
               const Padding(padding: EdgeInsets.all(24), child: Text('読み込めませんでした。下に引っぱると、もう一度読み込みます。', style: TextStyle(height: 1.7, color: Palette.inkSoft)))
@@ -63,7 +63,7 @@ class _FeedScreenState extends State<FeedScreen> {
                     const SizedBox(height: 10),
                     const Text('観た舞台の感想を公開すると、ここに並びます。最初の一人になりませんか。', textAlign: TextAlign.center, style: TextStyle(height: 1.7, color: Palette.inkSoft)),
                     const SizedBox(height: 18),
-                    FilledButton(style: FilledButton.styleFrom(backgroundColor: Palette.vermilion), onPressed: () => QuickLogSheet.open(context), child: const Text('観た舞台を記録する')),
+                    FilledButton(onPressed: () => QuickLogSheet.open(context), child: const Text('観た舞台を記録する')),
                   ],
                 ),
               )

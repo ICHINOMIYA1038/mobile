@@ -161,7 +161,7 @@ class _ShareCardScreenState extends State<ShareCardScreen> {
           Builder(
             builder: (c) => FilledButton.icon(
               key: const Key('card-share'),
-              style: FilledButton.styleFrom(backgroundColor: Palette.vermilion, padding: const EdgeInsets.symmetric(vertical: 14)),
+              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
               onPressed: _busy ? null : () => _share(c),
               icon: const Icon(Icons.ios_share),
               label: const Text('画像を共有', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -232,7 +232,7 @@ class LogShareCard extends StatelessWidget {
               Positioned(
                 left: w * 0.06,
                 top: w * 0.06,
-                child: Text('ゲキポン', style: TextStyle(fontFamily: titleFont, fontSize: w * 0.04, fontWeight: FontWeight.w800, color: Colors.white, shadows: const [Shadow(color: Colors.black45, blurRadius: 4)])),
+                child: Text('ゲキポン', style: TextStyle(fontFamily: displayFont, fontSize: w * 0.04, fontWeight: FontWeight.w800, color: Colors.white, shadows: const [Shadow(color: Colors.black45, blurRadius: 4)])),
               ),
               if (venue != null)
                 Positioned(
@@ -320,7 +320,7 @@ class _CardStub extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text('${d.year}', style: TextStyle(fontSize: s * 3, color: Colors.white70)),
-                        Text('${d.month}.${d.day}', style: TextStyle(fontFamily: titleFont, fontSize: s * 5.6, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text('${d.month}.${d.day}', style: TextStyle(fontFamily: displayFont, fontSize: s * 5.6, fontWeight: FontWeight.w700, color: Colors.white)),
                       ],
                     ),
                   ),
