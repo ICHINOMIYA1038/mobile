@@ -22,6 +22,10 @@ void main() {
     }
     await tester.pumpWidget(App(repository: repository, catalog: await repository.load(), log: log, auth: AuthService()));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('log-story')), findsOneWidget);
+    await Future<void>.delayed(hold);
+    await tester.tap(find.byKey(const Key('log-view-toggle')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('log-search')), findsOneWidget);
     await Future<void>.delayed(hold);
 

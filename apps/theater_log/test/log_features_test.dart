@@ -70,6 +70,8 @@ void main() {
     final now = DateTime.now();
     await log.upsert(_e('a', DateTime(now.year, now.month, 15), title: '十五日の舞台'));
     await tester.pumpWidget(wrap(log, const LogScreen()));
+    await tester.tap(find.byKey(const Key('log-view-toggle')));
+    await tester.pump();
     await tester.tap(find.byKey(const Key('log-calendar-toggle')));
     await tester.pump();
     expect(find.text('十五日の舞台'), findsNothing);

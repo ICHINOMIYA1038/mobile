@@ -106,7 +106,10 @@ class _ShellState extends State<Shell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _tab, children: const [LogScreen(), FeedScreen(), StampBookScreen()]),
-      bottomNavigationBar: _CurtainNavigation(
+      bottomNavigationBar: ValueListenableBuilder<bool>(
+        valueListenable: LogScreen.immersive,
+        builder: (context, immersive, _) => _CurtainNavigation(
+          dark: immersive && _tab == 0,
           selectedIndex: _tab,
           onDestinationSelected: (i) {
             setState(() => _tab = i);
@@ -117,6 +120,7 @@ class _ShellState extends State<Shell> {
             NavigationDestination(icon: Icon(Icons.forum_outlined), selectedIcon: Icon(Icons.forum), label: 'みんな'),
             NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified), label: 'スタンプ'),
           ],
+        ),
       ),
     );
   }
@@ -124,13 +128,34 @@ class _ShellState extends State<Shell> {
 
 /// 下のタブ。選んでいるタブの上に、定式幕の縞を引く
 class _CurtainNavigation extends StatelessWidget {
-  const _CurtainNavigation({required this.selectedIndex, required this.onDestinationSelected, required this.destinations});
+  const _CurtainNavigation({required this.dark, required this.selectedIndex, required this.onDestinationSelected, required this.destinations});
+  /// 半券帳の写真表示の下では、黒い帯にして写真から続けて見せる
+  final bool dark;
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final List<NavigationDestination> destinations;
 
   @override
-  Widget build(BuildContext context) => Column(
+  Widget build(BuildContext context) {
+    final bar = NavigationBar(selectedIndex: selectedIndex, onDestinationSelected: onDestinationSelected, destinations: destinations);
+    if (dark) {
+      final theme = Theme.of(context);
+      return Theme(
+        data: theme.copyWith(
+          navigationBarTheme: theme.navigationBarTheme.copyWith(
+            backgroundColor: Colors.black,
+            surfaceTintColor: Colors.transparent,
+            iconTheme: WidgetStateProperty.resolveWith((s) => IconThemeData(color: s.contains(WidgetState.selected) ? Colors.white : Colors.white54)),
+            labelTextStyle: WidgetStateProperty.resolveWith((s) => TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: s.contains(WidgetState.selected) ? Colors.white : Colors.white54)),
+          ),
+        ),
+        child: bar,
+      );
+    }
+    return _light(bar);
+  }
+
+  Widget _light(Widget bar) => Column(
     mainAxisSize: MainAxisSize.min,
     children: [
       const Divider(height: 1, thickness: 1),
@@ -155,7 +180,7 @@ class _CurtainNavigation extends StatelessWidget {
           );
         },
       ),
-      NavigationBar(selectedIndex: selectedIndex, onDestinationSelected: onDestinationSelected, destinations: destinations),
+      bar,
     ],
   );
 }
