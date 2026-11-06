@@ -43,8 +43,8 @@ class _Perforation extends CustomPainter {
   bool shouldRepaint(_Perforation old) => old.x != x || old.color != color;
 }
 
-/// 記録ごとに色を変える（集めたときに眺めて楽しいように）
-const _stubColors = [Color(0xFF1F2F4A), Color(0xFF7A2A2A), Color(0xFF23504A), Color(0xFF5B3F72), Color(0xFF8A5A1E)];
+/// 記録ごとに定式幕の三色のどれかを使う（並べると幕のように見える）
+const _stubColors = [Palette.sumi, Palette.kaki, Palette.moegi];
 
 Color stubColorOf(String id) => _stubColors[id.codeUnits.fold(0, (a, b) => a + b) % _stubColors.length];
 
@@ -85,14 +85,14 @@ class TicketStub extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text('${d.year}', style: const TextStyle(fontSize: 11, color: Colors.white70)),
-                        Text('${d.month}.${d.day}', style: const TextStyle(fontFamily: titleFont, fontSize: 21, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text('${d.month}.${d.day}', style: const TextStyle(fontFamily: displayFont, fontSize: 21, fontWeight: FontWeight.w700, color: Colors.white)),
                         if (entry.showTime != null) Text(entry.showTime == 'matinee' ? '昼' : '夜', style: const TextStyle(fontSize: 11, color: Colors.white70)),
                       ],
                     ),
                   ),
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(16, 12, showSeal ? 58 : textInset, 12),
+                      padding: EdgeInsets.fromLTRB(16, 12, textInset, 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -121,17 +121,20 @@ class TicketStub extends StatelessWidget {
     );
     if (!showSeal) return stub;
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         stub,
+        // もぎりのハンコのように、日付の欄と切り取り線にまたがって押す
         Positioned(
-          right: (trailing == null ? 8 : 46) + (entry.photos.isEmpty ? 0 : 70),
-          bottom: 6,
+          left: 54,
+          bottom: -7,
           child: IgnorePointer(
-            child: Opacity(
-              opacity: 0.82,
-              child: Transform.rotate(
-                angle: -0.2,
-                child: PonSeal(key: Key('stub-seal-${entry.id}'), size: 50, label: '観劇済', fontSize: 11),
+            child: Transform.rotate(
+              angle: -0.22,
+              child: Container(
+                padding: const EdgeInsets.all(1.5),
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: Palette.card),
+                child: PonSeal(key: Key('stub-seal-${entry.id}'), size: 36, label: '観劇済', fontSize: 9.5),
               ),
             ),
           ),

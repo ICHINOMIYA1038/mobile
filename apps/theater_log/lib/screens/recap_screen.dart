@@ -61,7 +61,7 @@ class _RecapScreenState extends State<RecapScreen> {
           const SizedBox(height: 16),
           if (recap.count > 0)
             Builder(
-              builder: (c) => FilledButton.icon(key: const Key('recap-share'), style: FilledButton.styleFrom(backgroundColor: Palette.vermilion, minimumSize: const Size.fromHeight(46)), onPressed: () => _share(c), icon: const Icon(Icons.ios_share), label: const Text('画像を共有')),
+              builder: (c) => FilledButton.icon(key: const Key('recap-share'), style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(46)), onPressed: () => _share(c), icon: const Icon(Icons.ios_share), label: const Text('画像を共有')),
             ),
         ],
       ),
@@ -102,9 +102,9 @@ class RecapCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.baseline,
                     textBaseline: TextBaseline.alphabetic,
                     children: [
-                      Text('${r.count}', key: const Key('recap-count'), style: const TextStyle(fontFamily: titleFont, fontSize: 68, fontWeight: FontWeight.w800, height: 1.15, color: Color(0xFFE9A23B))),
+                      Text('${r.count}', key: const Key('recap-count'), style: const TextStyle(fontFamily: displayFont, fontSize: 68, fontWeight: FontWeight.w800, height: 1.15, color: Color(0xFFE9A23B))),
                       const SizedBox(width: 6),
-                      const Text('本', style: TextStyle(fontFamily: titleFont, fontSize: 22, color: paper)),
+                      const Text('本', style: TextStyle(fontFamily: displayFont, fontSize: 22, color: paper)),
                     ],
                   ),
                   if (r.venueCount > 0) Text('${r.venueCount} の劇場${r.prefectureCount > 0 ? '・${r.prefectureCount} 都道府県' : ''}', style: const TextStyle(fontSize: 14, color: paper)),
@@ -113,7 +113,7 @@ class RecapCard extends StatelessWidget {
                   line('いちばん観た月', '${r.bestMonth}月（${r.bestMonthCount} 本）'),
                   if (r.favorites.isNotEmpty) line('★5 をつけた舞台', r.favorites.join('、')),
                   const Spacer(),
-                  const Align(alignment: Alignment.bottomRight, child: Text('ゲキポン', style: TextStyle(fontFamily: titleFont, fontSize: 12, color: paper))),
+                  const Align(alignment: Alignment.bottomRight, child: Text('ゲキポン', style: TextStyle(fontFamily: displayFont, fontSize: 12, color: paper))),
                 ],
               ),
       ),

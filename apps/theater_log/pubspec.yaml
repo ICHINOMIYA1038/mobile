@@ -17,7 +17,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+8
+version: 1.0.0+9
 
 environment:
   sdk: ^3.12.2
@@ -78,6 +78,17 @@ flutter:
   uses-material-design: true
   assets:
     - assets/sounds/pon.wav
+  # 太字を擬似的に作らせないよう、同じ書体をどの太さにも当てる
+  fonts:
+    - family: DelaGothicOne
+      fonts:
+        - asset: assets/fonts/DelaGothicOne-Regular.ttf
+        - asset: assets/fonts/DelaGothicOne-Regular.ttf
+          weight: 700
+        - asset: assets/fonts/DelaGothicOne-Regular.ttf
+          weight: 800
+        - asset: assets/fonts/DelaGothicOne-Regular.ttf
+          weight: 900
 
   # To add assets to your application, add an assets section, like this:
   # assets:

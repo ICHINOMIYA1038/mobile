@@ -106,7 +106,7 @@ class _ShellState extends State<Shell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _tab, children: const [LogScreen(), FeedScreen(), StampBookScreen()]),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: _CurtainNavigation(
           selectedIndex: _tab,
           onDestinationSelected: (i) {
             setState(() => _tab = i);
@@ -120,4 +120,42 @@ class _ShellState extends State<Shell> {
       ),
     );
   }
+}
+
+/// 下のタブ。選んでいるタブの上に、定式幕の縞を引く
+class _CurtainNavigation extends StatelessWidget {
+  const _CurtainNavigation({required this.selectedIndex, required this.onDestinationSelected, required this.destinations});
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final List<NavigationDestination> destinations;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const Divider(height: 1, thickness: 1),
+      LayoutBuilder(
+        builder: (_, c) {
+          final w = c.maxWidth / destinations.length;
+          return SizedBox(
+            height: 4,
+            child: Stack(
+              children: [
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  left: w * selectedIndex + w * 0.28,
+                  width: w * 0.44,
+                  top: 0,
+                  bottom: 0,
+                  child: const JoshikiStripe(),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      NavigationBar(selectedIndex: selectedIndex, onDestinationSelected: onDestinationSelected, destinations: destinations),
+    ],
+  );
 }

@@ -237,7 +237,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
                 hintText: '公演名、劇団、劇場で探す',
                 suffixIcon: _scanning
                     ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
-                    : IconButton(key: const Key('quick-scan'), tooltip: 'チケットから読み取る', icon: const Icon(Icons.document_scanner_outlined, color: Palette.vermilion), onPressed: _chooseScanSource),
+                    : IconButton(key: const Key('quick-scan'), tooltip: 'チケットから読み取る', icon: const Icon(Icons.document_scanner_outlined, color: Palette.ink), onPressed: _chooseScanSource),
                 filled: true,
                 fillColor: Palette.card,
                 border: OutlineInputBorder(
@@ -275,7 +275,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
                         padding: EdgeInsets.symmetric(vertical: 4),
                         child: Text(
                           '同じ題名の公演が複数あります。劇場を確かめて選んでください。',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.vermilion),
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.kaki),
                         ),
                       ),
                     for (final h in productionHits) _ProductionTile(hit: h, onTap: () => _select(h.production)),
@@ -360,7 +360,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     'この公演の期間は ${production.dateLabel} です。観た日を確かめてください。',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.vermilion),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.kaki),
                   ),
                 ),
             ],
@@ -369,7 +369,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
               width: double.infinity,
               child: FilledButton(
                 key: const Key('quick-save'),
-                style: FilledButton.styleFrom(backgroundColor: Palette.vermilion, padding: const EdgeInsets.symmetric(vertical: 15)),
+                style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
                 onPressed: _title.text.trim().isEmpty ? null : _save,
                 child: const Text('半券を切る', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
               ),
@@ -411,7 +411,7 @@ class _ProductionTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Row(
                     children: [
-                      const Icon(Icons.place, size: 14, color: Palette.vermilion),
+                      const Icon(Icons.place, size: 14, color: Palette.kaki),
                       const SizedBox(width: 2),
                       Flexible(
                         child: Text(
@@ -437,7 +437,7 @@ class _ProductionTile extends StatelessWidget {
               Container(
                 margin: const EdgeInsets.only(left: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(color: Palette.vermilion, borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: Palette.moegi, borderRadius: BorderRadius.circular(3)),
                 child: const Text(
                   '上演中',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
@@ -469,10 +469,10 @@ class _ScanSummary extends StatelessWidget {
       key: const Key('scan-summary'),
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.fromLTRB(12, 6, 2, 6),
-      decoration: BoxDecoration(color: const Color(0xFFFBEDEA), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: const Color(0xFFEDEDE8), borderRadius: BorderRadius.circular(4)),
       child: Row(
         children: [
-          const Icon(Icons.document_scanner_outlined, size: 18, color: Palette.vermilion),
+          const Icon(Icons.document_scanner_outlined, size: 18, color: Palette.ink),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -509,7 +509,7 @@ class _SelectedProduction extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.place, size: 18, color: Palette.vermilion),
+          const Icon(Icons.place, size: 18, color: Palette.kaki),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -632,7 +632,7 @@ class _StubStampedScreenState extends State<StubStampedScreen> with TickerProvid
                     if (widget.entry.venue == null) ...[
                       FilledButton.icon(
                         key: const Key('stamped-venue'),
-                        style: FilledButton.styleFrom(backgroundColor: Palette.vermilion),
+                        style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Palette.sumi),
                         onPressed: () async {
                           final venue = await VenuePickerSheet.open(context);
                           if (venue == null || !context.mounted) return;

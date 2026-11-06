@@ -30,7 +30,7 @@ class _LogStatsScreenState extends State<LogStatsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.vermilion)),
+                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.ink)),
                 const SizedBox(height: 6),
                 for (final r in rows)
                   Padding(
@@ -68,7 +68,7 @@ class _LogStatsScreenState extends State<LogStatsScreen> {
             ],
           ),
           const SizedBox(height: 24),
-          const Text('月ごとの本数', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.vermilion)),
+          const Text('月ごとの本数', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.ink)),
           const SizedBox(height: 12),
           SizedBox(
             height: 130,
