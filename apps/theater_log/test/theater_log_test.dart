@@ -115,7 +115,7 @@ void main() {
     expect(log.entries.single.group, '別の劇団');
     expect(log.entries.single.rating, 5);
     expect(find.byKey(const Key('log-to-play')), findsOneWidget);
-    expect(find.textContaining('これまで 1 本'), findsOneWidget);
+    expect(find.text('1 / 1'), findsOneWidget);
   });
 }
 

@@ -15,7 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'test_support.dart';
 
-TheaterLogEntry _e(String id, {int month = 1, String? venue, String note = '', int? playId}) => TheaterLogEntry(id: id, title: '舞台$id', watchedOn: DateTime(2026, month, 1), venue: venue, note: note, playId: playId);
+TheaterLogEntry _e(String id, {int month = 1, String? venue, String note = '', int? playId, String? title, DateTime? on}) => TheaterLogEntry(id: id, title: title ?? '舞台$id', watchedOn: on ?? DateTime(2026, month, 1), venue: venue, note: note, playId: playId);
 
 Widget _scope(TheaterLog log, Widget child, {List<Venue> venues = const []}) => AppScope(
   catalog: Catalog(generatedAt: DateTime.utc(2026), categories: const [], plays: const [Play(id: 7, title: '赤鬼', author: '野田秀樹')], venues: venues),
@@ -142,12 +142,48 @@ void main() {
       expect(find.text('観劇済'), findsOneWidget);
     });
 
-    testWidgets('半券帳の半券に印が残る', (tester) async {
+    testWidgets('半券帳の一覧の半券に印が残る', (tester) async {
       final log = TheaterLog();
       await log.upsert(_e('a'));
       await tester.pumpWidget(_scope(log, const LogScreen()));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('log-view-toggle')));
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('stub-seal-a')), findsOneWidget);
+    });
+  });
+
+  group('写真で振り返る', () {
+    testWidgets('新しい順に 1 本ずつ出し、右を押すと次、左を押すと前へ。一覧から選ぶとその 1 本を出す', (tester) async {
+      tester.view.physicalSize = const Size(430, 932);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final log = TheaterLog();
+      await log.upsert(_e('old', title: '前に観た舞台', on: DateTime(2026, 10, 1)));
+      await log.upsert(_e('new', title: '最近観た舞台', on: DateTime(2026, 11, 3)));
+      await tester.pumpWidget(_scope(log, const LogScreen()));
+      await tester.pumpAndSettle();
+      expect(find.text('1 / 2'), findsOneWidget);
+      expect(find.text('最近観た舞台'), findsOneWidget);
+      expect(find.textContaining('2026年11月3日（火）'), findsOneWidget);
+
+      await tester.tapAt(const Offset(380, 400));
+      await tester.pumpAndSettle();
+      expect(find.text('2 / 2'), findsOneWidget);
+      await tester.tapAt(const Offset(40, 400));
+      await tester.pumpAndSettle();
+      expect(find.text('1 / 2'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('log-view-toggle')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('前に観た舞台'));
+      await tester.pumpAndSettle();
+      expect(find.text('2 / 2'), findsOneWidget);
+    });
+
+    test('日付にマチネ・ソワレを添える', () {
+      expect(storyDate(TheaterLogEntry(id: 'a', title: 't', watchedOn: DateTime(2026, 11, 3), showTime: 'matinee')), '2026年11月3日（火）　マチネ');
+      expect(storyDate(TheaterLogEntry(id: 'a', title: 't', watchedOn: DateTime(2026, 11, 8))), '2026年11月8日（日）');
     });
   });
 
