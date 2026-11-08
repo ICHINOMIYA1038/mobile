@@ -17,6 +17,7 @@ class LogSync {
   bool _again = false;
 
   String _sinceKey(String userId) => 'log_sync_since_$userId';
+  String _cursorKey(String userId) => 'log_sync_cursor_$userId';
 
   /// 送れなかった分は dirty のまま残り、次の同期で送る
   Future<bool> run() async {
@@ -33,12 +34,17 @@ class LogSync {
         if (token == null || userId == null) return false;
         final headers = {'authorization': 'Bearer $token', 'content-type': 'application/json'};
         // 記録が多い人でも、1 件ごとに端末へ全件を書き直さない。最後にまとめて書く
+        // 送れないもの（書き込みの上限など）があっても、受け取りは続ける。他の端末の変更を止めない
+        var pushedAll = true;
         var pushed = 0;
         try {
           for (final e in log.dirtyEntries) {
             final url = Uri.parse('${AuthService.apiUrl}/logs/${e.id}');
             final res = e.deleted ? await _http.delete(url, headers: headers).timeout(_timeout) : await _http.put(url, headers: headers, body: jsonEncode(e.toServerJson())).timeout(_timeout);
-            if (res.statusCode >= 300) return false;
+            if (res.statusCode >= 300) {
+              pushedAll = false;
+              break;
+            }
             await log.markPushed(e, e.deleted ? null : jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>, persist: false);
             pushed++;
           }
@@ -46,18 +52,28 @@ class LogSync {
           if (pushed > 0) await log.flush();
         }
         final prefs = await SharedPreferences.getInstance();
-        // サーバーは 1 回に [_page] 件まで返す。満杯なら続きを取りに行く
+        // サーバーは 1 回に [_page] 件まで返す。満杯なら続きを取りに行く。
+        // 続きの位置は、更新時刻と ID の組（cursor）。同じ時刻の行が 1 ページを超えても取りこぼさない
         while (true) {
-          final since = prefs.getString(_sinceKey(userId));
-          final url = Uri.parse('${AuthService.apiUrl}/logs').replace(queryParameters: {'since': ?since});
+          final cursor = prefs.getString(_cursorKey(userId));
+          final since = cursor == null ? prefs.getString(_sinceKey(userId)) : null;
+          final url = Uri.parse('${AuthService.apiUrl}/logs').replace(queryParameters: {'cursor': ?cursor, 'since': ?since});
           final res = await _http.get(url, headers: headers).timeout(_timeout);
           if (res.statusCode != 200) return false;
-          final rows = ((jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>)['logs'] as List).cast<Map<String, dynamic>>();
+          final body = jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+          final rows = (body['logs'] as List).cast<Map<String, dynamic>>();
           await log.applyRemote(rows);
           if (rows.isEmpty) break;
-          await prefs.setString(_sinceKey(userId), rows.last['updatedAt'] as String);
+          final next = body['cursor'] as String?;
+          if (next != null) {
+            if (next == cursor) break; // 進まないときは止める
+            await prefs.setString(_cursorKey(userId), next);
+          } else {
+            await prefs.setString(_sinceKey(userId), rows.last['updatedAt'] as String);
+          }
           if (rows.length < _page) break;
         }
+        if (!pushedAll) return false;
       } while (_again);
       return true;
     } catch (_) {
@@ -76,7 +92,11 @@ class LogSync {
     await run();
     if (!force && log.dirtyEntries.isNotEmpty) return false;
     final userId = auth.user?.id;
-    if (userId != null) await (await SharedPreferences.getInstance()).remove(_sinceKey(userId));
+    if (userId != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_sinceKey(userId));
+      await prefs.remove(_cursorKey(userId));
+    }
     await log.clearAll();
     await auth.clear();
     return true;

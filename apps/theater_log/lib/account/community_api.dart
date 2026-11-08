@@ -31,8 +31,15 @@ class Review {
   );
 }
 
+/// 新しい順の一覧の 1 ページ。next があれば続きを読める
+class ReviewPage {
+  const ReviewPage(this.reviews, this.next);
+  final List<Review> reviews;
+  final String? next;
+}
+
 class Production {
-  const Production({required this.id, required this.title, this.groupName, this.venueName, this.startDate, this.endDate, this.status = 'approved'});
+  const Production({required this.id, required this.title, this.groupName, this.venueName, this.startDate, this.endDate, this.status = 'approved', this.existing = false});
   final int id;
   final String title;
   final String? groupName;
@@ -40,6 +47,9 @@ class Production {
   final String? startDate;
   final String? endDate;
   final String status;
+
+  /// 登録しようとした公演が、別の人の登録で既にあった
+  final bool existing;
 
   factory Production.fromJson(Map<String, dynamic> j) => Production(
     id: j['id'] as int,
@@ -49,6 +59,7 @@ class Production {
     startDate: j['startDate'] as String?,
     endDate: j['endDate'] as String?,
     status: (j['status'] as String?) ?? 'approved',
+    existing: j['existing'] == true,
   );
 
   String get label => [title, groupName, venueName, startDate].whereType<String>().join('／');
@@ -85,14 +96,18 @@ class CommunityApi {
     return ((_json(r) as Map<String, dynamic>)['reviews'] as List).map((e) => Review.fromJson(e as Map<String, dynamic>)).toList();
   }
 
-  Future<List<Review>> feed() async {
-    final r = await _http.get(_u('/feed'), headers: await _headers()).timeout(_timeout);
+  /// みんなのひとこと。before に前のページの next を渡すと続き
+  Future<ReviewPage> feed({String? before}) async {
+    final r = await _http.get(_u('/feed', {'before': ?before}), headers: await _headers()).timeout(_timeout);
     _check(r);
-    return ((_json(r) as Map<String, dynamic>)['reviews'] as List).map((e) => Review.fromJson(e as Map<String, dynamic>)).toList();
+    final j = _json(r) as Map<String, dynamic>;
+    return ReviewPage((j['reviews'] as List).map((e) => Review.fromJson(e as Map<String, dynamic>)).toList(), j['next'] as String?);
   }
 
   Future<void> report(String reviewId, String reason) async {
     final r = await _http.post(_u('/reports'), headers: await _headers(required: true), body: jsonEncode({'reviewId': reviewId, 'reason': reason})).timeout(_timeout);
+    if (r.statusCode == 400 && (_json(r) as Map<String, dynamic>)['error'] == 'own_review') throw CommunityError('自分の感想は通報できません');
+    if (r.statusCode == 429) throw CommunityError('今日はこれ以上通報できません。急ぎのときは、お問い合わせからお知らせください');
     _check(r);
   }
 

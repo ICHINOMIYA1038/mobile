@@ -18,6 +18,8 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen> {
   List<Review>? _reviews;
+  String? _next;
+  bool _more = false;
   bool _failed = false;
   CommunityApi get _api => widget.api ?? CommunityApi(AppScope.of(context).auth);
 
@@ -30,9 +32,29 @@ class _FeedScreenState extends State<FeedScreen> {
   Future<void> _load() async {
     try {
       final r = await _api.feed();
-      if (mounted) setState(() { _reviews = r; _failed = false; });
+      if (mounted) setState(() { _reviews = r.reviews; _next = r.next; _failed = false; });
     } catch (_) {
       if (mounted) setState(() => _failed = true);
+    }
+  }
+
+  /// 続きを読む。読めなかったら、ボタンを残してもう一度押せるようにする
+  Future<void> _loadMore() async {
+    final next = _next;
+    if (next == null || _more) return;
+    setState(() => _more = true);
+    try {
+      final r = await _api.feed(before: next);
+      if (!mounted) return;
+      final have = {for (final x in _reviews ?? const <Review>[]) x.id};
+      setState(() {
+        _reviews = [...?_reviews, ...r.reviews.where((x) => !have.contains(x.id))];
+        _next = r.next;
+      });
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('続きを読み込めませんでした')));
+    } finally {
+      if (mounted) setState(() => _more = false);
     }
   }
 
@@ -67,7 +89,7 @@ class _FeedScreenState extends State<FeedScreen> {
                   ],
                 ),
               )
-            else
+            else ...[
               for (final r in rows)
                 ReviewTile(
                   review: r,
@@ -75,6 +97,16 @@ class _FeedScreenState extends State<FeedScreen> {
                   onBlocked: (id) => setState(() => _reviews = _reviews?.where((x) => x.authorId != id).toList()),
                   onOpenTitle: plays[r.postId] == null ? null : () => launchUrl(plays[r.postId]!.siteUrl, mode: LaunchMode.externalApplication),
                 ),
+              if (_next != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Center(
+                    child: _more
+                        ? const Padding(padding: EdgeInsets.all(12), child: SizedBox.square(dimension: 24, child: CircularProgressIndicator(strokeWidth: 2)))
+                        : TextButton(key: const Key('feed-more'), onPressed: _loadMore, child: const Text('もっと見る')),
+                  ),
+                ),
+            ],
           ],
         ),
       ),

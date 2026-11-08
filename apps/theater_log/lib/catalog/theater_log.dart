@@ -180,6 +180,12 @@ class TheaterLog extends ChangeNotifier {
     if (!identical(_entries[i], sent)) return;
     if (sent.deleted) {
       _entries.removeAt(i);
+    } else if (server?['deleted'] == true) {
+      // 別の端末で消されていた。古い編集では戻さない
+      for (final name in sent.photos) {
+        await LogPhotos.delete(name);
+      }
+      _entries.removeAt(i);
     } else {
       _entries[i] = server == null ? sent.copyWith(dirty: false, onServer: true) : TheaterLogEntry.fromServer(server, sent);
     }

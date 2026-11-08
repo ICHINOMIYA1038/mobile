@@ -253,6 +253,71 @@ void main() {
       expect(sinces, [null, '2026-11-04T00:00:00.000Z']);
     });
 
+    test('書き込みの上限で送れなくても、別の端末の変更は受け取る', () async {
+      final client = MockClient((req) async {
+        if (req.method == 'PUT') return _json({'error': 'too_many_requests'}, 429);
+        if (req.url.path.endsWith('/logs')) return _json({'logs': [row('b', note: '別の端末')], 'cursor': '2026-11-04T00:00:00.000Z|x1'});
+        return _authRoutes(req);
+      });
+      final auth = await signedIn(client);
+      final log = TheaterLog();
+      await log.upsert(entry('a', note: '送れない'));
+      expect(await LogSync(auth: auth, log: log, client: client).run(), isFalse);
+      expect(log.entries.map((e) => e.note), containsAll(['送れない', '別の端末']));
+      expect(log.dirtyEntries.single.id, 'a');
+    });
+
+    test('続きは cursor で頼む。同じ時刻の行が 1000 件を超えても取りこぼさない', () async {
+      final asked = <Map<String, String>>[];
+      final client = MockClient((req) async {
+        if (req.url.path.endsWith('/logs')) {
+          asked.add(req.url.queryParameters);
+          final cursor = req.url.queryParameters['cursor'];
+          final start = cursor == null ? 0 : 1000;
+          final n = cursor == null ? 1000 : 2;
+          // 全部同じ時刻
+          return _json({'logs': [for (var i = start; i < start + n; i++) row('r$i')], 'cursor': '2026-11-04T00:00:00.000Z|${start + n - 1}'});
+        }
+        return _authRoutes(req);
+      });
+      final auth = await signedIn(client);
+      final log = TheaterLog();
+      expect(await LogSync(auth: auth, log: log, client: client).run(), isTrue);
+      expect(log.entries.length, 1002);
+      expect(asked, [{}, {'cursor': '2026-11-04T00:00:00.000Z|999'}]);
+    });
+
+    test('前の版で受け取った位置（since）から続け、次からは cursor にする', () async {
+      SharedPreferences.setMockInitialValues({'log_sync_since_u1': '2026-11-01T00:00:00.000Z'});
+      final asked = <Map<String, String>>[];
+      final client = MockClient((req) async {
+        if (req.url.path.endsWith('/logs')) {
+          asked.add(req.url.queryParameters);
+          return _json({'logs': [row('b')], 'cursor': '2026-11-04T00:00:00.000Z|x1'});
+        }
+        return _authRoutes(req);
+      });
+      final auth = await signedIn(client);
+      final sync = LogSync(auth: auth, log: TheaterLog(), client: client);
+      await sync.run();
+      await sync.run();
+      expect(asked, [{'since': '2026-11-01T00:00:00.000Z'}, {'cursor': '2026-11-04T00:00:00.000Z|x1'}]);
+    });
+
+    test('別の端末で消された記録は、古い編集を送っても戻らずに消える', () async {
+      final client = MockClient((req) async {
+        if (req.method == 'PUT') return _json(row(req.url.pathSegments.last, deleted: true));
+        if (req.url.path.endsWith('/logs')) return _json({'logs': []});
+        return _authRoutes(req);
+      });
+      final auth = await signedIn(client);
+      final log = TheaterLog();
+      await log.upsert(entry('a', note: '古い編集'));
+      expect(await LogSync(auth: auth, log: log, client: client).run(), isTrue);
+      expect(log.entries, isEmpty);
+      expect(log.dirtyEntries, isEmpty);
+    });
+
     test('未送信の変更は受け取った内容で上書きしない', () async {
       final log = TheaterLog();
       await log.upsert(entry('a', note: '端末の変更'));
@@ -359,6 +424,48 @@ void main() {
         expect(find.text('面白かった'), findsNothing);
       });
       expect(calls, ['POST reports', 'PUT u9']);
+    });
+
+    testWidgets('みんなのひとことは「もっと見る」で続きを読める', (tester) async {
+      final befores = <String?>[];
+      await tester.runAsync(() async {
+        final client = MockClient((req) async {
+          if (req.url.path.endsWith('/feed')) {
+            final before = req.url.queryParameters['before'];
+            befores.add(before);
+            return before == null ? _json({'reviews': [review], 'next': 'n1'}) : _json({'reviews': [review, {...review, 'id': 'r2', 'note': '続きの感想'}], 'next': null});
+          }
+          return _authRoutes(req);
+        });
+        final auth = await signedIn(client);
+        await tester.pumpWidget(scope(FeedScreen(api: CommunityApi(auth, client: client)), auth));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        await tester.pump();
+        expect(find.text('続きの感想'), findsNothing);
+        await tester.scrollUntilVisible(find.byKey(const Key('feed-more')), 200, scrollable: find.byType(Scrollable).first);
+        await tester.tap(find.byKey(const Key('feed-more')));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        await tester.pump();
+        expect(find.text('面白かった'), findsOneWidget);
+        expect(find.text('続きの感想'), findsOneWidget);
+        expect(find.byKey(const Key('feed-more')), findsNothing);
+      });
+      expect(befores, [null, 'n1']);
+    });
+
+    test('運営や公式と間違われる名前は、理由を伝えて断る', () async {
+      final client = MockClient((req) async {
+        if (req.method == 'PATCH') {
+          final name = (jsonDecode(req.body) as Map<String, dynamic>)['displayName'] as String;
+          if (name.contains('運営')) return _json({'error': 'display_name_reserved'}, 400);
+          return _json({'id': 'u1', 'displayName': name.replaceAll('\n', ' ')});
+        }
+        return _authRoutes(req);
+      });
+      final auth = await signedIn(client);
+      await expectLater(auth.setDisplayName('運営'), throwsA(isA<DisplayNameRejected>()));
+      await auth.setDisplayName('一行目\n二行目');
+      expect(auth.user!.displayName, '一行目 二行目');
     });
 
     testWidgets('自分の感想には通報とブロックを出さない', (tester) async {
