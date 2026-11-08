@@ -14,9 +14,10 @@ import 'firebase_options.dart';
 import 'navigation_policy.dart';
 import 'purchase_service.dart';
 
-const _homeUrl = 'https://tomoshibi.gikyokutosyokan.com/';
+const _homeUrl = 'https://tomoshibi.gikyokutosyokan.com/studio/projects/';
+const _sessionApiUrl = 'https://gikyokutosyokan.com/api/tomoshibi/session';
 
-/// 起動時に開くURL。既定は本番のホーム。
+/// 起動時に開くURL。既定は本番のプロジェクト一覧。
 /// ストア用スクリーンショットの撮影 (tool/screenshots.sh) から、シーンを
 /// 埋め込んだ `#scene=...` 付きURLを流し込むための差し替え口。
 /// リリースビルドではこのdefineを渡さないので常に _homeUrl になる。
@@ -39,7 +40,7 @@ class TomoshibiApp extends StatelessWidget {
     this.requestTracking = true,
   });
 
-  /// 最初に開くURL。既定は `--dart-define=TOMOSHIBI_START_URL` かホーム。
+  /// 最初に開くURL。既定は `--dart-define=TOMOSHIBI_START_URL` かプロジェクト一覧。
   final String startUrl;
 
   /// ATT許諾をリクエストするか。スクリーンショット撮影時のみfalseにして、
@@ -141,7 +142,9 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
           onPageFinished: (_) {
             final completer = _pageFinishedCompleter;
             _pageFinishedCompleter = null;
-            if (completer != null && !completer.isCompleted) completer.complete();
+            if (completer != null && !completer.isCompleted) {
+              completer.complete();
+            }
           },
         ),
       );
@@ -170,7 +173,9 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
   /// リクエストすることでこれを防ぐ。
   Future<void> _waitUntilResumed() async {
     final frameCompleter = Completer<void>();
-    WidgetsBinding.instance.addPostFrameCallback((_) => frameCompleter.complete());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => frameCompleter.complete(),
+    );
     await frameCompleter.future;
 
     if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
@@ -191,7 +196,9 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
       status = await AppTrackingTransparency.requestTrackingAuthorization();
     }
     _attHeaders = {
-      'X-ATT-Status': status == TrackingStatus.authorized ? 'authorized' : 'denied',
+      'X-ATT-Status': status == TrackingStatus.authorized
+          ? 'authorized'
+          : 'denied',
     };
     _bootstrapped = true;
     // コールドスタート時にUniversal Linkで起動された場合はそのURLを優先する。
@@ -345,7 +352,7 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     final completer = Completer<String?>();
     _sessionCompleter = completer;
     await _controller.runJavaScript('''
-      fetch('/api/tomoshibi/session', { credentials: 'include' })
+      fetch('$_sessionApiUrl', { credentials: 'include' })
         .then(r => r.json())
         .then(d => TomoshibiSession.postMessage(JSON.stringify({ userId: d.user ? d.user.id : null })))
         .catch(e => TomoshibiSession.postMessage(JSON.stringify({ userId: null })));
@@ -468,6 +475,7 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
       },
       child: Scaffold(
         body: SafeArea(
+          bottom: false,
           child: Stack(
             children: [
               WebViewWidget(controller: _controller),
@@ -488,13 +496,19 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
                 ),
               // ATT許諾待ち〜初回ページ読み込み開始前は_progressが0のままなので、
               // 画面が固まって見えないよう全画面のローディング表示で覆う。
-              if (_progress == 0 && _loadError == null) const _LaunchLoadingOverlay(),
-              if (_progress > 0 && !_purchaseBusy)
-                _RestorePurchasesButton(onPressed: _restorePurchases),
+              if (_progress == 0 && _loadError == null)
+                const _LaunchLoadingOverlay(),
               if (_purchaseBusy) const _BusyOverlay(),
             ],
           ),
         ),
+        bottomNavigationBar:
+            _progress >= 1 && !_purchaseBusy && _loadError == null
+            ? SafeArea(
+                top: false,
+                child: _RestorePurchasesBar(onPressed: _restorePurchases),
+              )
+            : null,
       ),
     );
   }
@@ -540,30 +554,24 @@ class _BusyOverlay extends StatelessWidget {
   }
 }
 
-class _RestorePurchasesButton extends StatelessWidget {
-  const _RestorePurchasesButton({required this.onPressed});
+class _RestorePurchasesBar extends StatelessWidget {
+  const _RestorePurchasesBar({required this.onPressed});
 
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    // サイト側のヘッダーやフッター (右上のユーザーアバター、右下のシーン編集
-    // メニュー等) と衝突しないよう、常に空いている左下隅にアイコンのみで置く。
-    return Positioned(
-      bottom: 8,
-      left: 8,
-      child: Material(
-        color: Colors.black.withValues(alpha: 0.45),
-        shape: const CircleBorder(),
-        child: Tooltip(
-          message: '購入を復元',
-          child: InkWell(
-            customBorder: const CircleBorder(),
-            onTap: onPressed,
-            child: const Padding(
-              padding: EdgeInsets.all(10),
-              child: Icon(Icons.restore, size: 18, color: Color(0xFFF0E8DA)),
-            ),
+    return Material(
+      color: const Color(0xFF171316),
+      child: SizedBox(
+        height: 48,
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: onPressed,
+            style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
+            icon: const Icon(Icons.restore, size: 18),
+            label: const Text('購入を復元'),
           ),
         ),
       ),
