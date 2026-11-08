@@ -104,7 +104,8 @@ class _LogScreenState extends State<LogScreen> {
             onList: () => setState(() => _list = true),
           );
         }
-        return _listView(scope, byId);
+        // 一覧は紙の画面なので、時刻や電池の表示を黒にする（1 枚ずつの表示は黒地なので白）
+        return AnnotatedRegion<SystemUiOverlayStyle>(value: SystemUiOverlayStyle.dark, child: _listView(scope, byId));
       },
     );
   }

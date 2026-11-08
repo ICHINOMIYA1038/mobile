@@ -49,3 +49,4 @@ app.*.map.json
 ios/fastlane/frame_assets/fonts/
 ios/fastlane/screenshots/*/*.png
 ios/fastlane/report.xml
+/tool/store_compose/build/
