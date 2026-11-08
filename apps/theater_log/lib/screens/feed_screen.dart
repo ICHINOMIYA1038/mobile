@@ -71,6 +71,13 @@ class _FeedScreenState extends State<FeedScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
             const Text('みんなのひとこと', style: TextStyle(fontFamily: displayFont, fontSize: 30, height: 1.1, color: Palette.sumi)),
+            const SizedBox(height: 6),
+            // 自分の記録や写真が勝手に出るのではと不安にならないよう、何が並ぶかを先に言う
+            const Text(
+              '自分で「公開する」にした感想だけが並びます。記録は自動では公開されず、写真はどこにも公開・送信されません。',
+              key: Key('feed-note'),
+              style: TextStyle(fontSize: 12, height: 1.6, color: Palette.inkSoft),
+            ),
             const SizedBox(height: 12),
             if (_failed)
               const Padding(padding: EdgeInsets.all(24), child: Text('読み込めませんでした。下に引っぱると、もう一度読み込みます。', style: TextStyle(height: 1.7, color: Palette.inkSoft)))

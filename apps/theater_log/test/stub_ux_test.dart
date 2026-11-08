@@ -543,6 +543,52 @@ void main() {
       expect([e.showTime, e.seat, e.price], ['matinee', '1階C列12番', 7800]);
     });
 
+    testWidgets('読み取ったチケットの写真は 1 枚目に入り、写真の画面で外せる。撮り直すと差し替わる', (tester) async {
+      final log = TheaterLog();
+      final sheet = await open(tester, log, ['電子チケット', '誰も知らない新作', '本多劇場']);
+      await sheet.scanPath('/dev/null', AppScope.of(tester.element(find.byType(QuickLogSheet))));
+      sheet.adoptTicketPhoto('ticket1.jpg');
+      sheet.adoptTicketPhoto('ticket2.jpg');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('scan-title-0')));
+      await tester.pump();
+      for (var i = 0; i < 3; i++) {
+        await tester.tap(find.byKey(Key(i == 0 ? 'flow-next' : (i == 1 ? 'flow-next' : 'flow-skip'))));
+        await tester.pumpAndSettle();
+      }
+      expect(find.byKey(const Key('flow-photo-ticket')), findsOneWidget);
+      expect(find.byKey(const Key('flow-photo-1')), findsNothing);
+      await tester.tap(find.byKey(const Key('quick-finish')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 2));
+      expect(log.entries.single.photos, ['ticket2.jpg']);
+    });
+
+    testWidgets('チケットの写真は、写真の画面で外せば記録に入らない', (tester) async {
+      final log = TheaterLog();
+      final sheet = await open(tester, log, ['電子チケット', '誰も知らない新作', '本多劇場']);
+      await sheet.scanPath('/dev/null', AppScope.of(tester.element(find.byType(QuickLogSheet))));
+      sheet.adoptTicketPhoto('ticket.jpg');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('scan-title-0')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('flow-next')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('flow-next')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('flow-skip')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('flow-photo-remove-0')));
+      await tester.pump();
+      expect(find.byKey(const Key('flow-photo-ticket')), findsNothing);
+      await tester.tap(find.byKey(const Key('quick-finish')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 2));
+      expect(log.entries.single.photos, isEmpty);
+    });
+
     testWidgets('公演が分からなければ題名の画面のまま、チケットの候補から選べる', (tester) async {
       final log = TheaterLog();
       final sheet = await open(tester, log, ['電子チケット', '誰も知らない新作', '本多劇場', '2026.11.08 開演 18:30']);
