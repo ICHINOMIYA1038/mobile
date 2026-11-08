@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('作品を選んで記録し、ノートに台本情報への入口が出る', (tester) async {
+  testWidgets('作品を選んで記録し、感想を書くと、ノートに台本情報への入口が出る', (tester) async {
     SharedPreferences.setMockInitialValues({});
     const hold = Duration(seconds: 6);
     final repository = CatalogRepository();
@@ -22,13 +22,15 @@ void main() {
 
     await tester.tap(find.byKey(const Key('log-add')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('quick-more')));
+    await tester.tap(find.byKey(const Key('flow-skip')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('log-title')));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('log-title')), 'エダニク');
+    await tester.enterText(find.byKey(const Key('quick-title')), 'エダニク');
     await tester.pumpAndSettle();
     await tester.tap(find.text('横山拓也').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('quick-save')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('stamped-note')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('star-4')));
     await tester.enterText(find.byKey(const Key('log-note')), '動作確認用の仮の感想です。');

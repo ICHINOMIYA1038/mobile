@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../account/auth_service.dart';
 import '../app_scope.dart';
+import '../catalog/log_flow_prefs.dart';
 import '../theme.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -115,6 +116,8 @@ class _AccountScreenState extends State<AccountScreen> {
                     child: const Text('アカウントを削除', style: TextStyle(color: Palette.vermilion)),
                   ),
                   const Text('削除すると、観劇の記録と公開した感想も消えます。戯曲 ID のページで手続きします。', style: TextStyle(fontSize: 12, height: 1.6, color: Palette.inkSoft)),
+                  const SizedBox(height: 28),
+                  const LogFlowSettings(),
                 ]
               : [
                   const Text('戯曲 ID でログインすると、機種を変えても記録を引き継げ、感想を公開できます。ログインしなくても、記録は端末の中で使えます。', style: TextStyle(height: 1.7)),
@@ -124,9 +127,68 @@ class _AccountScreenState extends State<AccountScreen> {
                   OutlinedButton(key: const Key('sign-in-google'), onPressed: _busy ? null : () => _signIn('google'), child: const Text('Google でログイン')),
                   const SizedBox(height: 16),
                   const Text('戯曲図書館、戯曲パレット、TOMOSHIBI と同じアカウントです。', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
+                  const SizedBox(height: 28),
+                  const LogFlowSettings(),
                 ],
         ),
       ),
+    );
+  }
+}
+
+/// 記録の手順で出す画面。チケットと写真だけ切り替えられる
+class LogFlowSettings extends StatefulWidget {
+  const LogFlowSettings({super.key});
+
+  @override
+  State<LogFlowSettings> createState() => _LogFlowSettingsState();
+}
+
+class _LogFlowSettingsState extends State<LogFlowSettings> {
+  ({bool ticket, bool photos})? _show;
+
+  @override
+  void initState() {
+    super.initState();
+    LogFlowPrefs.load().then((v) {
+      if (mounted) setState(() => _show = v);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final show = _show;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('記録の手順', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 4),
+        const Text('観た舞台を記録するときに出す画面です。題名・劇場・評価は毎回聞きます。', style: TextStyle(fontSize: 12, height: 1.6, color: Palette.inkSoft)),
+        SwitchListTile(
+          key: const Key('flow-setting-ticket'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('チケットを撮る'),
+          value: show?.ticket ?? true,
+          onChanged: show == null
+              ? null
+              : (v) async {
+                  setState(() => _show = (ticket: v, photos: show.photos));
+                  await LogFlowPrefs.showTicket(v);
+                },
+        ),
+        SwitchListTile(
+          key: const Key('flow-setting-photos'),
+          contentPadding: EdgeInsets.zero,
+          title: const Text('写真を残す'),
+          value: show?.photos ?? true,
+          onChanged: show == null
+              ? null
+              : (v) async {
+                  setState(() => _show = (ticket: show.ticket, photos: v));
+                  await LogFlowPrefs.showPhotos(v);
+                },
+        ),
+      ],
     );
   }
 }

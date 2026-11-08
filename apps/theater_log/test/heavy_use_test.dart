@@ -201,7 +201,7 @@ void main() {
   });
 
   group('記録の編集', () {
-    testWidgets('チケットを読んで「くわしく書く」に進むと、座席・金額・昼夜も引き継ぐ', (tester) async {
+    testWidgets('チケットから読んだ下書きで編集画面を開くと、座席・金額・昼夜も引き継ぐ', (tester) async {
       _phone(tester, const Size(393, 852));
       final draft = TheaterLogEntry(id: 'draft', title: '読んだ舞台', watchedOn: DateTime(2026, 11, 3), seat: '1階C列12番', price: 5500, showTime: 'matinee');
       await tester.pumpWidget(_scope(TheaterLog(), home: LogEditScreen(draft: draft)));
