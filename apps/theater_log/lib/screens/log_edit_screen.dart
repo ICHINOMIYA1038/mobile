@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../account/community_api.dart';
+import '../account/ng_words.dart';
 import '../app_scope.dart';
 import '../catalog/log_photos.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
@@ -95,6 +96,14 @@ class _LogEditScreenState extends State<LogEditScreen> {
     final play = _play?.title == title ? _play : null;
     final old = widget.entry;
     final linkedId = play?.id ?? (old?.title == title ? old?.playId : null);
+    // 公開させない言葉やリンクを含む感想は、非公開で保存して理由を伝える（サーバーも同じ決まりで弾く）
+    final held = _public ? ngReason(_note.text) : null;
+    if (held != null) {
+      _public = false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(held == 'link' ? 'リンクを含む感想は公開できないため、非公開で保存しました' : '公開できない言葉が含まれているため、非公開で保存しました')),
+      );
+    }
     _saving = true;
     await AppScope.of(context).log.upsert(
       TheaterLogEntry(
