@@ -85,7 +85,7 @@ class TicketStub extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text('${d.year}', style: const TextStyle(fontSize: 11, color: Colors.white70)),
-                        Text('${d.month}.${d.day}', style: const TextStyle(fontFamily: displayFont, fontSize: 21, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text('${d.month}.${d.day}', style: const TextStyle(fontFamily: displayFont, fontSize: 21, fontWeight: FontWeight.w800, color: Colors.white)),
                         if (entry.showTime != null) Text(entry.showTime == 'matinee' ? '昼' : '夜', style: const TextStyle(fontSize: 11, color: Colors.white70)),
                       ],
                     ),

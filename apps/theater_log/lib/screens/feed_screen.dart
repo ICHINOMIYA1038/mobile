@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../account/community_api.dart';
@@ -62,7 +63,10 @@ class _FeedScreenState extends State<FeedScreen> {
   Widget build(BuildContext context) {
     final plays = {for (final p in AppScope.of(context).catalog.plays) p.id: p};
     final rows = _reviews;
-    return SafeArea(
+    // 紙の画面なので、時刻や電池の表示は黒に
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: SafeArea(
       bottom: false,
       child: RefreshIndicator(
         onRefresh: _load,
@@ -117,6 +121,7 @@ class _FeedScreenState extends State<FeedScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }

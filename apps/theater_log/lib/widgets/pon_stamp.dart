@@ -110,7 +110,7 @@ class _SealPainter extends CustomPainter {
       canvas.drawLine(c + Offset(-half, -band), c + Offset(half, -band), rule);
       canvas.drawLine(c + Offset(-half, band), c + Offset(half, band), rule);
       _fit(canvas, _text(label, base, family: sealFont), c + Offset(0, -band - (innerR - band) * 0.48), innerR * 1.25, (innerR - band) * 0.8);
-      if (sub != null) _fit(canvas, _text(sub!, base * 0.95, family: displayFont, weight: FontWeight.w400, spacing: 0.5), c, half * 1.8, band * 1.5);
+      if (sub != null) _fit(canvas, _text(sub!, base * 0.95, family: displayFont, weight: FontWeight.w800, spacing: 0.3), c, half * 1.8, band * 1.5);
       _fit(canvas, _text(bottom!, base * 0.8, family: sealFont), c + Offset(0, band + (innerR - band) * 0.48), innerR * 1.25, (innerR - band) * 0.8);
     } else {
       final main = _text(label, base, family: sealFont, height: 1.12);

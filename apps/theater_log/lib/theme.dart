@@ -20,8 +20,9 @@ class Palette {
   static const navy = sumi;
 }
 
-/// 短く大きな見出しと数字だけに使う書体（小さい字や長い文では潰れる）。芝居のビラのような太いゴシック（Dela Gothic One、OFL）
-const displayFont = 'DelaGothicOne';
+/// 見出しと数字の書体。iPhone に入っているヒラギノ角ゴを極太（W8）で使う（アプリに書体を入れず、容量を増やさない）。
+/// 使うときは fontWeight: FontWeight.w800 を付ける
+const displayFont = 'Hiragino Sans';
 
 /// 公演名などの太字。小さくても読めるよう標準のゴシックにする
 const titleFont = 'Hiragino Sans';
