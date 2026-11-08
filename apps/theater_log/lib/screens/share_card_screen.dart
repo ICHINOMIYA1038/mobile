@@ -320,7 +320,7 @@ class _CardStub extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text('${d.year}', style: TextStyle(fontSize: s * 3, color: Colors.white70)),
-                        Text('${d.month}.${d.day}', style: TextStyle(fontFamily: displayFont, fontSize: s * 5.6, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text('${d.month}.${d.day}', style: TextStyle(fontFamily: displayFont, fontSize: s * 5.6, fontWeight: FontWeight.w800, color: Colors.white)),
                       ],
                     ),
                   ),

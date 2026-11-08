@@ -512,7 +512,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
   };
 
   // 問いは芝居のビラの太い書体で大きく。入力は罫線 1 本の上に書く（箱に入れない）
-  static const _heading = TextStyle(fontFamily: displayFont, fontSize: 25, height: 1.3, color: Palette.sumi);
+  static const _heading = TextStyle(fontFamily: displayFont, fontWeight: FontWeight.w800, fontSize: 25, height: 1.3, color: Palette.sumi);
   static const _sub = TextStyle(fontSize: 13, height: 1.5, color: Palette.inkSoft);
 
 

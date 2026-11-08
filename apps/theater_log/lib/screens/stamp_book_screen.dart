@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app_scope.dart';
 import '../catalog/achievements.dart';
@@ -17,58 +18,62 @@ class StampBookScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final log = AppScope.of(context).log;
-    return SafeArea(
-      bottom: false,
-      child: ListenableBuilder(
-        listenable: log,
-        builder: (context, _) {
-          final items = achievementsOf(log.entries);
-          final done = items.where((a) => a.earned).length;
-          final year = DateTime.now().year;
-          final stats = LogStats.of(log.entries, year);
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            children: [
-              const Text(
-                'スタンプ帳',
-                style: TextStyle(fontFamily: displayFont, fontSize: 30, height: 1.1, color: Palette.sumi),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${items.length} 個のうち $done 個を押しました',
-                key: const Key('stamp-count'),
-                style: const TextStyle(fontSize: 13, color: Palette.inkSoft),
-              ),
-              const SizedBox(height: 18),
-              // 帳面の 1 ページ。押したものは朱の印、まだのものは点線の枠
-              LayoutBuilder(
-                builder: (context, c) {
-                  const cols = 3;
-                  final w = (c.maxWidth - 8 * (cols - 1)) / cols;
-                  return Wrap(
-                    spacing: 8,
-                    runSpacing: 18,
-                    children: [
-                      for (final a in items)
-                        SizedBox(
-                          width: w,
-                          child: _Stamp(a, size: math.min(96, w * 0.82)),
-                        ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 30),
-              const _Rule(),
-              const SizedBox(height: 18),
-              const VenueStampSummary(),
-              const SizedBox(height: 26),
-              const _Rule(),
-              if (log.entries.isNotEmpty) _Row(key: const Key('open-recap'), title: '$year年のふりかえり', sub: '観た本数と、よく行った劇場を 1 枚に', onTap: () => RecapScreen.open(context)),
-              _Row(key: const Key('open-stats'), title: '$year年は ${stats.count} 本', sub: '月ごとの本数、よく行く劇場、よく観る劇団', onTap: () => LogStatsScreen.open(context)),
-            ],
-          );
-        },
+    // 紙の画面なので、時刻や電池の表示は黒に
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: SafeArea(
+        bottom: false,
+        child: ListenableBuilder(
+          listenable: log,
+          builder: (context, _) {
+            final items = achievementsOf(log.entries);
+            final done = items.where((a) => a.earned).length;
+            final year = DateTime.now().year;
+            final stats = LogStats.of(log.entries, year);
+            return ListView(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              children: [
+                const Text(
+                  'スタンプ帳',
+                  style: TextStyle(fontFamily: displayFont, fontWeight: FontWeight.w800, fontSize: 30, height: 1.1, color: Palette.sumi),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${items.length} 個のうち $done 個を押しました',
+                  key: const Key('stamp-count'),
+                  style: const TextStyle(fontSize: 13, color: Palette.inkSoft),
+                ),
+                const SizedBox(height: 18),
+                // 帳面の 1 ページ。押したものは朱の印、まだのものは点線の枠
+                LayoutBuilder(
+                  builder: (context, c) {
+                    const cols = 3;
+                    final w = (c.maxWidth - 8 * (cols - 1)) / cols;
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 18,
+                      children: [
+                        for (final a in items)
+                          SizedBox(
+                            width: w,
+                            child: _Stamp(a, size: math.min(96, w * 0.82)),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 30),
+                const _Rule(),
+                const SizedBox(height: 18),
+                const VenueStampSummary(),
+                const SizedBox(height: 26),
+                const _Rule(),
+                if (log.entries.isNotEmpty) _Row(key: const Key('open-recap'), title: '$year年のふりかえり', sub: '観た本数と、よく行った劇場を 1 枚に', onTap: () => RecapScreen.open(context)),
+                _Row(key: const Key('open-stats'), title: '$year年は ${stats.count} 本', sub: '月ごとの本数、よく行く劇場、よく観る劇団', onTap: () => LogStatsScreen.open(context)),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
