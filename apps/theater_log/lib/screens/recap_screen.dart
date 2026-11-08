@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../widgets/illustrations.dart';
 import '../app_scope.dart';
 import '../catalog/log_stats.dart';
 import '../theme.dart';
@@ -49,6 +50,7 @@ class _RecapScreenState extends State<RecapScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
         children: [
+          Center(child: StageArt.light(key: const Key('art-light'), width: 170)),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
