@@ -10,6 +10,7 @@ import '../catalog/log_stats.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import '../catalog/theater_log.dart';
 import '../theme.dart';
+import '../widgets/illustrations.dart';
 import '../widgets/ticket_stub.dart';
 import '../widgets/log_calendar.dart';
 import '../widgets/pon_stamp.dart';
@@ -163,7 +164,7 @@ class _LogScreenState extends State<LogScreen> {
                     const Expanded(
                       child: Text(
                         '半券帳',
-                        style: TextStyle(fontFamily: sealFont, fontSize: 28, fontWeight: FontWeight.w800, height: 1.1, color: Palette.sumi),
+                        style: TextStyle(fontFamily: displayFont, fontSize: 28, fontWeight: FontWeight.w800, height: 1.1, color: Palette.sumi),
                       ),
                     ),
                     if (entries.isNotEmpty)
@@ -303,13 +304,8 @@ class _FirstStub extends StatelessWidget {
     padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
     child: Column(
       children: [
-        Opacity(
-          opacity: 0.55,
-          child: TicketStub(
-            entry: TheaterLogEntry(id: 'sample', title: 'あなたの最初の一枚', watchedOn: DateTime.now()),
-          ),
-        ),
-        const SizedBox(height: 28),
+        const LineArt.curtain(key: Key('art-curtain'), width: 220),
+        const SizedBox(height: 24),
         const Text(
           '観た舞台が、半券になって\nたまっていきます',
           textAlign: TextAlign.center,
@@ -317,7 +313,7 @@ class _FirstStub extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         const Text(
-          '作品名と星だけ、3 秒で記録できます。\n行った劇場には、スタンプも押せます。',
+          'チケットを撮るか、題名を入れるだけ。\n行った劇場のスタンプも一緒に押されます。',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 14, color: Palette.inkSoft),
         ),
@@ -373,7 +369,7 @@ class _Story extends StatelessWidget {
                       children: [
                         const Text(
                           '半券帳',
-                          style: TextStyle(fontFamily: sealFont, fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white),
+                          style: TextStyle(fontFamily: displayFont, fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white),
                         ),
                         const SizedBox(width: 10),
                         Text(
@@ -543,7 +539,7 @@ class _StoryPageState extends State<_StoryPage> {
                     e.title,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontFamily: sealFont, fontSize: 30, fontWeight: FontWeight.w800, height: 1.25, color: Colors.white),
+                    style: const TextStyle(fontFamily: displayFont, fontSize: 30, fontWeight: FontWeight.w800, height: 1.25, color: Colors.white),
                   ),
                   if (place.isNotEmpty || e.group != null) ...[
                     const SizedBox(height: 8),
@@ -720,5 +716,5 @@ class _TitleCover extends StatelessWidget {
     );
   }
 
-  TextStyle _style(double size) => TextStyle(fontFamily: sealFont, fontSize: size, fontWeight: FontWeight.w800, height: 1, color: const Color(0xE6FFFFFF));
+  TextStyle _style(double size) => TextStyle(fontFamily: displayFont, fontSize: size, fontWeight: FontWeight.w800, height: 1, color: const Color(0xE6FFFFFF));
 }
