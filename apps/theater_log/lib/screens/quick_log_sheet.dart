@@ -23,17 +23,16 @@ import '../widgets/ticket_stub.dart';
 import 'log_edit_screen.dart';
 import 'share_card_screen.dart';
 
-enum _Step { ticket, title, place, rating, photos }
+enum _Step { title, place, rating, photos }
 
-/// 観た舞台を 1 画面に 1 つずつ聞いて記録する。題名のあとは、どこからでも半券を切れる
+/// 観た舞台を、題名（チケットの読み取りも）→ いつ・どこで → 評価と感想 → 写真の順に聞いて記録する。題名のあとは、どこからでも半券を切れる
 class QuickLogSheet extends StatefulWidget {
-  const QuickLogSheet({super.key, this.play, this.showTicket = true, this.showPhotos = true});
+  const QuickLogSheet({super.key, this.play, this.showPhotos = true});
   final Play? play;
-  final bool showTicket;
   final bool showPhotos;
 
   static Future<void> open(BuildContext context, {Play? play}) async {
-    final show = await LogFlowPrefs.load();
+    final showPhotos = await LogFlowPrefs.showsPhotos();
     if (!context.mounted) return;
     return showModalBottomSheet<void>(
       context: context,
@@ -43,7 +42,7 @@ class QuickLogSheet extends StatefulWidget {
       enableDrag: false,
       backgroundColor: Palette.paper,
       routeSettings: const RouteSettings(name: 'quick_log'),
-      builder: (_) => QuickLogSheet(play: play, showTicket: show.ticket, showPhotos: show.photos),
+      builder: (_) => QuickLogSheet(play: play, showPhotos: showPhotos),
     );
   }
 
@@ -56,6 +55,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
   late Play? _play = widget.play;
   CurrentProduction? _production;
   int? _rating;
+  final _note = TextEditingController();
   int _daysAgo = 0;
   DateTime? _pickedDate;
 
@@ -78,7 +78,6 @@ class QuickLogSheetState extends State<QuickLogSheet> {
   ImageSource? _lastSource;
 
   late final List<_Step> _steps = [
-    if (widget.showTicket) _Step.ticket,
     if (widget.play == null) _Step.title,
     _Step.place,
     _Step.rating,
@@ -108,6 +107,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
       }
     }
     _title.dispose();
+    _note.dispose();
     _venueQuery.dispose();
     super.dispose();
   }
@@ -142,18 +142,11 @@ class QuickLogSheetState extends State<QuickLogSheet> {
     _next();
   }
 
-  Future<void> _hide(_Step step) async {
-    AppInsights.logEvent('log_flow_hide', parameters: {'step': step.name});
-    if (step == _Step.ticket) await LogFlowPrefs.showTicket(false);
-    if (step == _Step.photos) await LogFlowPrefs.showPhotos(false);
-    if (!mounted) return;
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(const SnackBar(content: Text('アカウントの「記録の手順」で戻せます')));
-    // 写真の画面は最後なので、出さないにしても記録は押すまで切らない
-    if (step == _Step.ticket) {
-      _next();
-    } else {
-      setState(() => _photosHidden = true);
-    }
+  /// 写真の画面を次から出さない。最後の画面なので、記録は「半券を切る」まで切らない
+  Future<void> _hidePhotos() async {
+    AppInsights.logEvent('log_flow_hide', parameters: {'step': _Step.photos.name});
+    await LogFlowPrefs.showPhotos(false);
+    if (mounted) setState(() => _photosHidden = true);
   }
 
   Future<void> _scanTicket(ImageSource source) async {
@@ -196,8 +189,8 @@ class QuickLogSheetState extends State<QuickLogSheet> {
           _play = null;
         }
       });
-      // 公演まで分かれば、題名は聞かずに劇場の確認へ
-      _goTo(scan.production != null || !_steps.contains(_Step.title) ? _Step.place : _Step.title);
+      // 公演まで分かれば、劇場の確認へ進む。分からなければ、この画面で題名の候補から選ぶ
+      if (scan.production != null) _goTo(_Step.place);
     } catch (_) {
       if (mounted) setState(() => _scanError = '読み取れませんでした。明るい場所で、チケット全体を撮ってください');
     } finally {
@@ -239,12 +232,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
 
   void _rate(int i) {
     HapticFeedback.selectionClick();
-    setState(() => _rating = i);
-    if (_isLast) return;
-    // 押した星が見えてから次へ
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted && _step == _Step.rating) _next();
-    });
+    setState(() => _rating = _rating == i ? null : i);
   }
 
   /// 残りの枚数まで、まとめて選べる
@@ -302,6 +290,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
       venue: _venue,
       productionId: production?.id,
       rating: _rating,
+      note: _note.text.trim(),
       showTime: _scan?.showTime,
       seat: _scan?.seat,
       price: _scan?.price,
@@ -460,9 +449,6 @@ class QuickLogSheetState extends State<QuickLogSheet> {
       child: const Text('次へ', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
     );
     switch (_step) {
-      case _Step.ticket:
-        left = TextButton(key: const Key('flow-hide-ticket'), onPressed: () => _hide(_Step.ticket), style: TextButton.styleFrom(foregroundColor: Palette.inkSoft), child: const Text('次回から出さない', style: TextStyle(fontSize: 13)));
-        right = skip;
       case _Step.title:
         left = null;
         right = nextButton(enabled: _hasTitle);
@@ -473,7 +459,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
       case _Step.rating:
         if (_isLast) return _bar(null, finish, full: true);
         left = null;
-        right = _rating == null ? skip : nextButton();
+        right = _rating == null && _note.text.trim().isEmpty ? skip : nextButton();
       case _Step.photos:
         return _bar(null, finish, full: true);
     }
@@ -487,7 +473,6 @@ class QuickLogSheetState extends State<QuickLogSheet> {
   );
 
   Widget _stepBody() => switch (_step) {
-    _Step.ticket => _ticketStep(),
     _Step.title => _titleStep(),
     _Step.place => _placeStep(),
     _Step.rating => _ratingStep(),
@@ -515,27 +500,32 @@ class QuickLogSheetState extends State<QuickLogSheet> {
     );
   }
 
-  Widget _ticketStep() {
+  /// 題名の画面の下に出す、チケットからの読み取り。任意
+  Widget _ticketPanel() {
     Widget source(Key key, IconData icon, String label, ImageSource src) => Expanded(
-      child: OutlinedButton(
+      child: OutlinedButton.icon(
         key: key,
         onPressed: _scanning ? null : () => _scanTicket(src),
         style: OutlinedButton.styleFrom(
           foregroundColor: Palette.ink,
           backgroundColor: Palette.card,
-          padding: const EdgeInsets.symmetric(vertical: 22),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           side: const BorderSide(color: Palette.line),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        child: Column(children: [Icon(icon, size: 30), const SizedBox(height: 6), Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700))]),
+        icon: Icon(icon, size: 22),
+        label: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
       ),
     );
-    return ListView(
+    return Column(
+      key: const Key('quick-scan'),
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('チケットを撮る', style: _heading),
-        const SizedBox(height: 4),
-        const Text('読み取った題名・日付・劇場・座席を、次の画面から入れておきます。', style: _sub),
-        const SizedBox(height: 20),
+        const SizedBox(height: 22),
+        const Text('チケットから読み取る', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.ink)),
+        const SizedBox(height: 2),
+        const Text('題名・日付・劇場・座席を入れておきます。撮らなくても記録できます。', style: _sub),
+        const SizedBox(height: 10),
         if (_scanning)
           Row(
             key: const Key('scan-progress'),
@@ -543,7 +533,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
               if (_scanningPath != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  child: Image.file(File(_scanningPath!), width: 56, height: 56, fit: BoxFit.cover, cacheWidth: 168, errorBuilder: (_, _, _) => const SizedBox(width: 56, height: 56)),
+                  child: Image.file(File(_scanningPath!), width: 48, height: 48, fit: BoxFit.cover, cacheWidth: 144, errorBuilder: (_, _, _) => const SizedBox(width: 48, height: 48)),
                 ),
               const SizedBox(width: 12),
               const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
@@ -554,24 +544,20 @@ class QuickLogSheetState extends State<QuickLogSheet> {
         else
           Row(
             children: [
-              source(const Key('scan-camera'), Icons.photo_camera_outlined, '撮る', ImageSource.camera),
-              const SizedBox(width: 12),
+              source(const Key('scan-camera'), Icons.photo_camera_outlined, 'チケットを撮る', ImageSource.camera),
+              const SizedBox(width: 10),
               source(const Key('scan-library'), Icons.photo_library_outlined, '写真から選ぶ', ImageSource.gallery),
             ],
           ),
         if (_scanError != null) ...[
-          const SizedBox(height: 16),
-          Text(_scanError!, key: const Key('scan-error'), style: const TextStyle(fontSize: 14, height: 1.5, fontWeight: FontWeight.w600, color: Palette.ink)),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            children: [
-              OutlinedButton(key: const Key('scan-retry'), onPressed: () => _scanTicket(_lastSource ?? ImageSource.camera), child: const Text('もう一度撮る')),
-              TextButton(key: const Key('scan-without'), onPressed: _next, child: const Text('チケットなしで進む')),
-            ],
+          const SizedBox(height: 10),
+          Text(_scanError!, key: const Key('scan-error'), style: const TextStyle(fontSize: 13, height: 1.5, fontWeight: FontWeight.w600, color: Palette.ink)),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(key: const Key('scan-retry'), onPressed: () => _scanTicket(_lastSource ?? ImageSource.camera), style: TextButton.styleFrom(padding: EdgeInsets.zero), child: const Text('もう一度撮る')),
           ),
         ],
-        const SizedBox(height: 20),
+        const SizedBox(height: 8),
         const Text('写真はこの端末の中で読むだけです。保存も送信もしません。', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
       ],
     );
@@ -592,7 +578,6 @@ class QuickLogSheetState extends State<QuickLogSheet> {
         TextField(
           key: const Key('quick-title'),
           controller: _title,
-          autofocus: !_hasTitle,
           textInputAction: TextInputAction.next,
           onSubmitted: (_) {
             if (_hasTitle) _next();
@@ -621,6 +606,8 @@ class QuickLogSheetState extends State<QuickLogSheet> {
             ),
           ),
         if (production != null) _SelectedProduction(production: production, onClear: () => setState(() => _production = null)),
+        // 候補を探している間は候補を広く見せ、読み取りは畳む
+        if (q.isEmpty || selected) Expanded(child: SingleChildScrollView(child: _ticketPanel())),
         if (q.isNotEmpty && !selected)
           Expanded(
             child: ListView(
@@ -803,12 +790,11 @@ class QuickLogSheetState extends State<QuickLogSheet> {
     );
   }
 
-  Widget _ratingStep() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _ratingStep() => ListView(
     children: [
       _titleLine(),
       const Text('どうでしたか？', style: _heading),
-      const SizedBox(height: 28),
+      const SizedBox(height: 16),
       Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -816,13 +802,32 @@ class QuickLogSheetState extends State<QuickLogSheet> {
             IconButton(
               key: Key('quick-star-$i'),
               tooltip: '$i',
-              iconSize: 48,
+              iconSize: 44,
               padding: const EdgeInsets.symmetric(horizontal: 2),
               onPressed: () => _rate(i),
               icon: Icon((_rating ?? 0) >= i ? Icons.star : Icons.star_border, color: Palette.vermilion),
             ),
         ],
       ),
+      const SizedBox(height: 16),
+      TextField(
+        key: const Key('quick-note'),
+        controller: _note,
+        minLines: 3,
+        maxLines: 6,
+        maxLength: 2000,
+        textInputAction: TextInputAction.newline,
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          hintText: 'ひとこと感想（なくても大丈夫です）',
+          filled: true,
+          fillColor: Palette.card,
+          counterText: '',
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Palette.line)),
+        ),
+      ),
+      const SizedBox(height: 6),
+      const Text('感想は自分だけが見られます。公開したいときは、記録の編集から公開できます。', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
     ],
   );
 
@@ -876,7 +881,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
         alignment: Alignment.centerLeft,
         child: _photosHidden
             ? const Text('次回から写真の画面は出しません', style: TextStyle(fontSize: 13, color: Palette.inkSoft))
-            : TextButton(key: const Key('flow-hide-photos'), onPressed: () => _hide(_Step.photos), style: TextButton.styleFrom(foregroundColor: Palette.inkSoft, padding: EdgeInsets.zero), child: const Text('次回から出さない', style: TextStyle(fontSize: 13))),
+            : TextButton(key: const Key('flow-hide-photos'), onPressed: _hidePhotos, style: TextButton.styleFrom(foregroundColor: Palette.inkSoft, padding: EdgeInsets.zero), child: const Text('次回から出さない', style: TextStyle(fontSize: 13))),
       ),
     ],
   );
