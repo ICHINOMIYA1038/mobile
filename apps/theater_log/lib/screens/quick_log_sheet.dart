@@ -220,9 +220,23 @@ class QuickLogSheetState extends State<QuickLogSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '何を観ましたか？',
-              style: TextStyle(fontFamily: titleFont, fontSize: 22, fontWeight: FontWeight.w700, color: Palette.navy),
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '何を観ましたか？',
+                    style: TextStyle(fontFamily: titleFont, fontSize: 22, fontWeight: FontWeight.w700, color: Palette.navy),
+                  ),
+                ),
+                // 任意。撮ると公演名・日付・劇場・座席を読み取る
+                TextButton.icon(
+                  key: const Key('quick-scan'),
+                  onPressed: _scanning ? null : _chooseScanSource,
+                  style: TextButton.styleFrom(foregroundColor: Palette.ink, padding: const EdgeInsets.symmetric(horizontal: 8)),
+                  icon: const Icon(Icons.photo_camera_outlined, size: 20),
+                  label: const Text('チケットを撮る', style: TextStyle(fontSize: 13)),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             TextField(
@@ -235,9 +249,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
               }),
               decoration: InputDecoration(
                 hintText: '公演名、劇団、劇場で探す',
-                suffixIcon: _scanning
-                    ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
-                    : IconButton(key: const Key('quick-scan'), tooltip: 'チケットから読み取る', icon: const Icon(Icons.document_scanner_outlined, color: Palette.ink), onPressed: _chooseScanSource),
+                suffixIcon: _scanning ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))) : null,
                 filled: true,
                 fillColor: Palette.card,
                 border: OutlineInputBorder(
