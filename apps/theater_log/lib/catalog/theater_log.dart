@@ -172,7 +172,8 @@ class TheaterLog extends ChangeNotifier {
 
   List<TheaterLogEntry> get dirtyEntries => _entries.where((e) => e.dirty).toList();
 
-  Future<void> markPushed(TheaterLogEntry sent, Map<String, dynamic>? server) async {
+  /// [persist] が false のときは端末に書かない。まとめて送ったあとで [flush] を呼ぶ
+  Future<void> markPushed(TheaterLogEntry sent, Map<String, dynamic>? server, {bool persist = true}) async {
     final i = _entries.indexWhere((e) => e.id == sent.id);
     if (i < 0) return;
     // 送っている間にまた変わっていたら、次の同期に任せる
@@ -183,8 +184,10 @@ class TheaterLog extends ChangeNotifier {
       _entries[i] = server == null ? sent.copyWith(dirty: false, onServer: true) : TheaterLogEntry.fromServer(server, sent);
     }
     notifyListeners();
-    await _save();
+    if (persist) await _save();
   }
+
+  Future<void> flush() => _save();
 
   Future<void> applyRemote(List<Map<String, dynamic>> rows) async {
     if (rows.isEmpty) return;
@@ -246,7 +249,17 @@ class TheaterLog extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _sort() => _entries.sort((a, b) => b.watchedOn.compareTo(a.watchedOn));
+  // 同じ日は、夜の回を上（あとで観た方）に、さらに後から記録した方を上にする。
+  // 並びが保存のたびに入れ替わらないよう、最後は id で決める
+  void _sort() => _entries.sort((a, b) {
+    final d = b.watchedOn.compareTo(a.watchedOn);
+    if (d != 0) return d;
+    final t = _timeRank(b.showTime) - _timeRank(a.showTime);
+    if (t != 0) return t;
+    return b.id.compareTo(a.id);
+  });
+
+  static int _timeRank(String? t) => switch (t) { 'matinee' => 0, 'soiree' => 2, _ => 1 };
 
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();

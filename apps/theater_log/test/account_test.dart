@@ -130,6 +130,50 @@ void main() {
       'clientId': id, 'title': '舞台$id', 'watchedOn': '2026-11-03', 'postId': null, 'productionId': null, 'groupName': null, 'venueName': null, 'showTime': null, 'seat': 'C-1', 'price': 3000, 'rating': null, 'note': note, 'visibility': 'private', 'hidden': hidden, 'updatedAt': updatedAt, 'deleted': deleted,
     };
 
+    test('記録が 1000 件を超える人は、続きを取りに行って全部受け取る', () async {
+      final sinces = <String?>[];
+      final client = MockClient((req) async {
+        if (req.url.path.endsWith('/logs')) {
+          final since = req.url.queryParameters['since'];
+          sinces.add(since);
+          final start = since == null ? 0 : 1000;
+          final n = since == null ? 1000 : 5;
+          return _json({'logs': [for (var i = start; i < start + n; i++) row('r$i', updatedAt: DateTime.utc(2026, 11, 1).add(Duration(seconds: i)).toIso8601String())]});
+        }
+        return _authRoutes(req);
+      });
+      final auth = await signedIn(client);
+      final log = TheaterLog();
+      expect(await LogSync(auth: auth, log: log, client: client).run(), isTrue);
+      expect(log.entries.length, 1005);
+      expect(sinces.length, 2);
+      expect(sinces.first, isNull);
+    });
+
+    test('たくさん送っても、端末に書くのは最後の 1 回だけで、全部送れる', () async {
+      var puts = 0;
+      final client = MockClient((req) async {
+        if (req.method == 'PUT') {
+          puts++;
+          return _json(row(req.url.pathSegments.last));
+        }
+        if (req.url.path.endsWith('/logs')) return _json({'logs': []});
+        return _authRoutes(req);
+      });
+      final auth = await signedIn(client);
+      final log = TheaterLog();
+      for (var i = 0; i < 300; i++) {
+        await log.upsert(entry('m$i'));
+      }
+      expect(await LogSync(auth: auth, log: log, client: client).run(), isTrue);
+      expect(puts, 300);
+      expect(log.dirtyEntries, isEmpty);
+      final reloaded = TheaterLog();
+      await reloaded.load();
+      expect(reloaded.dirtyEntries, isEmpty);
+      expect(reloaded.entries.length, 300);
+    });
+
     test('端末の記録を送り、写真は送らず、日付は端末の日付のまま送る', () async {
       Map<String, dynamic>? sent;
       final client = MockClient((req) async {

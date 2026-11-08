@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 
 /// 観劇の写真。端末の中だけに保存し、サーバーには送らない
 class LogPhotos {
-  static const maxPerEntry = 4;
+  static const maxPerEntry = 10;
 
   static Future<Directory> _dir() async {
     final dir = Directory('${(await getApplicationSupportDirectory()).path}/log_photos');
@@ -40,7 +40,8 @@ class LogPhotoImage extends StatelessWidget {
   Widget build(BuildContext context) => FutureBuilder<File>(
     future: LogPhotos.file(name),
     builder: (context, snap) => snap.hasData
-        ? Image.file(snap.data!, width: size, height: size, fit: BoxFit.cover, errorBuilder: (_, _, _) => SizedBox(width: size, height: size))
+        // 小さく出すときは小さく読み込む。元の大きさのまま並べると、写真が多い人で端末のメモリが足りなくなる
+        ? Image.file(snap.data!, width: size, height: size, fit: BoxFit.cover, cacheWidth: (size * MediaQuery.devicePixelRatioOf(context) * 2).round(), gaplessPlayback: true, errorBuilder: (_, _, _) => SizedBox(width: size, height: size))
         : SizedBox(width: size, height: size),
   );
 }

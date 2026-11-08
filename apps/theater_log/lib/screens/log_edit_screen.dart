@@ -38,9 +38,9 @@ class _LogEditScreenState extends State<LogEditScreen> {
   late DateTime _date = _seed?.watchedOn ?? DateUtils.dateOnly(DateTime.now());
   late int? _rating = _seed?.rating;
   late Play? _play = widget.play;
-  late final _seat = TextEditingController(text: widget.entry?.seat);
-  late final _price = TextEditingController(text: widget.entry?.price?.toString());
-  late String? _showTime = widget.entry?.showTime;
+  late final _seat = TextEditingController(text: _seed?.seat);
+  late final _price = TextEditingController(text: _seed?.price?.toString());
+  late String? _showTime = _seed?.showTime;
   late bool _public = widget.entry?.visibility == 'public';
   late int? _productionId = _seed?.productionId;
   late String? _productionLabel = widget.productionLabel;
@@ -112,16 +112,57 @@ class _LogEditScreenState extends State<LogEditScreen> {
 
   final List<String> _removed = [];
 
-  Future<void> _addPhoto() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 2000, imageQuality: 85);
-    if (picked == null) return;
-    final name = await LogPhotos.save(File(picked.path));
-    if (!mounted) return;
-    setState(() {
-      _photos.add(name);
-      _added.add(name);
-    });
+  bool _adding = false;
+
+  /// 残りの枚数まで、まとめて選べる
+  Future<void> _addPhotos() async {
+    final room = LogPhotos.maxPerEntry - _photos.length;
+    if (room <= 0 || _adding) return;
+    setState(() => _adding = true);
+    try {
+      final picked = room == 1
+          ? [?await ImagePicker().pickImage(source: ImageSource.gallery, maxWidth: 2000, imageQuality: 85)]
+          : await ImagePicker().pickMultiImage(maxWidth: 2000, imageQuality: 85, limit: room);
+      final names = <String>[];
+      for (final x in picked.take(room)) {
+        names.add(await LogPhotos.save(File(x.path)));
+      }
+      if (!mounted) {
+        for (final n in names) {
+          LogPhotos.delete(n);
+        }
+        return;
+      }
+      setState(() {
+        _photos.addAll(names);
+        _added.addAll(names);
+      });
+      if (picked.length > room && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('写真は 1 つの記録に ${LogPhotos.maxPerEntry} 枚までです。先の $room 枚を入れました')));
+      }
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('写真を読み込めませんでした。写真へのアクセスを許可しているか確かめてください')));
+    } finally {
+      if (mounted) setState(() => _adding = false);
+    }
   }
+
+  void _removePhoto(String name) => setState(() {
+    _photos.remove(name);
+    // 今回足した写真はすぐ消す。保存済みの写真は、保存を押すまで残す
+    if (_added.remove(name)) {
+      LogPhotos.delete(name);
+    } else {
+      _removed.add(name);
+    }
+  });
+
+  /// 押した写真を 1 枚目（半券帳の表紙）にする
+  void _makeCover(String name) => setState(() {
+    _photos
+      ..remove(name)
+      ..insert(0, name);
+  });
 
   Future<void> _togglePublic(bool on) async {
     if (!on) return setState(() => _public = false);
@@ -172,6 +213,7 @@ class _LogEditScreenState extends State<LogEditScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('この記録を削除しますか'),
+        content: Text(widget.entry!.photos.isEmpty ? '元に戻せません。' : '写真 ${widget.entry!.photos.length} 枚も一緒に消え、元に戻せません。'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('やめる')),
           TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('削除')),
@@ -341,37 +383,65 @@ class _LogEditScreenState extends State<LogEditScreen> {
               const SizedBox(height: 12),
               TextField(key: const Key('log-price'), controller: _price, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'チケット代（円）', border: border)),
               const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  _photos.length < 2 ? '写真（${LogPhotos.maxPerEntry} 枚まで）' : '写真 ${_photos.length} / ${LogPhotos.maxPerEntry} 枚　押すと表紙にできます',
+                  style: const TextStyle(fontSize: 12, color: Palette.inkSoft),
+                ),
+              ),
+              const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: [
-                  for (final name in _photos)
-                    Stack(
-                      children: [
-                        ClipRRect(borderRadius: BorderRadius.circular(6), child: LogPhotoImage(name: name, size: 84)),
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: GestureDetector(
-                            onTap: () => setState(() {
-                              _photos.remove(name);
-                              // 今回足した写真はすぐ消す。保存済みの写真は、保存を押すまで残す
-                              if (_added.remove(name)) {
-                                LogPhotos.delete(name);
-                              } else {
-                                _removed.add(name);
-                              }
-                            }),
-                            child: const CircleAvatar(radius: 11, backgroundColor: Colors.black54, child: Icon(Icons.close, size: 14, color: Colors.white)),
+                  for (final (i, name) in _photos.indexed)
+                    SizedBox(
+                      key: Key('edit-photo-$i'),
+                      width: 84,
+                      height: 84,
+                      child: Stack(
+                        children: [
+                          // 写真が読めなくても（消えていても）押せるようにする
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: i == 0 ? null : () => _makeCover(name),
+                            child: ClipRRect(borderRadius: BorderRadius.circular(6), child: LogPhotoImage(name: name, size: 84)),
                           ),
-                        ),
-                      ],
+                          if (i == 0 && _photos.length > 1)
+                            Positioned(
+                              left: 4,
+                              bottom: 4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(3)),
+                                child: const Text('表紙', style: TextStyle(fontSize: 10, color: Colors.white)),
+                              ),
+                            ),
+                          // 指で押しやすいよう、見た目より広く取る
+                          Positioned(
+                            right: -6,
+                            top: -6,
+                            child: IconButton(
+                              key: Key('edit-photo-remove-$i'),
+                              tooltip: '写真を外す',
+                              onPressed: () => _removePhoto(name),
+                              icon: const CircleAvatar(radius: 11, backgroundColor: Colors.black54, child: Icon(Icons.close, size: 14, color: Colors.white)),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   if (_photos.length < LogPhotos.maxPerEntry)
                     SizedBox(
                       width: 84,
                       height: 84,
-                      child: OutlinedButton(onPressed: _addPhoto, style: OutlinedButton.styleFrom(padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))), child: const Icon(Icons.add_a_photo_outlined)),
+                      child: OutlinedButton(
+                        key: const Key('edit-photo-add'),
+                        onPressed: _adding ? null : _addPhotos,
+                        style: OutlinedButton.styleFrom(padding: EdgeInsets.zero, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                        child: _adding ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.add_a_photo_outlined),
+                      ),
                     ),
                 ],
               ),

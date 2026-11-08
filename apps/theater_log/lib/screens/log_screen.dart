@@ -34,6 +34,9 @@ class _LogScreenState extends State<LogScreen> {
   String _query = '';
   final _pages = PageController();
   int _index = 0;
+  // 見ている 1 本。記録が増えたり消えたり、日付が変わって並びが動いても、同じ記録を出し続ける
+  String? _currentId;
+  Set<String>? _known;
 
   @override
   void dispose() {
@@ -51,10 +54,11 @@ class _LogScreenState extends State<LogScreen> {
     _pages.animateToPage(i, duration: const Duration(milliseconds: 260), curve: Curves.easeOutCubic);
   }
 
-  void _openStory(int i) {
+  void _openStory(int i, List<TheaterLogEntry> entries) {
     setState(() {
       _list = false;
       _index = i;
+      _currentId = entries[i].id;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_pages.hasClients) _pages.jumpToPage(i);
@@ -84,14 +88,17 @@ class _LogScreenState extends State<LogScreen> {
         final entries = scope.log.entries;
         final story = entries.isNotEmpty && !_list;
         _setImmersive(story);
+        _follow(entries);
         if (story) {
-          if (_index >= entries.length) _index = entries.length - 1;
           return _Story(
             entries: entries,
             byId: byId,
             controller: _pages,
             index: _index,
-            onPage: (i) => setState(() => _index = i),
+            onPage: (i) => setState(() {
+              _index = i;
+              _currentId = entries[i].id;
+            }),
             onStep: (d) => _go(_index + d, entries.length),
             onList: () => setState(() => _list = true),
           );
@@ -99,6 +106,31 @@ class _LogScreenState extends State<LogScreen> {
         return _listView(scope, byId);
       },
     );
+  }
+
+  /// 並びが変わったあとも、見ていた記録（自分で今足した記録があればそれ）を出す
+  void _follow(List<TheaterLogEntry> entries) {
+    if (entries.isEmpty) {
+      _known = {};
+      _currentId = null;
+      _index = 0;
+      return;
+    }
+    final known = _known;
+    if (known != null) {
+      // 同期で届いた記録では動かさない。この端末で足した記録だけ
+      final added = entries.where((e) => e.dirty && !known.contains(e.id));
+      if (added.isNotEmpty) _currentId = added.first.id;
+    }
+    _known = {for (final e in entries) e.id};
+    var i = _currentId == null ? -1 : entries.indexWhere((e) => e.id == _currentId);
+    if (i < 0) i = _index.clamp(0, entries.length - 1);
+    _index = i;
+    _currentId = entries[i].id;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_pages.hasClients) return;
+      if ((_pages.page ?? 0).round() != _index) _pages.jumpToPage(_index);
+    });
   }
 
   Widget _listView(AppScope scope, Map<int, Play> byId) {
@@ -123,78 +155,101 @@ class _LogScreenState extends State<LogScreen> {
             final entries = scope.log.entries;
             final shown = entries.where((e) => logMatches(e, _query)).toList();
             final year = DateTime.now().year;
-            return ListView(
-              padding: const EdgeInsets.only(bottom: 96),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 4, 4),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          '半券帳',
-                          style: TextStyle(fontFamily: sealFont, fontSize: 28, fontWeight: FontWeight.w800, height: 1.1, color: Palette.sumi),
-                        ),
+            final head = <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 4, 4),
+                child: Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        '半券帳',
+                        style: TextStyle(fontFamily: sealFont, fontSize: 28, fontWeight: FontWeight.w800, height: 1.1, color: Palette.sumi),
                       ),
-                      if (entries.isNotEmpty) IconButton(key: const Key('log-view-toggle'), tooltip: '写真で見る', onPressed: () => _openStory(0), icon: const Icon(Icons.photo_outlined)),
+                    ),
+                    if (entries.isNotEmpty)
                       IconButton(
-                        key: const Key('log-calendar-toggle'),
-                        tooltip: _calendar ? '一覧で見る' : 'カレンダーで見る',
-                        onPressed: () => setState(() => _calendar = !_calendar),
-                        icon: Icon(_calendar ? Icons.view_agenda_outlined : Icons.calendar_month_outlined),
+                        key: const Key('log-view-toggle'),
+                        tooltip: '写真で見る',
+                        onPressed: () => _openStory(entries.isEmpty ? 0 : _index.clamp(0, entries.length - 1), entries),
+                        icon: const Icon(Icons.photo_outlined),
                       ),
-                      IconButton(key: const Key('open-account'), tooltip: 'アカウント', onPressed: () => AccountScreen.open(context), icon: const Icon(Icons.person_outline)),
-                    ],
+                    IconButton(
+                      key: const Key('log-calendar-toggle'),
+                      tooltip: _calendar ? '一覧で見る' : 'カレンダーで見る',
+                      onPressed: () => setState(() => _calendar = !_calendar),
+                      icon: Icon(_calendar ? Icons.view_agenda_outlined : Icons.calendar_month_outlined),
+                    ),
+                    IconButton(key: const Key('open-account'), tooltip: 'アカウント', onPressed: () => AccountScreen.open(context), icon: const Icon(Icons.person_outline)),
+                  ],
+                ),
+              ),
+              if (entries.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                  child: Text.rich(
+                    key: const Key('log-count'),
+                    TextSpan(
+                      style: const TextStyle(fontSize: 13, color: Palette.inkSoft),
+                      children: [
+                        TextSpan(text: '$year年 '),
+                        TextSpan(
+                          text: '${scope.log.countInYear(year)}',
+                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Palette.sumi),
+                        ),
+                        const TextSpan(text: ' 本　これまで '),
+                        TextSpan(
+                          text: '${entries.length}',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink),
+                        ),
+                        const TextSpan(text: ' 本'),
+                      ],
+                    ),
                   ),
                 ),
-                if (entries.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-                    child: Text.rich(
-                      key: const Key('log-count'),
-                      TextSpan(
-                        style: const TextStyle(fontSize: 13, color: Palette.inkSoft),
-                        children: [
-                          TextSpan(text: '$year年 '),
-                          TextSpan(
-                            text: '${scope.log.countInYear(year)}',
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Palette.sumi),
-                          ),
-                          const TextSpan(text: ' 本　これまで '),
-                          TextSpan(
-                            text: '${entries.length}',
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink),
-                          ),
-                          const TextSpan(text: ' 本'),
-                        ],
+              if (_calendar) LogCalendar(entries: entries, onDay: (day) => _showDay(day, byId)),
+              if (!_calendar && entries.length >= 5)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: TextField(
+                    key: const Key('log-search'),
+                    onChanged: (v) => setState(() => _query = v),
+                    decoration: InputDecoration(
+                      hintText: '作品・劇団・劇場・感想から探す',
+                      prefixIcon: const Icon(Icons.search),
+                      isDense: true,
+                      filled: true,
+                      fillColor: Palette.card,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: Palette.line),
                       ),
                     ),
                   ),
-                if (_calendar) LogCalendar(entries: entries, onDay: (day) => _showDay(day, byId)),
-                if (!_calendar && entries.length >= 5)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: TextField(
-                      key: const Key('log-search'),
-                      onChanged: (v) => setState(() => _query = v),
-                      decoration: InputDecoration(
-                        hintText: '作品・劇団・劇場・感想から探す',
-                        prefixIcon: const Icon(Icons.search),
-                        isDense: true,
-                        filled: true,
-                        fillColor: Palette.card,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Palette.line),
-                        ),
-                      ),
-                    ),
+                ),
+              if (entries.isEmpty) const _FirstStub(),
+              if (entries.isNotEmpty && !_calendar && shown.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                  child: Text(
+                    '「${_query.trim()}」に当たる記録はありません',
+                    key: const Key('log-search-empty'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Palette.inkSoft),
                   ),
-                if (entries.isEmpty)
-                  const _FirstStub()
-                else if (!_calendar)
-                  for (final e in shown) _EntryCard(entry: e, play: byId[e.playId], onTap: () => _openStory(entries.indexOf(e))),
-              ],
+                ),
+            ];
+            final cards = entries.isEmpty || _calendar ? const <TheaterLogEntry>[] : shown;
+            // 記録が多い人でも、画面に入る分だけ作る
+            return ListView.builder(
+              key: const Key('log-list'),
+              padding: const EdgeInsets.only(bottom: 96),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              itemCount: head.length + cards.length,
+              itemBuilder: (context, i) {
+                if (i < head.length) return head[i];
+                final e = cards[i - head.length];
+                return _EntryCard(key: ValueKey(e.id), entry: e, play: byId[e.playId], onTap: () => _openStory(entries.indexOf(e), entries));
+              },
             );
           },
         ),
@@ -204,7 +259,7 @@ class _LogScreenState extends State<LogScreen> {
 }
 
 class _EntryCard extends StatelessWidget {
-  const _EntryCard({required this.entry, this.play, this.onTap});
+  const _EntryCard({super.key, required this.entry, this.play, this.onTap});
   final TheaterLogEntry entry;
   final Play? play;
   final VoidCallback? onTap;
@@ -304,7 +359,7 @@ class _Story extends StatelessWidget {
               controller: controller,
               itemCount: entries.length,
               onPageChanged: onPage,
-              itemBuilder: (context, i) => _StoryPage(entry: entries[i], play: byId[entries[i].playId], onStep: onStep),
+              itemBuilder: (context, i) => _StoryPage(key: ValueKey(entries[i].id), entry: entries[i], play: byId[entries[i].playId], onStep: onStep),
             ),
             SafeArea(
               bottom: false,
@@ -403,25 +458,52 @@ class _Progress extends StatelessWidget {
   }
 }
 
-class _StoryPage extends StatelessWidget {
-  const _StoryPage({required this.entry, this.play, required this.onStep});
+class _StoryPage extends StatefulWidget {
+  const _StoryPage({super.key, required this.entry, this.play, required this.onStep});
   final TheaterLogEntry entry;
   final Play? play;
   final ValueChanged<int> onStep;
 
   @override
+  State<_StoryPage> createState() => _StoryPageState();
+}
+
+class _StoryPageState extends State<_StoryPage> {
+  int _photo = 0;
+  bool _expanded = false;
+
+  /// 写真が何枚かあれば、まずその記録の写真を送り、端の 1 枚から隣の記録へ
+  void _step(int d) {
+    final n = widget.entry.photos.length;
+    final next = _photo + d;
+    if (n > 1 && next >= 0 && next < n) {
+      setState(() => _photo = next);
+    } else {
+      widget.onStep(d);
+    }
+  }
+
+  @override
+  void didUpdateWidget(_StoryPage old) {
+    super.didUpdateWidget(old);
+    if (_photo >= widget.entry.photos.length) _photo = 0;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final e = entry;
+    final e = widget.entry;
+    final play = widget.play;
     final place = [?e.venue, ?e.seat].join('　');
+    final note = e.note.trim();
     return LayoutBuilder(
       builder: (context, c) => GestureDetector(
         behavior: HitTestBehavior.opaque,
         // 左の 3 分の 1 を押すと前へ、それ以外は次へ
-        onTapUp: (d) => onStep(d.localPosition.dx < c.maxWidth / 3 ? -1 : 1),
+        onTapUp: (d) => _step(d.localPosition.dx < c.maxWidth / 3 ? -1 : 1),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            e.photos.isNotEmpty ? _Photo(name: e.photos.first) : _TitleCover(entry: e, height: c.maxHeight),
+            e.photos.isNotEmpty ? _Photo(key: ValueKey(e.photos[_photo]), name: e.photos[_photo]) : _TitleCover(entry: e, height: c.maxHeight),
             const DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -440,6 +522,21 @@ class _StoryPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (e.photos.length > 1) ...[
+                    Row(
+                      key: const Key('story-photo-dots'),
+                      children: [
+                        for (var i = 0; i < e.photos.length; i++)
+                          Container(
+                            width: i == _photo ? 14 : 6,
+                            height: 6,
+                            margin: const EdgeInsets.only(right: 4),
+                            decoration: BoxDecoration(color: i == _photo ? Colors.white : Colors.white38, borderRadius: BorderRadius.circular(3)),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   Text(storyDate(e), style: const TextStyle(fontSize: 12, color: Colors.white70, letterSpacing: 0.4)),
                   const SizedBox(height: 4),
                   Text(
@@ -469,22 +566,28 @@ class _StoryPage extends StatelessWidget {
                     const SizedBox(height: 10),
                     Text('★' * e.rating! + '☆' * (5 - e.rating!), style: const TextStyle(fontSize: 14, letterSpacing: 2, color: Color(0xFFF1C24B))),
                   ],
-                  if (e.note.trim().isNotEmpty) ...[
+                  if (note.isNotEmpty) ...[
                     const SizedBox(height: 6),
-                    Text(
-                      e.note.trim(),
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 14, height: 1.7, color: Color(0xE6FFFFFF)),
+                    // 長い感想は押すと全部読める。開いている間は、感想の中だけがスクロールする
+                    GestureDetector(
+                      key: const Key('story-note'),
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => setState(() => _expanded = !_expanded),
+                      child: _expanded
+                          ? ConstrainedBox(
+                              constraints: BoxConstraints(maxHeight: c.maxHeight * 0.3),
+                              child: SingleChildScrollView(child: Text(note, style: _noteStyle)),
+                            )
+                          : _ClampedNote(text: note),
                     ),
                   ],
                   if (play != null)
                     TextButton.icon(
                       key: const Key('log-to-play'),
                       style: TextButton.styleFrom(foregroundColor: Colors.white70, padding: EdgeInsets.zero, minimumSize: const Size(0, 36)),
-                      onPressed: () => launchUrl(play!.siteUrl, mode: LaunchMode.externalApplication),
+                      onPressed: () => launchUrl(play.siteUrl, mode: LaunchMode.externalApplication),
                       icon: const Icon(Icons.menu_book_outlined, size: 16),
-                      label: Text('この作品の台本（${play!.author}）', style: const TextStyle(fontSize: 13)),
+                      label: Text('この作品の台本（${play.author}）', style: const TextStyle(fontSize: 13)),
                     ),
                 ],
               ),
@@ -494,6 +597,43 @@ class _StoryPage extends StatelessWidget {
       ),
     );
   }
+}
+
+const _noteStyle = TextStyle(fontSize: 14, height: 1.7, color: Color(0xE6FFFFFF));
+
+/// 4 行で切り、続きがあるときだけ「続きを読む」を出す
+class _ClampedNote extends StatelessWidget {
+  const _ClampedNote({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, c) {
+      final tp = TextPainter(
+        text: TextSpan(text: text, style: _noteStyle),
+        maxLines: 4,
+        textDirection: TextDirection.ltr,
+        textScaler: MediaQuery.textScalerOf(context),
+      )..layout(maxWidth: c.maxWidth);
+      final more = tp.didExceedMaxLines;
+      tp.dispose();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(text, maxLines: 4, overflow: TextOverflow.ellipsis, style: _noteStyle),
+          if (more)
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
+              child: Text(
+                '続きを読む',
+                key: Key('story-note-more'),
+                style: TextStyle(fontSize: 12, color: Colors.white70, decoration: TextDecoration.underline, decorationColor: Colors.white70),
+              ),
+            ),
+        ],
+      );
+    },
+  );
 }
 
 /// 2026年11月3日（火）マチネ
@@ -509,7 +649,7 @@ String storyDate(TheaterLogEntry e) {
 }
 
 class _Photo extends StatelessWidget {
-  const _Photo({required this.name});
+  const _Photo({super.key, required this.name});
   final String name;
 
   @override
