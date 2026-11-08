@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../account/community_api.dart';
 import '../app_scope.dart';
 import '../theme.dart';
+import '../widgets/illustrations.dart';
 import '../widgets/community_widgets.dart';
 import 'quick_log_sheet.dart';
 
@@ -92,6 +93,8 @@ class _FeedScreenState extends State<FeedScreen> {
                 padding: const EdgeInsets.fromLTRB(8, 40, 8, 8),
                 child: Column(
                   children: [
+                    const LineArt.seats(key: Key('art-seats'), width: 200),
+                    const SizedBox(height: 18),
                     const Text('まだ、ひとことがありません', key: Key('feed-empty'), style: TextStyle(fontFamily: titleFont, fontSize: 20, fontWeight: FontWeight.w700, color: Palette.navy)),
                     const SizedBox(height: 10),
                     const Text('観た舞台の感想を公開すると、ここに並びます。最初の一人になりませんか。', textAlign: TextAlign.center, style: TextStyle(height: 1.7, color: Palette.inkSoft)),
