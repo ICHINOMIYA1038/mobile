@@ -10,26 +10,48 @@ import '../theme.dart';
 
 /// 公開する前に一度だけ、投稿のルールに同意してもらう（App Store の要件）
 class CommunityRules {
-  static const _key = 'community_rules_v1';
+  // 文面を変えたら版を上げ、もう一度同意してもらう（v2: 出る場所・出るもの・プライバシーポリシーを足した）
+  static const _key = 'community_rules_v2';
 
   static Future<bool> confirm(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool(_key) == true) return true;
     if (!context.mounted) return false;
+    Widget link(String label, String url) => TextButton(
+      onPressed: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4), minimumSize: const Size(0, 36)),
+      child: Text(label),
+    );
+    const body = TextStyle(fontSize: 14, height: 1.6);
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('公開の前に'),
-        content: const Text(
-          '他の人や団体への中傷、差別、個人情報、ネタバレを隠さない重大な内容の書き込みは禁止です。'
-          '不適切な投稿は削除し、繰り返す場合は利用をお断りします。通報には運営が確認して対応します。',
-          style: TextStyle(height: 1.6),
+        title: const Text('感想を公開する前に'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('公開した感想は、このアプリの「みんな」と作品のページに、公開の名前・評価・劇団・劇場・観た月と一緒に出ます。', style: body),
+              const SizedBox(height: 6),
+              const Text('写真、座席、チケット代、観た日は出ません。いつでも非公開に戻せ、戻すとすぐに見えなくなります。', style: body),
+              const SizedBox(height: 10),
+              const Text(
+                '他の人や団体への中傷、差別、個人情報、ネタバレを隠さない重大な内容の書き込みは禁止です。不適切な投稿は削除し、繰り返す場合は利用をお断りします。通報は運営が確かめて対応します。',
+                style: TextStyle(fontSize: 13, height: 1.6, color: Palette.inkSoft),
+              ),
+              const SizedBox(height: 10),
+              const Text('「同意する」を押すと、利用規約とプライバシーポリシーに同意したことになります。', style: TextStyle(fontSize: 13, height: 1.6, fontWeight: FontWeight.w600)),
+              Wrap(
+                children: [
+                  link('利用規約', 'https://gikyokutosyokan.com/support/tos'),
+                  link('プライバシーポリシー', 'https://gikyokutosyokan.com/support/privacy-policy'),
+                ],
+              ),
+            ],
+          ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => launchUrl(Uri.parse('https://gikyokutosyokan.com/support/tos'), mode: LaunchMode.externalApplication),
-            child: const Text('利用規約'),
-          ),
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('やめる')),
           TextButton(key: const Key('rules-agree'), onPressed: () => Navigator.pop(ctx, true), child: const Text('同意する')),
         ],
