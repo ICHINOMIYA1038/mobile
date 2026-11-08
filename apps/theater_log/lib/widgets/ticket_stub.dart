@@ -124,18 +124,14 @@ class TicketStub extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         stub,
-        // もぎりのハンコのように、日付の欄と切り取り線にまたがって押す
+        // もぎりの印。切り取り線のすぐ右、白い紙の上に押す
         Positioned(
-          left: 54,
-          bottom: -7,
+          left: 82,
+          bottom: -10,
           child: IgnorePointer(
             child: Transform.rotate(
               angle: -0.22,
-              child: Container(
-                padding: const EdgeInsets.all(1.5),
-                decoration: const BoxDecoration(shape: BoxShape.circle, color: Palette.card),
-                child: PonSeal(key: Key('stub-seal-${entry.id}'), size: 36, label: '観劇済', fontSize: 9.5),
-              ),
+              child: PonSeal(key: Key('stub-seal-${entry.id}'), size: 40, label: '観劇'),
             ),
           ),
         ),

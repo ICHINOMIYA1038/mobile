@@ -80,12 +80,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
   String? _scanError;
   ImageSource? _lastSource;
 
-  late final List<_Step> _steps = [
-    if (widget.play == null) _Step.title,
-    _Step.place,
-    _Step.rating,
-    if (widget.showPhotos) _Step.photos,
-  ];
+  late final List<_Step> _steps = [if (widget.play == null) _Step.title, _Step.place, _Step.rating, if (widget.showPhotos) _Step.photos];
   int _index = 0;
   bool _forward = true;
   _Step get _step => _steps[_index];
@@ -347,11 +342,10 @@ class QuickLogSheetState extends State<QuickLogSheet> {
     navigator.pop();
     navigator.push(
       PageRouteBuilder<void>(
-        opaque: false,
-        barrierColor: Colors.black87,
         settings: const RouteSettings(name: 'stub_stamped'),
-        transitionDuration: const Duration(milliseconds: 150),
+        transitionDuration: const Duration(milliseconds: 180),
         pageBuilder: (_, _, _) => StubStampedScreen(entry: entry, earned: earned, venue: venue, isNewVenue: isNewVenue),
+        transitionsBuilder: (_, a, _, child) => FadeTransition(opacity: a, child: child),
       ),
     );
   }
@@ -434,18 +428,18 @@ class QuickLogSheetState extends State<QuickLogSheet> {
           icon: Icon(_index == 0 ? Icons.close : Icons.chevron_left),
           onPressed: () => _index == 0 ? Navigator.of(context).maybePop() : _go(_index - 1),
         ),
-        Text('${_index + 1} / ${_steps.length}', key: const Key('flow-progress'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Palette.inkSoft)),
+        Text(
+          '${_index + 1} / ${_steps.length}',
+          key: const Key('flow-progress'),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Palette.inkSoft),
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Row(
             children: [
               for (var i = 0; i < _steps.length; i++)
                 Expanded(
-                  child: Container(
-                    height: 3,
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    color: i <= _index ? Palette.sumi : Palette.line,
-                  ),
+                  child: Container(height: 3, margin: const EdgeInsets.symmetric(horizontal: 2), color: i <= _index ? Palette.sumi : Palette.line),
                 ),
             ],
           ),
@@ -467,7 +461,12 @@ class QuickLogSheetState extends State<QuickLogSheet> {
   Widget _bottomBar() {
     final Widget? left;
     final Widget right;
-    final skip = OutlinedButton(key: const Key('flow-skip'), onPressed: _scanning ? null : _skip, child: const Text('スキップ'));
+    final skip = TextButton(
+      key: const Key('flow-skip'),
+      onPressed: _scanning ? null : _skip,
+      style: TextButton.styleFrom(foregroundColor: Palette.ink, padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13)),
+      child: const Text('スキップ', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+    );
     final finish = FilledButton(
       key: const Key('quick-finish'),
       style: FilledButton.styleFrom(backgroundColor: Palette.sumi, padding: const EdgeInsets.symmetric(vertical: 15)),
@@ -511,8 +510,24 @@ class QuickLogSheetState extends State<QuickLogSheet> {
     _Step.photos => _photoStep(),
   };
 
-  static const _heading = TextStyle(fontFamily: titleFont, fontSize: 22, fontWeight: FontWeight.w700, color: Palette.navy);
+  // 問いは芝居のビラの太い書体で大きく。入力は罫線 1 本の上に書く（箱に入れない）
+  static const _heading = TextStyle(fontFamily: displayFont, fontSize: 25, height: 1.3, color: Palette.sumi);
   static const _sub = TextStyle(fontSize: 13, height: 1.5, color: Palette.inkSoft);
+
+  static InputDecoration _line(String hint, {Widget? prefix}) => InputDecoration(
+    hintText: hint,
+    hintStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500, color: Color(0xFFA3A39D)),
+    prefixIcon: prefix,
+    prefixIconConstraints: const BoxConstraints(minWidth: 30),
+    filled: false,
+    isDense: true,
+    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+    border: const UnderlineInputBorder(borderSide: BorderSide(color: Palette.ink, width: 1.5)),
+    enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Palette.ink, width: 1.5)),
+    focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Palette.sumi, width: 2.5)),
+  );
+
+  static const _field = TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: Palette.ink);
 
   /// 題名が決まったあとの画面の上に、何の記録かを 1 行出す。押すと題名に戻る
   Widget _titleLine() {
@@ -526,71 +541,90 @@ class QuickLogSheetState extends State<QuickLogSheet> {
           _hasTitle ? '『${_title.text.trim()}』' : '題名はまだです',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Palette.inkSoft, decoration: canEdit ? TextDecoration.underline : null, decorationColor: Palette.line),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Palette.inkSoft),
         ),
       ),
     );
   }
 
   /// 題名の画面の下に出す、チケットからの読み取り。任意
+  /// 題名の下に置く、チケットからの読み取り。半券の形の枠に、撮る（大）と写真から（小）を並べる
   Widget _ticketPanel() {
-    Widget source(Key key, IconData icon, String label, ImageSource src) => Expanded(
-      child: OutlinedButton.icon(
-        key: key,
-        onPressed: _scanning ? null : () => _scanTicket(src),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: Palette.ink,
-          backgroundColor: Palette.card,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          side: const BorderSide(color: Palette.line),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    Widget half(Key key, IconData icon, String label, ImageSource src, {bool big = false}) => InkWell(
+      key: key,
+      onTap: _scanning ? null : () => _scanTicket(src),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: big ? 30 : 22, color: Palette.ink),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: TextStyle(fontSize: big ? 15 : 12, fontWeight: FontWeight.w700, color: Palette.ink),
+            ),
+          ],
         ),
-        icon: Icon(icon, size: 22),
-        label: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
       ),
     );
     return Column(
       key: const Key('quick-scan'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 22),
-        const Text('チケットから読み取る', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.ink)),
-        const SizedBox(height: 2),
-        const Text('題名・日付・劇場・座席を入れておきます。撮らなくても記録できます。', style: _sub),
-        const SizedBox(height: 10),
-        if (_scanning)
-          Row(
-            key: const Key('scan-progress'),
-            children: [
-              if (_scanningPath != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Image.file(File(_scanningPath!), width: 48, height: 48, fit: BoxFit.cover, cacheWidth: 144, errorBuilder: (_, _, _) => const SizedBox(width: 48, height: 48)),
-                ),
-              const SizedBox(width: 12),
-              const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)),
-              const SizedBox(width: 10),
-              const Text('読み取っています', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-            ],
-          )
-        else
-          Row(
-            children: [
-              source(const Key('scan-camera'), Icons.photo_camera_outlined, 'チケットを撮る', ImageSource.camera),
-              const SizedBox(width: 10),
-              source(const Key('scan-library'), Icons.photo_library_outlined, '写真から選ぶ', ImageSource.gallery),
-            ],
+        const SizedBox(height: 26),
+        Text(
+          'チケットがあれば',
+          style: _sub.copyWith(fontWeight: FontWeight.w700, color: Palette.ink),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 104,
+          child: CustomPaint(
+            painter: const _TicketSlotPainter(split: 0.68),
+            child: _scanning
+                ? Row(
+                    key: const Key('scan-progress'),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (_scanningPath != null)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: Image.file(File(_scanningPath!), width: 44, height: 44, fit: BoxFit.cover, cacheWidth: 132, errorBuilder: (_, _, _) => const SizedBox(width: 44, height: 44)),
+                        ),
+                      const SizedBox(width: 12),
+                      const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Palette.ink)),
+                      const SizedBox(width: 10),
+                      const Text('読み取っています', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(flex: 68, child: half(const Key('scan-camera'), Icons.photo_camera_outlined, 'チケットを撮る', ImageSource.camera, big: true)),
+                      Expanded(flex: 32, child: half(const Key('scan-library'), Icons.photo_library_outlined, '写真から', ImageSource.gallery)),
+                    ],
+                  ),
           ),
+        ),
         if (_scanError != null) ...[
           const SizedBox(height: 10),
-          Text(_scanError!, key: const Key('scan-error'), style: const TextStyle(fontSize: 13, height: 1.5, fontWeight: FontWeight.w600, color: Palette.ink)),
+          Text(
+            _scanError!,
+            key: const Key('scan-error'),
+            style: const TextStyle(fontSize: 13, height: 1.5, fontWeight: FontWeight.w700, color: Palette.ink),
+          ),
           Align(
             alignment: Alignment.centerLeft,
-            child: TextButton(key: const Key('scan-retry'), onPressed: () => _scanTicket(_lastSource ?? ImageSource.camera), style: TextButton.styleFrom(padding: EdgeInsets.zero), child: const Text('もう一度撮る')),
+            child: TextButton(
+              key: const Key('scan-retry'),
+              onPressed: () => _scanTicket(_lastSource ?? ImageSource.camera),
+              style: TextButton.styleFrom(padding: EdgeInsets.zero),
+              child: const Text('もう一度撮る'),
+            ),
           ),
         ],
-        const SizedBox(height: 8),
-        const Text('撮ったチケットは記録の 1 枚目の写真になり、最後の写真の画面で外せます。写真はこの端末の中だけに保存し、送信しません。', style: TextStyle(fontSize: 12, height: 1.5, color: Palette.inkSoft)),
+        const SizedBox(height: 10),
+        const Text('題名・日付・劇場・座席を読み取って入れておきます。撮ったチケットは 1 枚目の写真になり、最後の画面で外せます。写真はこの端末の中だけに保存し、送信しません。', style: TextStyle(fontSize: 12, height: 1.6, color: Palette.inkSoft)),
       ],
     );
   }
@@ -606,7 +640,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('何を観ましたか？', style: _heading),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         TextField(
           key: const Key('quick-title'),
           controller: _title,
@@ -617,12 +651,8 @@ class QuickLogSheetState extends State<QuickLogSheet> {
           onChanged: (text) => setState(() {
             if (_production != null && _production!.title != text.trim()) _production = null;
           }),
-          decoration: InputDecoration(
-            hintText: '公演名、劇団、劇場で探す',
-            filled: true,
-            fillColor: Palette.card,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Palette.line)),
-          ),
+          style: _field,
+          decoration: _line('公演名、劇団、劇場で探す'),
         ),
         if (_scan != null) _ScanSummary(scan: _scan!, watchedOn: _watchedOn, onClear: () => setState(() => _scan = null)),
         if (_scan != null && production == null && !_hasTitle && _scan!.titleCandidates.isNotEmpty)
@@ -632,7 +662,13 @@ class QuickLogSheetState extends State<QuickLogSheet> {
               spacing: 6,
               runSpacing: 4,
               children: [
-                const Padding(padding: EdgeInsets.only(top: 8), child: Text('チケットから：', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.inkSoft))),
+                const Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text(
+                    'チケットから：',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.inkSoft),
+                  ),
+                ),
                 for (final (i, t) in _scan!.titleCandidates.indexed) ActionChip(key: Key('scan-title-$i'), label: Text(t), onPressed: () => setState(() => _title.text = t)),
               ],
             ),
@@ -649,13 +685,19 @@ class QuickLogSheetState extends State<QuickLogSheet> {
                   const Padding(
                     key: Key('production-shared-note'),
                     padding: EdgeInsets.symmetric(vertical: 4),
-                    child: Text('同じ題名の公演が複数あります。劇場を確かめて選んでください。', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.kaki)),
+                    child: Text(
+                      '同じ題名の公演が複数あります。劇場を確かめて選んでください。',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.kaki),
+                    ),
                   ),
                 for (final h in productionHits) _ProductionTile(hit: h, onTap: () => _select(h.production)),
                 if (hits.isNotEmpty)
                   const Padding(
                     padding: EdgeInsets.only(top: 8),
-                    child: Text('台本から', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.inkSoft)),
+                    child: Text(
+                      '台本から',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.inkSoft),
+                    ),
                   ),
                 for (final p in hits)
                   ListTile(
@@ -672,7 +714,9 @@ class QuickLogSheetState extends State<QuickLogSheet> {
                   padding: const EdgeInsets.only(top: 4),
                   child: Row(
                     children: [
-                      const Expanded(child: Text('候補になくても、そのまま記録できます。', style: TextStyle(fontSize: 12, color: Palette.inkSoft))),
+                      const Expanded(
+                        child: Text('候補になくても、そのまま記録できます。', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
+                      ),
                       TextButton(key: const Key('production-register'), onPressed: _register, child: const Text('公演を登録')),
                     ],
                   ),
@@ -684,78 +728,120 @@ class QuickLogSheetState extends State<QuickLogSheet> {
     );
   }
 
+  /// 「いつ」「どこで」の小見出し
+  Widget _label(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 2),
+    child: Text(
+      text,
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Palette.inkSoft),
+    ),
+  );
+
+  /// 罫線の上に並べた選択肢。選んだものは太字にし、下に墨の線を引く
+  Widget _tab(Key key, String text, bool selected, VoidCallback onTap) => InkWell(
+    key: key,
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.fromLTRB(2, 10, 2, 8),
+      margin: const EdgeInsets.only(right: 18),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: selected ? Palette.sumi : Colors.transparent, width: 3)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 16, fontWeight: selected ? FontWeight.w800 : FontWeight.w500, color: selected ? Palette.sumi : Palette.inkSoft),
+      ),
+    ),
+  );
+
   Widget _placeStep() {
     final production = _production;
     final outOfRun = production != null && production.includes(_watchedOn) == false;
     final venue = _venue;
-    final searching = venue == null || _changingVenue;
-    // 劇場を探してキーボードが開いている間は、日付を畳んで候補を広く見せる
+    final searching = _changingVenue;
+    // 劇場を探している間は、日付を畳んで候補を広く見せる
     final typing = searching && MediaQuery.viewInsetsOf(context).bottom > 0;
     const days = ['今日', '昨日', 'おととい'];
     final fixedDate = _pickedDate ?? _scan?.date;
+    const rule = Divider(height: 1, thickness: 1.5, color: Palette.ink);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _titleLine(),
         const Text('いつ、どこで観ましたか？', style: _heading),
         if (!typing) ...[
-          const SizedBox(height: 14),
+          const SizedBox(height: 22),
+          _label('いつ'),
           if (fixedDate != null)
             Row(
               key: const Key('flow-date-fixed'),
               children: [
-                Text(
-                  '${fixedDate.month}/${fixedDate.day}${_pickedDate == null && _scan?.showTime != null ? (_scan!.showTime == 'matinee' ? ' 昼' : ' 夜') : ''}${_pickedDate == null ? '（チケットから）' : ''}',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Palette.ink),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Text(
+                      '${fixedDate.year}年${fixedDate.month}月${fixedDate.day}日${_pickedDate == null && _scan?.showTime != null ? (_scan!.showTime == 'matinee' ? ' 昼の部' : ' 夜の部') : ''}',
+                      style: _field,
+                    ),
+                  ),
                 ),
+                if (_pickedDate == null) const Text('チケットから', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
                 TextButton(key: const Key('flow-date-change'), onPressed: _pickDate, child: const Text('変える')),
               ],
             )
           else
-            Wrap(
-              spacing: 8,
+            Row(
               children: [
-                for (var i = 0; i < days.length; i++)
-                  ChoiceChip(
-                    key: Key('flow-day-$i'),
-                    label: Text(days[i], style: TextStyle(color: _daysAgo == i ? Colors.white : Palette.ink)),
-                    selected: _daysAgo == i,
-                    onSelected: (_) => setState(() => _daysAgo = i),
-                  ),
-                ActionChip(key: const Key('flow-date-pick'), label: const Text('日付を選ぶ'), onPressed: _pickDate),
+                for (var i = 0; i < days.length; i++) _tab(Key('flow-day-$i'), days[i], _daysAgo == i, () => setState(() => _daysAgo = i)),
+                _tab(const Key('flow-date-pick'), '日付を選ぶ', false, _pickDate),
               ],
             ),
+          rule,
           if (outOfRun)
             Padding(
               key: const Key('production-date-note'),
               padding: const EdgeInsets.only(top: 6),
-              child: Text('この公演の期間は ${production.dateLabel} です。観た日を確かめてください。', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.kaki)),
+              child: Text(
+                'この公演の期間は ${production.dateLabel} です。観た日を確かめてください。',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.kaki),
+              ),
             ),
         ],
-        const SizedBox(height: 16),
-        if (!searching)
-          Container(
-            key: const Key('flow-venue'),
-            padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
-            decoration: BoxDecoration(color: Palette.card, borderRadius: BorderRadius.circular(8), border: Border.all(color: Palette.line)),
-            child: Row(
-              children: [
-                const Icon(Icons.place, size: 20, color: Palette.kaki),
-                const SizedBox(width: 6),
-                Expanded(child: Text(venue, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink))),
-                TextButton(
-                  key: const Key('venue-change'),
-                  onPressed: () => setState(() {
-                    _changingVenue = true;
-                    _venueQuery.clear();
-                  }),
-                  child: const Text('変える'),
-                ),
-              ],
+        const SizedBox(height: 26),
+        _label('どこで'),
+        if (searching)
+          Expanded(child: _venueSearch())
+        else ...[
+          InkWell(
+            key: Key(venue == null ? 'venue-open' : 'flow-venue'),
+            onTap: () => setState(() {
+              _changingVenue = true;
+              _venueQuery.clear();
+            }),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                children: [
+                  Icon(Icons.place, size: 20, color: venue == null ? Palette.inkSoft : Palette.kaki),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      venue ?? '劇場を選ぶ',
+                      style: venue == null ? const TextStyle(fontSize: 17, fontWeight: FontWeight.w500, color: Color(0xFFA3A39D)) : _field,
+                    ),
+                  ),
+                  if (venue != null)
+                    const Text(
+                      '変える',
+                      key: Key('venue-change'),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Palette.ink),
+                    ),
+                ],
+              ),
             ),
-          )
-        else
-          Expanded(child: _venueSearch()),
+          ),
+          rule,
+        ],
       ],
     );
   }
@@ -764,7 +850,10 @@ class QuickLogSheetState extends State<QuickLogSheet> {
     final scope = AppScope.of(context);
     final recent = scope.log.recent((e) => e.venue).toSet();
     final q = _venueQuery.text.trim().toLowerCase();
-    final hits = scope.catalog.venues.where((v) => q.isEmpty ? recent.contains(v.name) : v.name.toLowerCase().contains(q) || v.prefecture.contains(q)).take(30).toList();
+    // 何も入れていないときは、最近行った劇場を少しだけ
+    final hits = q.isEmpty
+        ? scope.catalog.venues.where((v) => recent.contains(v.name)).take(5).toList()
+        : scope.catalog.venues.where((v) => v.name.toLowerCase().contains(q) || v.prefecture.contains(q)).take(30).toList();
     final exact = hits.any((v) => v.name.toLowerCase() == q);
     void choose(String name) {
       FocusManager.instance.primaryFocus?.unfocus();
@@ -780,40 +869,71 @@ class QuickLogSheetState extends State<QuickLogSheet> {
         TextField(
           key: const Key('venue-query'),
           controller: _venueQuery,
+          autofocus: true,
+          style: _field,
           onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            hintText: '劇場名か都道府県で探す',
-            prefixIcon: const Icon(Icons.search),
-            isDense: true,
-            filled: true,
-            fillColor: Palette.card,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Palette.line)),
+          decoration: _line('劇場名か都道府県', prefix: const Icon(Icons.search, size: 20, color: Palette.ink)).copyWith(
+            suffixIcon: TextButton(
+              key: const Key('venue-cancel'),
+              onPressed: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+                setState(() => _changingVenue = false);
+              },
+              child: const Text('閉じる'),
+            ),
           ),
         ),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.only(top: 4),
             children: [
-              if (q.isEmpty && hits.isNotEmpty) const Padding(padding: EdgeInsets.only(top: 6, bottom: 2), child: Text('最近行った劇場', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.inkSoft))),
+              if (q.isEmpty && hits.isNotEmpty)
+                const Padding(
+                  padding: EdgeInsets.only(top: 10, bottom: 2),
+                  child: Text(
+                    '最近行った劇場',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Palette.inkSoft),
+                  ),
+                ),
               for (final v in hits)
-                ListTile(
+                InkWell(
                   key: Key('venue-hit-${v.id}'),
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(v.name, style: const TextStyle(fontSize: 15)),
-                  subtitle: Text(v.prefecture),
-                  trailing: recent.contains(v.name) ? const Icon(Icons.verified, color: Palette.vermilion, size: 18) : null,
                   onTap: () => choose(v.name),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 11),
+                    decoration: const BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Palette.line)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            v.name,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Palette.ink),
+                          ),
+                        ),
+                        Text(v.prefecture, style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
+                      ],
+                    ),
+                  ),
                 ),
               if (q.isNotEmpty && !exact)
-                ListTile(
+                InkWell(
                   key: const Key('venue-free'),
-                  dense: true,
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.edit_outlined, size: 20),
-                  title: Text('「${_venueQuery.text.trim()}」で記録'),
-                  subtitle: const Text('一覧にない劇場は、スタンプが付きません'),
                   onTap: () => choose(_venueQuery.text.trim()),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '「${_venueQuery.text.trim()}」と書いて記録',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Palette.ink),
+                        ),
+                        const Text('一覧にない劇場は、劇場スタンプが付きません', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
+                      ],
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -828,37 +948,47 @@ class QuickLogSheetState extends State<QuickLogSheet> {
       const Text('どうでしたか？', style: _heading),
       const SizedBox(height: 16),
       Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           for (var i = 1; i <= 5; i++)
             IconButton(
               key: Key('quick-star-$i'),
               tooltip: '$i',
-              iconSize: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 2),
+              iconSize: 46,
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
               onPressed: () => _rate(i),
               icon: Icon((_rating ?? 0) >= i ? Icons.star : Icons.star_border, color: Palette.vermilion),
             ),
         ],
       ),
-      const SizedBox(height: 16),
-      TextField(
-        key: const Key('quick-note'),
-        controller: _note,
-        minLines: 3,
-        maxLines: 6,
-        maxLength: 2000,
-        textInputAction: TextInputAction.newline,
-        onChanged: (_) => setState(() {}),
-        decoration: InputDecoration(
-          hintText: 'ひとこと感想（なくても大丈夫です）',
-          filled: true,
-          fillColor: Palette.card,
-          counterText: '',
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Palette.line)),
+      const SizedBox(height: 22),
+      _label('ひとこと（なくても大丈夫です）'),
+      // 罫線のノートに書くように。行の高さと罫線の間隔をそろえる
+      CustomPaint(
+        painter: const _RuledPainter(lineHeight: 30, lines: 4),
+        child: TextField(
+          key: const Key('quick-note'),
+          controller: _note,
+          minLines: 4,
+          maxLines: 8,
+          maxLength: 2000,
+          textInputAction: TextInputAction.newline,
+          onChanged: (_) => setState(() {}),
+          style: const TextStyle(fontSize: 16, height: 30 / 16, color: Palette.ink),
+          decoration: const InputDecoration(
+            hintText: '心に残った場面や役者のこと',
+            hintStyle: TextStyle(fontSize: 16, height: 30 / 16, color: Color(0xFFA3A39D)),
+            filled: false,
+            isDense: true,
+            counterText: '',
+            contentPadding: EdgeInsets.zero,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+          ),
         ),
       ),
-      const SizedBox(height: 6),
+      const SizedBox(height: 10),
       const Text('感想は自分だけが見られます。公開したいときは、記録の編集から公開できます。', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
     ],
   );
@@ -870,7 +1000,11 @@ class QuickLogSheetState extends State<QuickLogSheet> {
       const SizedBox(height: 4),
       Text(_ticketPhoto != null ? '読み取ったチケットを 1 枚目に入れました。要らなければ × で外せます。チラシや劇場の外観も足せます。' : 'チラシや劇場の外観など。あとからでも足せます。', style: _sub),
       const SizedBox(height: 4),
-      const Text('写真はこの端末の中だけに保存します。感想を公開しても、写真は公開・送信されません。', key: Key('flow-photo-private'), style: TextStyle(fontSize: 12, height: 1.5, fontWeight: FontWeight.w600, color: Palette.ink)),
+      const Text(
+        '写真はこの端末の中だけに保存します。感想を公開しても、写真は公開・送信されません。',
+        key: Key('flow-photo-private'),
+        style: TextStyle(fontSize: 12, height: 1.5, fontWeight: FontWeight.w600, color: Palette.ink),
+      ),
       const SizedBox(height: 16),
       Wrap(
         spacing: 8,
@@ -881,7 +1015,10 @@ class QuickLogSheetState extends State<QuickLogSheet> {
               key: Key('flow-photo-$i'),
               clipBehavior: Clip.none,
               children: [
-                ClipRRect(borderRadius: BorderRadius.circular(6), child: LogPhotoImage(name: name, size: 92)),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LogPhotoImage(name: name, size: 92),
+                ),
                 if (name == _ticketPhoto)
                   Positioned(
                     left: 4,
@@ -890,7 +1027,10 @@ class QuickLogSheetState extends State<QuickLogSheet> {
                       key: const Key('flow-photo-ticket'),
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       color: Palette.sumi,
-                      child: const Text('チケット', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                      child: const Text(
+                        'チケット',
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
                     ),
                   ),
                 Positioned(
@@ -914,19 +1054,34 @@ class QuickLogSheetState extends State<QuickLogSheet> {
               child: OutlinedButton(
                 key: const Key('flow-photo-add'),
                 onPressed: _addingPhotos ? null : _addPhotos,
-                style: OutlinedButton.styleFrom(foregroundColor: Palette.ink, backgroundColor: Palette.card, side: const BorderSide(color: Palette.line), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)), padding: EdgeInsets.zero),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Palette.ink,
+                  backgroundColor: Palette.card,
+                  side: const BorderSide(color: Palette.line),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  padding: EdgeInsets.zero,
+                ),
                 child: _addingPhotos ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.add_a_photo_outlined),
               ),
             ),
         ],
       ),
-      if (_photoError != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_photoError!, style: const TextStyle(fontSize: 12, color: Palette.ink))),
+      if (_photoError != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Text(_photoError!, style: const TextStyle(fontSize: 12, color: Palette.ink)),
+        ),
       const SizedBox(height: 20),
       Align(
         alignment: Alignment.centerLeft,
         child: _photosHidden
             ? const Text('次回から写真の画面は出しません', style: TextStyle(fontSize: 13, color: Palette.inkSoft))
-            : TextButton(key: const Key('flow-hide-photos'), onPressed: _hidePhotos, style: TextButton.styleFrom(foregroundColor: Palette.inkSoft, padding: EdgeInsets.zero), child: const Text('次回から出さない', style: TextStyle(fontSize: 13))),
+            : TextButton(
+                key: const Key('flow-hide-photos'),
+                onPressed: _hidePhotos,
+                style: TextButton.styleFrom(foregroundColor: Palette.inkSoft, padding: EdgeInsets.zero),
+                child: const Text('次回から出さない', style: TextStyle(fontSize: 13)),
+              ),
       ),
     ],
   );
@@ -1011,7 +1166,12 @@ class _ScanSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      if (scan.date != null) '${watchedOn.month}/${watchedOn.day}${scan.showTime == null ? '' : scan.showTime == 'matinee' ? ' 昼' : ' 夜'}',
+      if (scan.date != null)
+        '${watchedOn.month}/${watchedOn.day}${scan.showTime == null
+            ? ''
+            : scan.showTime == 'matinee'
+            ? ' 昼'
+            : ' 夜'}',
       if (scan.production == null && scan.venue != null) scan.venue!.name,
       ?scan.seat,
       if (scan.price != null) '${scan.price}円',
@@ -1105,119 +1265,195 @@ class _StubStampedScreenState extends State<StubStampedScreen> with TickerProvid
   @override
   Widget build(BuildContext context) {
     final log = AppScope.of(context).log;
-    final year = widget.entry.watchedOn.year;
-    final nth = log.countInYear(year);
+    final d = widget.entry.watchedOn;
+    final nth = log.countInYear(d.year);
     final stubIn = CurvedAnimation(
       parent: _c,
-      curve: const Interval(0, 0.4, curve: Curves.easeOutBack),
+      curve: const Interval(0, 0.4, curve: Curves.easeOutCubic),
     );
     final restIn = CurvedAnimation(parent: _c, curve: const Interval(0.65, 1));
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              FadeTransition(
-                opacity: restIn,
-                child: Text(
-                  '$year年 $nth 本目',
-                  key: const Key('stamped-count'),
-                  style: const TextStyle(fontFamily: titleFont, fontSize: 28, fontWeight: FontWeight.w700, color: Colors.white),
-                ),
-              ),
-              const SizedBox(height: 20),
-              AnimatedBuilder(
-                animation: _shake,
-                builder: (_, child) => Transform.translate(
-                  // 押された勢いで半券が沈んで戻る
-                  offset: Offset(0, math.sin(_shake.value * math.pi * 2) * 7 * (1 - _shake.value)),
-                  child: child,
-                ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    ScaleTransition(
-                      scale: stubIn,
-                      child: TicketStub(entry: widget.entry, textInset: 96),
-                    ),
-                    Positioned(
-                      right: 6,
-                      bottom: -44,
-                      child: PonStamp(
-                        delay: const Duration(milliseconds: 420),
-                        wordAt: const Offset(-128, 58),
-                        onImpact: () => _shake.forward(from: 0),
-                        child: PonSeal(size: 100, label: '観劇済', sub: '${widget.entry.watchedOn.month}.${widget.entry.watchedOn.day}', fontSize: 21),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 60),
-              FadeTransition(
-                opacity: restIn,
-                child: Column(
-                  children: [
-                    for (final a in widget.earned)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          'スタンプ獲得「${a.title}」',
-                          key: Key('earned-${a.id}'),
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFFE9A23B)),
+    String two(int n) => n.toString().padLeft(2, '0');
+    const message = TextStyle(fontSize: 15, height: 1.6, fontWeight: FontWeight.w700, color: Palette.ink);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.dark,
+      child: Scaffold(
+        backgroundColor: Palette.paper,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            child: Column(
+              children: [
+                const Spacer(flex: 2),
+                AnimatedBuilder(
+                  animation: _shake,
+                  builder: (_, child) => Transform.translate(
+                    // 押された勢いで半券が沈んで戻る
+                    offset: Offset(0, math.sin(_shake.value * math.pi * 2) * 5 * (1 - _shake.value)),
+                    child: child,
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      FadeTransition(
+                        opacity: stubIn,
+                        child: SlideTransition(
+                          position: Tween(begin: const Offset(0, 0.08), end: Offset.zero).animate(stubIn),
+                          child: TicketStub(entry: widget.entry, textInset: 20),
                         ),
                       ),
-                    if (widget.venue != null)
-                      Padding(
-                        key: const Key('stamped-venue-auto'),
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Text(
-                          widget.isNewVenue ? '${widget.venue!.name}のスタンプも押しました\n${widget.venue!.prefecture}の新しい劇場！' : '${widget.venue!.name}のスタンプも押しました',
+                      // もぎりの日付印。半券の右下にまたがって押す
+                      Positioned(
+                        right: -4,
+                        bottom: -70,
+                        child: PonStamp(
+                          delay: const Duration(milliseconds: 420),
+                          onImpact: () => _shake.forward(from: 0),
+                          child: Transform.rotate(
+                            angle: -0.16,
+                            child: PonSeal(key: const Key('stamped-count'), size: 132, label: '観劇', sub: '${two(d.year % 100)}.${two(d.month)}.${two(d.day)}', bottom: '$nth本目'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 96),
+                FadeTransition(
+                  opacity: restIn,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final a in widget.earned)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text('スタンプ「${a.title}」が貯まりました', key: Key('earned-${a.id}'), textAlign: TextAlign.center, style: message),
+                        ),
+                      if (widget.venue != null)
+                        Text(
+                          widget.isNewVenue ? '${widget.venue!.name}のスタンプも押しました。${widget.venue!.prefecture}で初めての劇場です' : '${widget.venue!.name}のスタンプも押しました',
+                          key: const Key('stamped-venue-auto'),
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 15, height: 1.4, fontWeight: FontWeight.w700, color: Colors.white),
+                          style: message.copyWith(fontWeight: FontWeight.w500),
+                        ),
+                    ],
+                  ),
+                ),
+                const Spacer(flex: 3),
+                FadeTransition(
+                  opacity: restIn,
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              key: const Key('stamped-note'),
+                              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                              onPressed: () {
+                                final nav = Navigator.of(context);
+                                nav.pop();
+                                LogEditScreen.open(nav.context, entry: widget.entry);
+                              },
+                              icon: const Icon(Icons.edit_outlined, size: 18),
+                              label: const Text('感想を書く'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                              onPressed: () {
+                                final nav = Navigator.of(context);
+                                nav.pop();
+                                ShareCardScreen.open(nav.context, widget.entry);
+                              },
+                              icon: const Icon(Icons.ios_share, size: 18),
+                              label: const Text('シェアする'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          key: const Key('stamped-close'),
+                          style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('半券帳へ'),
                         ),
                       ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        TextButton(
-                          key: const Key('stamped-note'),
-                          onPressed: () {
-                            final nav = Navigator.of(context);
-                            nav.pop();
-                            LogEditScreen.open(nav.context, entry: widget.entry);
-                          },
-                          child: const Text('感想を書く', style: TextStyle(color: Colors.white)),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton(
-                          onPressed: () {
-                            final nav = Navigator.of(context);
-                            nav.pop();
-                            ShareCardScreen.open(nav.context, widget.entry);
-                          },
-                          child: const Text('シェアする', style: TextStyle(color: Colors.white)),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton(
-                          key: const Key('stamped-close'),
-                          style: FilledButton.styleFrom(backgroundColor: Palette.paper, foregroundColor: Palette.navy),
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('閉じる'),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+/// 点線で描いた半券の枠。[split] の位置に切り取り線と上下の切り込みを入れる
+class _TicketSlotPainter extends CustomPainter {
+  const _TicketSlotPainter({required this.split});
+  final double split;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final x = size.width * split;
+    const notch = 9.0;
+    final body = Path()..addRRect(RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(6)));
+    final holes = Path()
+      ..addOval(Rect.fromCircle(center: Offset(x, 0), radius: notch))
+      ..addOval(Rect.fromCircle(center: Offset(x, size.height), radius: notch));
+    final shape = Path.combine(PathOperation.difference, body, holes);
+    canvas.drawPath(shape, Paint()..color = Palette.card);
+    final dash = Paint()
+      ..color = Palette.ink
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.3;
+    for (final metric in shape.computeMetrics()) {
+      for (double d = 0; d < metric.length; d += 9) {
+        canvas.drawPath(metric.extractPath(d, math.min(d + 5, metric.length)), dash);
+      }
+    }
+    for (double y = notch + 6; y < size.height - notch - 6; y += 8) {
+      canvas.drawLine(Offset(x, y), Offset(x, y + 4), dash);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_TicketSlotPainter old) => old.split != split;
+}
+
+/// ノートの罫線。少なくとも [lines] 本、書いた分だけ下まで引く
+class _RuledPainter extends CustomPainter {
+  const _RuledPainter({required this.lineHeight, required this.lines});
+  final double lineHeight;
+  final int lines;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()
+      ..color = Palette.line
+      ..strokeWidth = 1;
+    final n = math.max(lines, (size.height / lineHeight).floor());
+    for (var i = 1; i <= n; i++) {
+      final y = i * lineHeight - 1;
+      canvas.drawLine(
+        Offset(0, y),
+        Offset(size.width, y),
+        i == n
+            ? (Paint()
+                ..color = Palette.ink
+                ..strokeWidth = 1.5)
+            : p,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RuledPainter old) => old.lineHeight != lineHeight || old.lines != lines;
 }

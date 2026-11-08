@@ -77,7 +77,9 @@ void main() {
 
     // 2. いつ・どこで。劇場が分からなければスキップできる
     expect(find.text('『赤鬼』'), findsOneWidget);
-    expect(find.byKey(const Key('venue-query')), findsOneWidget);
+    expect(find.byKey(const Key('venue-open')), findsOneWidget);
+    // 選ぼうとするまで、劇場の候補は出さない
+    expect(find.byKey(const Key('venue-query')), findsNothing);
     await tester.tap(find.byKey(const Key('flow-skip')));
     await tester.pumpAndSettle();
 
@@ -159,6 +161,8 @@ void main() {
       await toPlace(tester, '新作');
       await tester.tap(find.byKey(const Key('flow-day-1')));
       await tester.pump();
+      await tester.tap(find.byKey(const Key('venue-open')));
+      await tester.pump();
       await tester.enterText(find.byKey(const Key('venue-query')), '本多');
       await tester.pump();
       await tester.tap(find.byKey(const Key('venue-hit-1')));
@@ -183,6 +187,8 @@ void main() {
       final log = TheaterLog();
       await openAt(tester, log, venues: const [Venue(1, '本多劇場', '東京都')]);
       await toPlace(tester, '新作');
+      await tester.tap(find.byKey(const Key('venue-open')));
+      await tester.pump();
       await tester.enterText(find.byKey(const Key('venue-query')), '本多');
       await tester.pump();
       await tester.tap(find.byKey(const Key('venue-hit-1')));
@@ -282,20 +288,17 @@ void main() {
       ),
     );
 
-    testWidgets('押した瞬間に 1 回だけ合図し、「ポン！」は消える', (tester) async {
+    testWidgets('押した瞬間に 1 回だけ合図する', (tester) async {
       var impacts = 0;
       await tester.pumpWidget(stamp(onImpact: () => impacts++));
       await tester.pump(const Duration(milliseconds: 100));
       expect(impacts, 0);
-      expect(find.byKey(const Key('pon-word')), findsNothing);
       await tester.pump(const Duration(milliseconds: 220));
       await tester.pump(const Duration(milliseconds: 16));
       expect(impacts, 1);
-      expect(find.byKey(const Key('pon-word')), findsOneWidget);
       await tester.pumpAndSettle();
       expect(impacts, 1);
-      expect(find.byKey(const Key('pon-word')), findsNothing);
-      expect(find.text('観劇済'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp(r'^観劇済')), findsOneWidget);
     });
 
     testWidgets('動きを減らす設定では、動かさずに押された状態を見せる', (tester) async {
@@ -303,8 +306,7 @@ void main() {
       await tester.pumpWidget(stamp(onImpact: () => impacts++, reduced: true));
       await tester.pump();
       expect(impacts, 1);
-      expect(find.byKey(const Key('pon-word')), findsNothing);
-      expect(find.text('観劇済'), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp(r'^観劇済')), findsOneWidget);
     });
 
     testWidgets('半券帳の一覧の半券に印が残る', (tester) async {
@@ -479,15 +481,19 @@ void main() {
         await tester.pump();
         await tester.tap(find.byKey(const Key('flow-next')));
         await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('venue-open')));
+        await tester.pump();
         tester.view.viewInsets = FakeViewPadding(bottom: keyboard);
         await tester.enterText(find.byKey(const Key('venue-query')), '劇場');
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         expect(find.byKey(const Key('venue-hit-0')), findsOneWidget);
         expect(find.byKey(const Key('flow-day-0')), findsNothing);
+        await tester.tap(find.byKey(const Key('venue-hit-0')));
         tester.view.viewInsets = FakeViewPadding.zero;
         await tester.pumpAndSettle();
         expect(find.byKey(const Key('flow-day-0')), findsOneWidget);
+        expect(find.byKey(const Key('flow-venue')), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
     }
@@ -535,7 +541,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('2 / 4'), findsOneWidget);
       expect(find.byKey(const Key('flow-venue')), findsOneWidget);
-      expect(find.textContaining('11/8 昼（チケットから）'), findsOneWidget);
+      expect(find.textContaining('2026年11月8日 昼の部'), findsOneWidget);
       await cut(tester);
       final e = log.entries.single;
       expect([e.title, e.venue, e.group, e.productionId], ['赤鬼', '本多劇場', '劇団甲', 51]);
