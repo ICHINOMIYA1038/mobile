@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:theater_log/app_scope.dart';
 import 'package:theater_log/catalog/achievements.dart';
+import 'package:theater_log/catalog/log_flow_prefs.dart';
 import 'package:theater_log/catalog/productions.dart';
 import 'package:theater_log/catalog/ticket_scan.dart';
 import 'package:theater_log/screens/quick_log_sheet.dart';
@@ -52,7 +53,7 @@ void main() {
     });
   });
 
-  testWidgets('最初は 1 つのボタンだけ。作品名と星で記録すると、スタンプの画面が出る', (tester) async {
+  testWidgets('最初は 1 つのボタンだけ。チケット・題名・劇場・評価・写真と順に聞き、スタンプの画面が出る', (tester) async {
     tester.view.physicalSize = const Size(430, 932);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -62,16 +63,38 @@ void main() {
     await tester.tap(find.byKey(const Key('first-stub')));
     await tester.pumpAndSettle();
 
-    // 作品名が空なら保存できない
-    expect(tester.widget<FilledButton>(find.byKey(const Key('quick-save'))).onPressed, isNull);
+    // 1. チケット。撮らずに進める
+    expect(find.text('1 / 5'), findsOneWidget);
+    expect(find.byKey(const Key('scan-camera')), findsOneWidget);
+    expect(find.byKey(const Key('quick-save')), findsNothing);
+    await tester.tap(find.byKey(const Key('flow-skip')));
+    await tester.pumpAndSettle();
 
+    // 2. 題名。空なら進めない
+    expect(find.text('2 / 5'), findsOneWidget);
+    expect(tester.widget<FilledButton>(find.byKey(const Key('flow-next'))).onPressed, isNull);
     await tester.enterText(find.byKey(const Key('quick-title')), '赤');
     await tester.pump();
     await tester.tap(find.text('野田秀樹'));
     await tester.pump();
+    await tester.tap(find.byKey(const Key('flow-next')));
+    await tester.pumpAndSettle();
+
+    // 3. いつ・どこで。劇場が分からなければスキップできる
+    expect(find.text('『赤鬼』'), findsOneWidget);
+    expect(find.byKey(const Key('venue-query')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('flow-skip')));
+    await tester.pumpAndSettle();
+
+    // 4. 評価。星を押すと次へ進む
     await tester.tap(find.byKey(const Key('quick-star-4')));
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('quick-save')));
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pumpAndSettle();
+
+    // 5. 写真。最後は半券を切る
+    expect(find.byKey(const Key('flow-photo-add')), findsOneWidget);
+    expect(find.byKey(const Key('quick-save')), findsNothing);
+    await tester.tap(find.byKey(const Key('quick-finish')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump(const Duration(seconds: 1));
@@ -82,14 +105,159 @@ void main() {
     expect(e.playId, 7);
     expect(e.rating, 4);
     expect(e.group, isNull);
+    expect(e.venue, isNull);
     expect(find.byKey(const Key('stamped-count')), findsOneWidget);
     expect(find.byKey(const Key('earned-first')), findsOneWidget);
+    expect(find.byKey(const Key('stamped-venue')), findsNothing);
 
     await tester.tap(find.byKey(const Key('stamped-close')));
     await tester.pumpAndSettle();
     expect(find.text('赤鬼'), findsOneWidget);
     expect(find.text('この作品の台本（野田秀樹）'), findsOneWidget);
     expect(find.byKey(const Key('log-add')), findsOneWidget);
+  });
+
+  group('記録の手順', () {
+    Future<void> openAt(WidgetTester tester, TheaterLog log, {List<Venue> venues = const [], Size size = const Size(430, 932)}) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(_scope(log, const LogScreen(), venues: venues));
+      await tester.tap(find.byKey(const Key('first-stub')));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> toPlace(WidgetTester tester, String title) async {
+      await tester.tap(find.byKey(const Key('flow-skip')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('quick-title')), title);
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('flow-next')));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> cut(WidgetTester tester) async {
+      await tester.tap(find.byKey(const Key('quick-save')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 2));
+    }
+
+    testWidgets('題名を入れたら、どの画面からでも半券を切れる', (tester) async {
+      final log = TheaterLog();
+      await openAt(tester, log);
+      await tester.tap(find.byKey(const Key('flow-skip')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('quick-title')), 'ひとり芝居');
+      await tester.pump();
+      await cut(tester);
+      final e = log.entries.single;
+      expect([e.title, e.venue, e.rating], ['ひとり芝居', null, null]);
+      expect(e.watchedOn, DateUtils.dateOnly(DateTime.now()));
+    });
+
+    testWidgets('劇場は一覧から選ぶか、一覧になければそのまま書ける。観た日も選べる', (tester) async {
+      final log = TheaterLog();
+      const venues = [Venue(1, '本多劇場', '東京都'), Venue(2, 'ABCホール', '大阪府')];
+      await openAt(tester, log, venues: venues);
+      await toPlace(tester, '新作');
+      await tester.tap(find.byKey(const Key('flow-day-1')));
+      await tester.pump();
+      await tester.enterText(find.byKey(const Key('venue-query')), '本多');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('venue-hit-1')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('flow-venue')), findsOneWidget);
+      expect(find.byKey(const Key('flow-next')), findsOneWidget);
+
+      // 変えて、一覧にない劇場を書く
+      await tester.tap(find.byKey(const Key('venue-change')));
+      await tester.pump();
+      await tester.enterText(find.byKey(const Key('venue-query')), '近所の公民館');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('venue-free')));
+      await tester.pumpAndSettle();
+      await cut(tester);
+      final e = log.entries.single;
+      expect(e.venue, '近所の公民館');
+      expect(e.watchedOn, DateUtils.dateOnly(DateTime.now()).subtract(const Duration(days: 1)));
+    });
+
+    testWidgets('一覧の劇場を選べば、劇場スタンプも一緒に押される', (tester) async {
+      final log = TheaterLog();
+      await openAt(tester, log, venues: const [Venue(1, '本多劇場', '東京都')]);
+      await toPlace(tester, '新作');
+      await tester.enterText(find.byKey(const Key('venue-query')), '本多');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('venue-hit-1')));
+      await tester.pumpAndSettle();
+      await cut(tester);
+      expect(log.entries.single.venue, '本多劇場');
+      expect(find.byKey(const Key('stamped-venue-auto')), findsOneWidget);
+    });
+
+    testWidgets('「次回から出さない」にしたチケットは、次から出ない。アカウントで戻せる', (tester) async {
+      final log = TheaterLog();
+      await openAt(tester, log);
+      await tester.tap(find.byKey(const Key('flow-hide-ticket')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('quick-title')), findsOneWidget);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('log_flow_hide_ticket'), isTrue);
+
+      // 題名が空なら、確かめずに閉じる
+      await tester.tap(find.byKey(const Key('flow-back')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('flow-back')));
+      await tester.pumpAndSettle();
+      expect(find.byType(QuickLogSheet), findsNothing);
+
+      await tester.tap(find.byKey(const Key('first-stub')));
+      await tester.pumpAndSettle();
+      expect(find.text('1 / 4'), findsOneWidget);
+      expect(find.byKey(const Key('quick-title')), findsOneWidget);
+
+      await LogFlowPrefs.showTicket(true);
+      expect((await LogFlowPrefs.load()).ticket, isTrue);
+    });
+
+    testWidgets('題名を入れたあとで閉じるときは、やめてよいか確かめる', (tester) async {
+      final log = TheaterLog();
+      await openAt(tester, log);
+      await toPlace(tester, '途中の舞台');
+      await tester.tap(find.byKey(const Key('flow-back')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('flow-back')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('flow-back')));
+      await tester.pumpAndSettle();
+      expect(find.text('記録をやめますか？'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('flow-continue')));
+      await tester.pumpAndSettle();
+      expect(find.byType(QuickLogSheet), findsOneWidget);
+      await tester.tap(find.byKey(const Key('flow-back')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('flow-quit')));
+      await tester.pumpAndSettle();
+      expect(find.byType(QuickLogSheet), findsNothing);
+      expect(log.entries, isEmpty);
+    });
+
+    testWidgets('作品のページから開くと、題名は聞かない', (tester) async {
+      tester.view.physicalSize = const Size(430, 932);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final log = TheaterLog();
+      await tester.pumpWidget(_scope(log, Builder(builder: (c) => TextButton(onPressed: () => QuickLogSheet.open(c, play: const Play(id: 7, title: '赤鬼', author: '野田秀樹')), child: const Text('開く')))));
+      await tester.tap(find.text('開く'));
+      await tester.pumpAndSettle();
+      expect(find.text('1 / 4'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('flow-skip')));
+      await tester.pumpAndSettle();
+      expect(find.text('『赤鬼』'), findsOneWidget);
+      await cut(tester);
+      expect(log.entries.single.playId, 7);
+    });
   });
 
   testWidgets('スタンプ帳は取れた数を出す', (tester) async {
@@ -225,9 +393,18 @@ void main() {
       await tester.pumpWidget(_scope(log, const LogScreen()));
       await tester.tap(find.byKey(const Key('first-stub')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('flow-skip')));
+      await tester.pumpAndSettle();
     }
 
-    testWidgets('題名を入れると公演名と劇場名が出て、選ぶと劇場と劇団が記録に入る', (tester) async {
+    Future<void> cut(WidgetTester tester) async {
+      await tester.tap(find.byKey(const Key('quick-save')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 2));
+    }
+
+    testWidgets('題名を入れると公演名と劇場名が出て、選ぶと劇場の確認へ進み、劇場と劇団が記録に入る', (tester) async {
       final now = DateTime.now();
       String ymd(DateTime d) => '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
       ProductionStore.instance.rows = [
@@ -248,14 +425,11 @@ void main() {
       expect(find.byKey(const Key('production-shared-note')), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('production-hit-11')));
-      await tester.pump();
-      expect(find.byKey(const Key('production-selected')), findsOneWidget);
-      expect(find.byKey(const Key('production-hit-12')), findsNothing);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('flow-venue')), findsOneWidget);
+      expect(find.text('本多劇場'), findsOneWidget);
 
-      await tester.tap(find.byKey(const Key('quick-save')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.pump(const Duration(seconds: 2));
+      await cut(tester);
       final e = log.entries.single;
       expect(e.title, '赤鬼');
       expect(e.venue, '本多劇場');
@@ -272,15 +446,14 @@ void main() {
       await tester.enterText(find.byKey(const Key('quick-title')), '赤鬼');
       await tester.pump();
       await tester.tap(find.byKey(const Key('production-hit-21')));
-      await tester.pump();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('flow-back')));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('quick-title')), '自分だけの舞台');
       await tester.pump();
       expect(find.byKey(const Key('production-selected')), findsNothing);
       expect(find.byKey(const Key('production-register')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('quick-save')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.pump(const Duration(seconds: 2));
+      await cut(tester);
       final e = log.entries.single;
       expect(e.title, '自分だけの舞台');
       expect(e.venue, isNull);
@@ -288,14 +461,16 @@ void main() {
     });
 
     for (final (name, size, keyboard) in const [('iPhone 16', Size(393, 852), 336.0), ('iPhone SE', Size(375, 667), 216.0)]) {
-      testWidgets('$name でキーボードが開いても、候補が画面に収まる', (tester) async {
+      testWidgets('$name でキーボードが開いても、公演と劇場の候補が画面に収まる', (tester) async {
         ProductionStore.instance.rows = [for (var i = 0; i < 8; i++) CurrentProduction(id: 40 + i, title: '赤鬼 第$i部', venueName: '劇場$i', groupName: '劇団', startDate: '2026-11-01', endDate: '2026-11-02')];
         addTearDown(() => ProductionStore.instance.rows = const []);
         tester.view.physicalSize = size;
         tester.view.devicePixelRatio = 1;
         addTearDown(tester.view.reset);
-        await tester.pumpWidget(_scope(TheaterLog(), const LogScreen()));
+        await tester.pumpWidget(_scope(TheaterLog(), const LogScreen(), venues: [for (var i = 0; i < 8; i++) Venue(i, '劇場$i', '東京都')]));
         await tester.tap(find.byKey(const Key('first-stub')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('flow-skip')));
         await tester.pumpAndSettle();
         tester.view.viewInsets = FakeViewPadding(bottom: keyboard);
         await tester.pumpAndSettle();
@@ -303,12 +478,23 @@ void main() {
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         expect(find.byKey(const Key('production-hit-40')), findsOneWidget);
-        expect(find.byKey(const Key('quick-star-1')), findsNothing);
+        expect(find.byKey(const Key('flow-next')), findsOneWidget);
         expect(find.byKey(const Key('quick-save')), findsOneWidget);
-        await tester.tap(find.byKey(const Key('production-hit-40')));
+
+        // 一覧にない題名で進み、劇場を探す
+        await tester.enterText(find.byKey(const Key('quick-title')), '新作');
+        await tester.pump();
+        await tester.tap(find.byKey(const Key('flow-next')));
+        await tester.pumpAndSettle();
+        tester.view.viewInsets = FakeViewPadding(bottom: keyboard);
+        await tester.enterText(find.byKey(const Key('venue-query')), '劇場');
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(find.byKey(const Key('venue-hit-0')), findsOneWidget);
+        expect(find.byKey(const Key('flow-day-0')), findsNothing);
         tester.view.viewInsets = FakeViewPadding.zero;
         await tester.pumpAndSettle();
-        expect(find.byKey(const Key('quick-star-1')), findsOneWidget);
+        expect(find.byKey(const Key('flow-day-0')), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
     }
@@ -320,7 +506,7 @@ void main() {
       await tester.enterText(find.byKey(const Key('quick-title')), '赤鬼');
       await tester.pump();
       await tester.tap(find.byKey(const Key('production-hit-31')));
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('production-date-note')), findsOneWidget);
     });
   });
@@ -335,52 +521,57 @@ void main() {
       await tester.pumpWidget(_scope(log, const LogScreen(), venues: const [Venue(1, '本多劇場', '東京都')]));
       await tester.tap(find.byKey(const Key('first-stub')));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('quick-scan')), findsOneWidget);
+      expect(find.byKey(const Key('scan-camera')), findsOneWidget);
       return tester.state<QuickLogSheetState>(find.byType(QuickLogSheet));
     }
 
-    testWidgets('公演が分かれば選び、日付、座席、金額も記録に入る', (tester) async {
+    Future<void> cut(WidgetTester tester) async {
+      await tester.tap(find.byKey(const Key('quick-save')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 2));
+    }
+
+    testWidgets('公演が分かれば題名は聞かずに劇場の確認へ進み、日付、座席、金額も記録に入る', (tester) async {
       ProductionStore.instance.rows = const [CurrentProduction(id: 51, title: '赤鬼', venueName: '本多劇場', groupName: '劇団甲', startDate: '2026-11-01', endDate: '2026-11-10')];
       addTearDown(() => ProductionStore.instance.rows = const []);
       final log = TheaterLog();
       final sheet = await open(tester, log, ['赤鬼', '本多劇場', '2026年11月8日(日) 13:00開演', '1階 C列 12番', '¥7,800']);
       final scope = AppScope.of(tester.element(find.byType(QuickLogSheet)));
       await sheet.scanPath('/dev/null', scope);
-      await tester.pump();
-      expect(find.byKey(const Key('scan-summary')), findsOneWidget);
-      expect(find.byKey(const Key('production-selected')), findsOneWidget);
-      expect(find.textContaining('11/8 昼'), findsOneWidget);
-      await tester.tap(find.byKey(const Key('quick-save')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+      expect(find.text('3 / 5'), findsOneWidget);
+      expect(find.byKey(const Key('flow-venue')), findsOneWidget);
+      expect(find.textContaining('11/8 昼（チケットから）'), findsOneWidget);
+      await cut(tester);
       final e = log.entries.single;
       expect([e.title, e.venue, e.group, e.productionId], ['赤鬼', '本多劇場', '劇団甲', 51]);
       expect(e.watchedOn, DateTime(2026, 11, 8));
       expect([e.showTime, e.seat, e.price], ['matinee', '1階C列12番', 7800]);
     });
 
-    testWidgets('公演が分からなければ、題名の候補から選べる', (tester) async {
+    testWidgets('公演が分からなければ題名の画面に進み、チケットの候補から選べる', (tester) async {
       final log = TheaterLog();
       final sheet = await open(tester, log, ['電子チケット', '誰も知らない新作', '本多劇場', '2026.11.08 開演 18:30']);
       await sheet.scanPath('/dev/null', AppScope.of(tester.element(find.byType(QuickLogSheet))));
-      await tester.pump();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('scan-summary')), findsOneWidget);
       await tester.tap(find.byKey(const Key('scan-title-0')));
       await tester.pump();
-      await tester.tap(find.byKey(const Key('quick-save')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.pump(const Duration(seconds: 2));
+      await cut(tester);
       final e = log.entries.single;
       expect([e.title, e.venue, e.showTime], ['誰も知らない新作', '本多劇場', 'soiree']);
     });
 
-    testWidgets('何も読めなければ、撮り直しの案内を出す', (tester) async {
+    testWidgets('何も読めなければ、撮り直すかチケットなしで進むかを選べる', (tester) async {
       final sheet = await open(tester, TheaterLog(), const []);
       await sheet.scanPath('/dev/null', AppScope.of(tester.element(find.byType(QuickLogSheet))));
       await tester.pump();
       expect(find.byKey(const Key('scan-error')), findsOneWidget);
-      expect(find.byKey(const Key('scan-summary')), findsNothing);
+      expect(find.byKey(const Key('scan-retry')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('scan-without')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('quick-title')), findsOneWidget);
     });
   });
 }

@@ -22,15 +22,22 @@ void main() {
 
     await tester.tap(find.byKey(const Key('first-stub')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('flow-skip')));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('quick-title')), 'エダニク');
     await tester.pumpAndSettle();
     await tester.tap(find.text('横山拓也').first);
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('flow-next')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('flow-skip')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('quick-star-4')));
+    await tester.pump(const Duration(milliseconds: 350));
     await tester.pumpAndSettle();
     await Future<void>.delayed(hold);
 
-    await tester.tap(find.byKey(const Key('quick-save')));
+    await tester.tap(find.byKey(const Key('quick-finish')));
     await tester.pumpAndSettle();
     await Future<void>.delayed(hold);
     await tester.tap(find.byKey(const Key('stamped-close')));
