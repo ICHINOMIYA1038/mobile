@@ -14,6 +14,7 @@ class AboutScreen extends StatelessWidget {
   static final _site = Uri.parse('https://gikyokutosyokan.com/');
   static final _privacy = Uri.parse('https://gikyokutosyokan.com/support/privacy-policy');
   static final _contact = Uri.parse('https://gikyokutosyokan.com/support/contact');
+  static final _terms = Uri.parse('https://gikyokutosyokan.com/support/tos');
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +41,10 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 12),
           link('戯曲図書館のサイト', _site),
           link('お問い合わせ', _contact),
+          link('利用規約', _terms),
           link('プライバシーポリシー', _privacy),
+          const SizedBox(height: 12),
+          const Text('不適切な感想は、感想の「…」から通報できます。通報は運営が確かめ、24 時間以内に対応します。', style: TextStyle(fontSize: 12, height: 1.7, color: Palette.inkSoft)),
         ],
       ),
     );

@@ -13,7 +13,9 @@ void main() {
     expect(parseTicketDate('2026年11月8日(土)', today), DateTime(2026, 11, 8));
     expect(parseTicketDate('２０２６／１１／０８', today), DateTime(2026, 11, 8));
     expect(parseTicketDate('11月8日(土) 18:00', today), DateTime(2026, 11, 8));
-    expect(parseTicketDate('1/10(日)', today), DateTime(2027, 1, 10));
+    // 観た記録なので、1 週間より先になる日付は前の年にする
+    expect(parseTicketDate('1/10(日)', today), DateTime(2026, 1, 10));
+    expect(parseTicketDate('11/12', today), DateTime(2026, 11, 12));
     expect(parseTicketDate('10/30', today), DateTime(2026, 10, 30));
     expect(parseTicketDate('2026/02/30', today), isNull);
     expect(parseTicketDate('開演 18:30', today), isNull);

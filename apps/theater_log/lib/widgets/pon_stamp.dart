@@ -26,8 +26,11 @@ class PonSeal extends StatelessWidget {
     child: ExcludeSemantics(
       child: SizedBox.square(
         dimension: size,
-        child: CustomPaint(
-          painter: _SealPainter(label: label, sub: sub, bottom: bottom, fontSize: fontSize, color: color, square: square),
+        // 押す動きの間、毎フレーム描き直さないよう、ハンコは 1 枚の絵としてとっておく
+        child: RepaintBoundary(
+          child: CustomPaint(
+            painter: _SealPainter(label: label, sub: sub, bottom: bottom, fontSize: fontSize, color: color, square: square),
+          ),
         ),
       ),
     ),
@@ -217,7 +220,13 @@ class _PonStampState extends State<PonStamp> with SingleTickerProviderStateMixin
     // 動きを減らす設定の人には、押された状態を最初から見せる
     _c.value = 0;
     if (MediaQuery.disableAnimationsOf(context)) {
+      // 動きを減らす設定では、揺らさずに押された状態だけを見せる（build の途中で親を動かさない）。音と振動は描き終えてから
+      _impacted = true;
       _c.value = 1;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        HapticFeedback.heavyImpact();
+        PonSound.play();
+      });
     } else {
       _c.forward();
     }

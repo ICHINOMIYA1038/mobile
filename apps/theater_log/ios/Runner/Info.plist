@@ -33,7 +33,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>チケットを撮って、日付や座席を読み取るために使います。写真は端末の中だけで読み取り、保存も送信もしません。</string>
+	<string>チケットを撮って、題名や日付、座席を読み取るために使います。撮った写真は記録の写真として端末の中だけに保存し、送信しません。</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>作ったシェアカードやふりかえりの画像を、写真に保存するために使います。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>観劇の記録に写真を付けるために使います。写真は端末の中だけに保存します。</string>
 	<key>UIApplicationSceneManifest</key>
@@ -66,8 +68,6 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>

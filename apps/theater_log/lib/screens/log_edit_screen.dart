@@ -81,7 +81,11 @@ class _LogEditScreenState extends State<LogEditScreen> {
 
   String? _text(TextEditingController c) => c.text.trim().isEmpty ? null : c.text.trim();
 
+  bool _saving = false;
+
   Future<void> _save() async {
+    // 2 回押しても 1 回だけ保存する（2 回目の pop で下の画面まで閉じないように）
+    if (_saving) return;
     final title = _title?.text.trim() ?? '';
     if (title.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('作品名を入れてください')));
@@ -91,6 +95,7 @@ class _LogEditScreenState extends State<LogEditScreen> {
     final play = _play?.title == title ? _play : null;
     final old = widget.entry;
     final linkedId = play?.id ?? (old?.title == title ? old?.playId : null);
+    _saving = true;
     await AppScope.of(context).log.upsert(
       TheaterLogEntry(
         id: old?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),

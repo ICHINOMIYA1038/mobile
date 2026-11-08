@@ -89,7 +89,9 @@ class RecapCard extends StatelessWidget {
         ],
       ),
     );
-    return AspectRatio(
+    // 画像として共有するカードなので、文字の大きさの設定に関わらず同じ見た目にする
+    return MediaQuery.withNoTextScaling(
+      child: AspectRatio(
       aspectRatio: 4 / 5,
       child: Container(
         padding: const EdgeInsets.all(22),
@@ -119,6 +121,7 @@ class RecapCard extends StatelessWidget {
                 ],
               ),
       ),
+    ),
     );
   }
 }
