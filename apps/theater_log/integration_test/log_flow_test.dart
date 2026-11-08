@@ -22,8 +22,6 @@ void main() {
 
     await tester.tap(find.byKey(const Key('log-add')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('flow-skip')));
-    await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('quick-title')), 'エダニク');
     await tester.pumpAndSettle();
     await tester.tap(find.text('横山拓也').first);

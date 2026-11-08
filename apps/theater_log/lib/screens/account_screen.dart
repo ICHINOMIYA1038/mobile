@@ -136,7 +136,7 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 }
 
-/// 記録の手順で出す画面。チケットと写真だけ切り替えられる
+/// 記録の手順で出す画面。写真だけ切り替えられる
 class LogFlowSettings extends StatefulWidget {
   const LogFlowSettings({super.key});
 
@@ -145,50 +145,35 @@ class LogFlowSettings extends StatefulWidget {
 }
 
 class _LogFlowSettingsState extends State<LogFlowSettings> {
-  ({bool ticket, bool photos})? _show;
+  bool? _photos;
 
   @override
   void initState() {
     super.initState();
-    LogFlowPrefs.load().then((v) {
-      if (mounted) setState(() => _show = v);
+    LogFlowPrefs.showsPhotos().then((v) {
+      if (mounted) setState(() => _photos = v);
     });
   }
 
   @override
-  Widget build(BuildContext context) {
-    final show = _show;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('記録の手順', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 4),
-        const Text('観た舞台を記録するときに出す画面です。題名・劇場・評価は毎回聞きます。', style: TextStyle(fontSize: 12, height: 1.6, color: Palette.inkSoft)),
-        SwitchListTile(
-          key: const Key('flow-setting-ticket'),
-          contentPadding: EdgeInsets.zero,
-          title: const Text('チケットを撮る'),
-          value: show?.ticket ?? true,
-          onChanged: show == null
-              ? null
-              : (v) async {
-                  setState(() => _show = (ticket: v, photos: show.photos));
-                  await LogFlowPrefs.showTicket(v);
-                },
-        ),
-        SwitchListTile(
-          key: const Key('flow-setting-photos'),
-          contentPadding: EdgeInsets.zero,
-          title: const Text('写真を残す'),
-          value: show?.photos ?? true,
-          onChanged: show == null
-              ? null
-              : (v) async {
-                  setState(() => _show = (ticket: show.ticket, photos: v));
-                  await LogFlowPrefs.showPhotos(v);
-                },
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text('記録の手順', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 4),
+      const Text('観た舞台を記録するときに出す画面です。題名・いつどこで・評価は毎回聞きます。', style: TextStyle(fontSize: 12, height: 1.6, color: Palette.inkSoft)),
+      SwitchListTile(
+        key: const Key('flow-setting-photos'),
+        contentPadding: EdgeInsets.zero,
+        title: const Text('写真を残す'),
+        value: _photos ?? true,
+        onChanged: _photos == null
+            ? null
+            : (v) async {
+                setState(() => _photos = v);
+                await LogFlowPrefs.showPhotos(v);
+              },
+      ),
+    ],
+  );
 }
