@@ -151,8 +151,11 @@ class AuthService extends ChangeNotifier {
     final token = await accessToken();
     if (token == null) throw AuthExpired();
     final res = await _http.patch(Uri.parse('$apiUrl/session'), headers: {'authorization': 'Bearer $token', 'content-type': 'application/json'}, body: jsonEncode({'displayName': name})).timeout(const Duration(seconds: 20));
+    if (res.statusCode == 400 && res.body.contains('display_name_reserved')) throw DisplayNameRejected('運営や公式と間違われる名前は使えません');
     if (res.statusCode != 200) throw StateError('名前を変更できませんでした');
-    await _setUser(AccountUser(user!.id, name));
+    // サーバーで整えた名前（改行や見えない文字を除いたもの）にそろえる
+    final saved = (jsonDecode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>)['displayName'] as String?;
+    await _setUser(AccountUser(user!.id, saved ?? name, banned: user!.banned));
   }
 
   Future<void> clear() async {
@@ -168,3 +171,9 @@ class AuthService extends ChangeNotifier {
 }
 
 class AuthExpired implements Exception {}
+
+/// 公開の名前に使えない名前だった。message はそのまま利用者に見せる
+class DisplayNameRejected implements Exception {
+  DisplayNameRejected(this.message);
+  final String message;
+}

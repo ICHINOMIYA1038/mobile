@@ -272,8 +272,10 @@ class _ProductionPickerState extends State<ProductionPicker> {
         'startDate': _date(_start),
         'endDate': _date(_end),
       });
-      AppInsights.logEvent('production_create');
-      if (mounted) Navigator.pop(context, p);
+      AppInsights.logEvent(p.existing ? 'production_existing' : 'production_create');
+      if (!mounted) return;
+      if (p.existing) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('同じ公演がもう登録されていたので、そちらを選びました')));
+      Navigator.pop(context, p);
     } on CommunityError catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {

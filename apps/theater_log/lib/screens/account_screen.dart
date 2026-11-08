@@ -65,6 +65,8 @@ class _AccountScreenState extends State<AccountScreen> {
     if (name == null || name.isEmpty) return;
     try {
       await auth.setDisplayName(name);
+    } on DisplayNameRejected catch (e) {
+      _say(e.message);
     } catch (_) {
       _say('名前を変更できませんでした');
     }
