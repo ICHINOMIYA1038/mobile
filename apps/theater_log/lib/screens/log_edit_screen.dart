@@ -357,7 +357,7 @@ class _LogEditScreenState extends State<LogEditScreen> {
             key: const Key('log-public'),
             contentPadding: EdgeInsets.zero,
             title: const Text('感想をみんなに公開する'),
-            subtitle: Text(_public ? 'アプリと戯曲図書館のサイトに、感想、評価、劇団、劇場、観た月、公開の名前が出ます。座席とチケット代は出ません。' : '自分だけが見られます。', style: const TextStyle(fontSize: 12)),
+            subtitle: Text(_public ? 'アプリと戯曲図書館のサイトに、感想、評価、劇団、劇場、観た月、公開の名前が出ます。写真、座席、チケット代は出ません。' : '自分だけが見られます。', style: const TextStyle(fontSize: 12)),
             value: _public,
             onChanged: _togglePublic,
           ),

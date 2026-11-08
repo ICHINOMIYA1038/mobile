@@ -65,6 +65,9 @@ class QuickLogSheetState extends State<QuickLogSheet> {
   final _venueQuery = TextEditingController();
 
   final _photos = <String>[];
+
+  /// 読み取ったチケットの写真。記録の 1 枚目に入れ、写真の画面で外せる
+  String? _ticketPhoto;
   bool _addingPhotos = false;
   String? _photoError;
   bool _saved = false;
@@ -162,12 +165,36 @@ class QuickLogSheetState extends State<QuickLogSheet> {
     }
     if (picked == null || !mounted) return;
     setState(() => _scanningPath = picked!.path);
-    await scanPath(picked.path, scope);
+    final ok = await scanPath(picked.path, scope);
+    if (!ok || !mounted) return;
+    try {
+      final name = await LogPhotos.save(File(picked.path));
+      if (mounted) {
+        adoptTicketPhoto(name);
+      } else {
+        LogPhotos.delete(name);
+      }
+    } catch (_) {
+      // 写真を残せなくても、読み取った内容で記録はできる
+    }
   }
 
-  /// 選んだ写真を読み取る。テストからも呼ぶ
+  /// 読み取ったチケットの写真を 1 枚目に入れる。撮り直したら差し替える。テストからも呼ぶ
   @visibleForTesting
-  Future<void> scanPath(String path, AppScope scope) async {
+  void adoptTicketPhoto(String name) {
+    final old = _ticketPhoto;
+    setState(() {
+      if (old != null) _photos.remove(old);
+      if (_photos.length >= LogPhotos.maxPerEntry) _photos.removeLast();
+      _photos.insert(0, name);
+      _ticketPhoto = name;
+    });
+    if (old != null) LogPhotos.delete(old);
+  }
+
+  /// 選んだ写真を読み取る。読み取れたら true。テストからも呼ぶ
+  @visibleForTesting
+  Future<bool> scanPath(String path, AppScope scope) async {
     setState(() {
       _scanning = true;
       _scanError = null;
@@ -175,11 +202,11 @@ class QuickLogSheetState extends State<QuickLogSheet> {
     try {
       final lines = await TicketScanner.recognize(path);
       final scan = parseTicket(lines, venues: scope.catalog.venues, productions: ProductionStore.instance.rows, today: _today);
-      if (!mounted) return;
+      if (!mounted) return false;
       AppInsights.logEvent('ticket_scan', parameters: {'production': scan.production == null ? 0 : 1, 'date': scan.date == null ? 0 : 1, 'venue': scan.venue == null ? 0 : 1});
       if (scan.isEmpty) {
         setState(() => _scanError = '読み取れませんでした。明るい場所で、チケット全体を撮ってください');
-        return;
+        return false;
       }
       setState(() {
         _scan = scan;
@@ -191,8 +218,10 @@ class QuickLogSheetState extends State<QuickLogSheet> {
       });
       // 公演まで分かれば、劇場の確認へ進む。分からなければ、この画面で題名の候補から選ぶ
       if (scan.production != null) _goTo(_Step.place);
+      return true;
     } catch (_) {
       if (mounted) setState(() => _scanError = '読み取れませんでした。明るい場所で、チケット全体を撮ってください');
+      return false;
     } finally {
       if (mounted) {
         setState(() {
@@ -269,7 +298,10 @@ class QuickLogSheetState extends State<QuickLogSheet> {
   }
 
   void _removePhoto(String name) {
-    setState(() => _photos.remove(name));
+    setState(() {
+      _photos.remove(name);
+      if (_ticketPhoto == name) _ticketPhoto = null;
+    });
     LogPhotos.delete(name);
   }
 
@@ -558,7 +590,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
           ),
         ],
         const SizedBox(height: 8),
-        const Text('写真はこの端末の中で読むだけです。保存も送信もしません。', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
+        const Text('撮ったチケットは記録の 1 枚目の写真になり、最後の写真の画面で外せます。写真はこの端末の中だけに保存し、送信しません。', style: TextStyle(fontSize: 12, height: 1.5, color: Palette.inkSoft)),
       ],
     );
   }
@@ -836,7 +868,9 @@ class QuickLogSheetState extends State<QuickLogSheet> {
       _titleLine(),
       const Text('写真を残す', style: _heading),
       const SizedBox(height: 4),
-      const Text('チラシや劇場の外観など。この端末の中だけに保存し、あとからでも足せます。', style: _sub),
+      Text(_ticketPhoto != null ? '読み取ったチケットを 1 枚目に入れました。要らなければ × で外せます。チラシや劇場の外観も足せます。' : 'チラシや劇場の外観など。あとからでも足せます。', style: _sub),
+      const SizedBox(height: 4),
+      const Text('写真はこの端末の中だけに保存します。感想を公開しても、写真は公開・送信されません。', key: Key('flow-photo-private'), style: TextStyle(fontSize: 12, height: 1.5, fontWeight: FontWeight.w600, color: Palette.ink)),
       const SizedBox(height: 16),
       Wrap(
         spacing: 8,
@@ -848,6 +882,17 @@ class QuickLogSheetState extends State<QuickLogSheet> {
               clipBehavior: Clip.none,
               children: [
                 ClipRRect(borderRadius: BorderRadius.circular(6), child: LogPhotoImage(name: name, size: 92)),
+                if (name == _ticketPhoto)
+                  Positioned(
+                    left: 4,
+                    bottom: 4,
+                    child: Container(
+                      key: const Key('flow-photo-ticket'),
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      color: Palette.sumi,
+                      child: const Text('チケット', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                    ),
+                  ),
                 Positioned(
                   right: -8,
                   top: -8,
