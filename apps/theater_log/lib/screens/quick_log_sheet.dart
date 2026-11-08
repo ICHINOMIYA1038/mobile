@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../widgets/illustrations.dart';
 import '../app_scope.dart';
 import '../account/community_api.dart';
 import '../catalog/achievements.dart';
@@ -983,7 +984,12 @@ class QuickLogSheetState extends State<QuickLogSheet> {
   Widget _photoStep() => ListView(
     children: [
       _titleLine(),
-      const Text('写真を残す', style: _heading),
+      Row(
+        children: [
+          const Expanded(child: Text('写真を残す', style: _heading)),
+          StageArt.album(key: const Key('art-album'), width: 76),
+        ],
+      ),
       const SizedBox(height: 4),
       Text(_ticketPhoto != null ? '読み取ったチケットを 1 枚目に入れました。要らなければ × で外せます。チラシや劇場の外観も足せます。' : 'チラシや劇場の外観など。あとからでも足せます。', style: _sub),
       const SizedBox(height: 4),

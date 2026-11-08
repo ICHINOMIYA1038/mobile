@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../widgets/illustrations.dart';
 import '../app_scope.dart';
 import '../catalog/achievements.dart';
 import '../catalog/log_stats.dart';
@@ -33,6 +34,8 @@ class StampBookScreen extends StatelessWidget {
             return ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
               children: [
+                Center(child: StageArt.lanterns(key: const Key('art-lanterns'), width: 180)),
+                const SizedBox(height: 4),
                 const Text(
                   'スタンプ帳',
                   style: TextStyle(fontFamily: displayFont, fontWeight: FontWeight.w800, fontSize: 30, height: 1.1, color: Palette.sumi),

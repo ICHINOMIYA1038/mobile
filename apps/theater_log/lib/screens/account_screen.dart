@@ -2,6 +2,7 @@ import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../widgets/illustrations.dart';
 import '../account/auth_service.dart';
 import '../app_scope.dart';
 import '../catalog/log_flow_prefs.dart';
@@ -120,6 +121,8 @@ class _AccountScreenState extends State<AccountScreen> {
                   const LogFlowSettings(),
                 ]
               : [
+                  Center(child: StageArt.reception(key: const Key('art-reception'), width: 190)),
+                  const SizedBox(height: 16),
                   const Text('戯曲 ID でログインすると、機種を変えても記録を引き継げ、感想を公開できます。ログインしなくても、記録は端末の中で使えます。', style: TextStyle(height: 1.7)),
                   const SizedBox(height: 20),
                   FilledButton.icon(key: const Key('sign-in-apple'), onPressed: _busy ? null : () => _signIn('apple'), icon: const Icon(Icons.apple), label: const Text('Apple でログイン')),

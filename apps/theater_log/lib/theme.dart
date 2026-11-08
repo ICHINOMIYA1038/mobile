@@ -16,6 +16,10 @@ class Palette {
   /// ハンコの朱肉
   static const vermilion = Color(0xFFD0342C);
 
+  /// 挿絵の差し色（docs/illustration-style.md）。金茶と、生成り（木や紙）
+  static const kincha = Color(0xFFD49A2A);
+  static const kinari = Color(0xFFEFE4CC);
+
   /// 主な操作と見出しの色（以前の紺の役目）
   static const navy = sumi;
 }

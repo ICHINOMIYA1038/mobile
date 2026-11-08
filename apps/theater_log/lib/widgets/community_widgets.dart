@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'illustrations.dart';
 import '../account/community_api.dart';
 import '../app_scope.dart';
 import '../screens/account_screen.dart';
@@ -26,12 +27,15 @@ class CommunityRules {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Palette.paper,
         title: const Text('感想を公開する前に'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(child: StageArt.survey(width: 96)),
+              const SizedBox(height: 10),
               const Text('公開した感想は、このアプリの「みんな」と作品のページに、公開の名前・評価・劇団・劇場・観た月と一緒に出ます。', style: body),
               const SizedBox(height: 6),
               const Text('写真、座席、チケット代、観た日は出ません。いつでも非公開に戻せ、戻すとすぐに見えなくなります。', style: body),
@@ -342,9 +346,9 @@ class _ProductionPickerState extends State<ProductionPicker> {
                     onTap: () => Navigator.pop(context, p),
                   ),
                 if (_rows != null && _rows!.isEmpty && _error == null)
-                  const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Text('見つかりませんでした。', style: TextStyle(color: Palette.inkSoft)),
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(children: [StageArt.flashlight(width: 130), const Text('見つかりませんでした。', style: TextStyle(color: Palette.inkSoft))]),
                   ),
                 TextButton.icon(key: const Key('production-new'), onPressed: () => setState(() => _creating = true), icon: const Icon(Icons.add), label: const Text('この公演を登録する')),
               ] else ...[

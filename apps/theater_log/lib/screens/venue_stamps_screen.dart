@@ -1,6 +1,7 @@
 import 'package:app_insights/app_insights.dart';
 import 'package:flutter/material.dart';
 
+import '../widgets/illustrations.dart';
 import '../app_scope.dart';
 import '../catalog/achievements.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
@@ -25,6 +26,8 @@ class VenueStampSummary extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              StageArt.passport(key: const Key('art-passport'), width: 64),
+              const SizedBox(width: 10),
               const Expanded(child: Text('劇場スタンプ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Palette.ink))),
               Text('$done / ${scope.catalog.venues.length}', key: const Key('venue-count'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Palette.ink)),
             ],
@@ -180,7 +183,12 @@ class _VenuePickerSheetState extends State<VenuePickerSheet> {
                 child: hits.isEmpty
                     ? Padding(
                         padding: const EdgeInsets.all(20),
-                        child: Text(q.isEmpty ? '劇場名を入れて探してください。' : '見つかりませんでした。一覧にない劇場は、記録の編集で自由に書けます。', style: const TextStyle(color: Palette.inkSoft, height: 1.6)),
+                        child: Column(
+                          children: [
+                            if (q.isNotEmpty) StageArt.flashlight(key: const Key('art-flashlight'), width: 140),
+                            Text(q.isEmpty ? '劇場名を入れて探してください。' : '見つかりませんでした。一覧にない劇場は、記録の編集で自由に書けます。', textAlign: TextAlign.center, style: const TextStyle(color: Palette.inkSoft, height: 1.6)),
+                          ],
+                        ),
                       )
                     : ListView(
                         children: [

@@ -85,7 +85,16 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
             const SizedBox(height: 12),
             if (_failed)
-              const Padding(padding: EdgeInsets.all(24), child: Text('読み込めませんでした。下に引っぱると、もう一度読み込みます。', style: TextStyle(height: 1.7, color: Palette.inkSoft)))
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    StageArt.unplugged(key: const Key('art-unplugged'), width: 170),
+                    const SizedBox(height: 12),
+                    const Text('読み込めませんでした。下に引っぱると、もう一度読み込みます。', textAlign: TextAlign.center, style: TextStyle(height: 1.7, color: Palette.inkSoft)),
+                  ],
+                ),
+              )
             else if (rows == null)
               const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator()))
             else if (rows.isEmpty)
