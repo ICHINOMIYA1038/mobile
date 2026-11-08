@@ -305,7 +305,7 @@ void main() {
       var impacts = 0;
       await tester.pumpWidget(stamp(onImpact: () => impacts++, reduced: true));
       await tester.pump();
-      expect(impacts, 1);
+      expect(impacts, 0, reason: '揺らさない');
       expect(find.bySemanticsLabel(RegExp(r'^観劇済')), findsOneWidget);
     });
 
@@ -569,6 +569,38 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(seconds: 2));
       expect(log.entries.single.photos, ['ticket2.jpg']);
+    });
+
+    testWidgets('チケットを読み直すと、前のチケットから入れた公演と題名は外れる。× で外すと写真も外れる', (tester) async {
+      ProductionStore.instance.rows = const [CurrentProduction(id: 61, title: '赤鬼', venueName: '本多劇場', startDate: '2026-11-01', endDate: '2026-11-10')];
+      addTearDown(() => ProductionStore.instance.rows = const []);
+      final log = TheaterLog();
+      final sheet = await open(tester, log, ['赤鬼', '本多劇場', '2026年11月5日']);
+      final scope = AppScope.of(tester.element(find.byType(QuickLogSheet)));
+      await sheet.scanPath('/dev/null', scope);
+      sheet.adoptTicketPhoto('a.jpg');
+      await tester.pumpAndSettle();
+      // 公演が分かって劇場の画面へ進んだので、題名の画面へ戻って別のチケットを読む
+      await tester.tap(find.byKey(const Key('flow-back')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('production-selected')), findsOneWidget);
+      TicketScanner.override = (_) async => ['電子チケット', '誰も知らない新作', '2026.11.06'];
+      await sheet.scanPath('/dev/null', scope);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('production-selected')), findsNothing);
+      expect(tester.widget<TextField>(find.byKey(const Key('quick-title'))).controller!.text, isEmpty);
+      // × で外すと、チケットの写真も外れる
+      await tester.tap(find.byKey(const Key('scan-clear')));
+      await tester.pump();
+      expect(find.byKey(const Key('scan-summary')), findsNothing);
+      await tester.enterText(find.byKey(const Key('quick-title')), '手で入れた題名');
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('quick-save')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump(const Duration(seconds: 2));
+      final e = log.entries.single;
+      expect([e.title, e.productionId, e.photos], ['手で入れた題名', null, isEmpty]);
     });
 
     testWidgets('チケットの写真は、写真の画面で外せば記録に入らない', (tester) async {

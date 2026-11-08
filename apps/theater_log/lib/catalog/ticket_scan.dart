@@ -39,13 +39,15 @@ class TicketScanner {
 
 String _z2h(String s) => String.fromCharCodes(s.runes.map((c) => c >= 0xFF01 && c <= 0xFF5E ? c - 0xFEE0 : (c == 0x3000 ? 0x20 : c)));
 
-/// 年が書かれていない日付は、今日にいちばん近い年にする
+/// 年が書かれていない日付は、今日にいちばん近い年にする。
+/// ただし観た記録なので、1 週間より先の日付になるなら前の年にする（7 月に「1月10日」を読んでも来年にしない）
 DateTime? _closest(int month, int day, DateTime today) {
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
   DateTime? best;
   for (final y in [today.year - 1, today.year, today.year + 1]) {
     final d = DateTime(y, month, day);
     if (d.month != month) continue;
+    if (d.isAfter(today.add(const Duration(days: 7)))) continue;
     if (best == null || d.difference(today).abs() < best.difference(today).abs()) best = d;
   }
   return best;

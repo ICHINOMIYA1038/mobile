@@ -7,6 +7,7 @@ import '../account/auth_service.dart';
 import '../app_scope.dart';
 import '../catalog/log_flow_prefs.dart';
 import '../theme.dart';
+import 'about_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -75,7 +76,28 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _signOut() async {
-    final sync = AppScope.of(context).sync;
+    final scope = AppScope.of(context);
+    final sync = scope.sync;
+    // ログアウトすると、この端末の記録と写真を消す。写真はサーバーに無いので戻らないことを先に伝える
+    final photos = scope.log.entries.fold(0, (n, e) => n + e.photos.length);
+    if (scope.log.entries.isNotEmpty) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('ログアウトしますか？'),
+          content: Text(
+            photos == 0
+                ? 'この端末から記録を消します。記録はログインし直すと戻ります。'
+                : 'この端末から記録と写真 $photos 枚を消します。記録はログインし直すと戻りますが、写真は端末の中にしか無いため戻りません。',
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('やめる')),
+            TextButton(key: const Key('sign-out-confirm'), onPressed: () => Navigator.pop(ctx, true), child: const Text('ログアウト')),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+    }
     setState(() => _busy = true);
     final done = await sync.signOut();
     if (!done && mounted) {
@@ -119,19 +141,37 @@ class _AccountScreenState extends State<AccountScreen> {
                   const Text('削除すると、観劇の記録と公開した感想も消えます。戯曲 ID のページで手続きします。', style: TextStyle(fontSize: 12, height: 1.6, color: Palette.inkSoft)),
                   const SizedBox(height: 28),
                   const LogFlowSettings(),
+                  const Divider(height: 32),
+                  ListTile(
+                    key: const Key('open-about'),
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('このアプリについて'),
+                    subtitle: const Text('お問い合わせ・利用規約・プライバシーポリシー'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => AboutScreen.open(context),
+                  ),
                 ]
               : [
                   Center(child: StageArt.reception(key: const Key('art-reception'), width: 190)),
                   const SizedBox(height: 16),
                   const Text('戯曲 ID でログインすると、機種を変えても記録を引き継げ、感想を公開できます。ログインしなくても、記録は端末の中で使えます。', style: TextStyle(height: 1.7)),
                   const SizedBox(height: 20),
-                  FilledButton.icon(key: const Key('sign-in-apple'), onPressed: _busy ? null : () => _signIn('apple'), icon: const Icon(Icons.apple), label: const Text('Apple でログイン')),
+                  FilledButton.icon(key: const Key('sign-in-apple'), onPressed: _busy ? null : () => _signIn('apple'), icon: const Icon(Icons.apple), label: const Text('Appleでサインイン')),
                   const SizedBox(height: 10),
-                  OutlinedButton(key: const Key('sign-in-google'), onPressed: _busy ? null : () => _signIn('google'), child: const Text('Google でログイン')),
+                  OutlinedButton(key: const Key('sign-in-google'), onPressed: _busy ? null : () => _signIn('google'), child: const Text('Googleでサインイン')),
                   const SizedBox(height: 16),
                   const Text('戯曲図書館、戯曲パレット、TOMOSHIBI と同じアカウントです。', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
                   const SizedBox(height: 28),
                   const LogFlowSettings(),
+                  const Divider(height: 32),
+                  ListTile(
+                    key: const Key('open-about'),
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('このアプリについて'),
+                    subtitle: const Text('お問い合わせ・利用規約・プライバシーポリシー'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => AboutScreen.open(context),
+                  ),
                 ],
         ),
       ),
