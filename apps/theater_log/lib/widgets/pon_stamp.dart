@@ -9,8 +9,11 @@ import '../theme.dart';
 /// 朱肉で紙に押したハンコの跡。塗りつぶしではなく、輪と文字を朱で押す（朱文）。
 /// [bottom] があると日付印の形になる：上に [label]、中の帯に [sub]、下に [bottom]
 class PonSeal extends StatelessWidget {
-  const PonSeal({super.key, required this.size, required this.label, this.sub, this.bottom, this.fontSize, this.color = Palette.vermilion});
+  const PonSeal({super.key, required this.size, required this.label, this.sub, this.bottom, this.fontSize, this.color = Palette.vermilion, this.square = false});
   final double size;
+
+  /// 角印にする（丸印と押し分けて、集めたときに見た目に変化を付ける）
+  final bool square;
   final String label;
   final String? sub;
   final String? bottom;
@@ -24,7 +27,7 @@ class PonSeal extends StatelessWidget {
       child: SizedBox.square(
         dimension: size,
         child: CustomPaint(
-          painter: _SealPainter(label: label, sub: sub, bottom: bottom, fontSize: fontSize, color: color),
+          painter: _SealPainter(label: label, sub: sub, bottom: bottom, fontSize: fontSize, color: color, square: square),
         ),
       ),
     ),
@@ -32,7 +35,8 @@ class PonSeal extends StatelessWidget {
 }
 
 class _SealPainter extends CustomPainter {
-  _SealPainter({required this.label, this.sub, this.bottom, this.fontSize, required this.color});
+  _SealPainter({required this.label, this.sub, this.bottom, this.fontSize, required this.color, this.square = false});
+  final bool square;
   final String label;
   final String? sub;
   final String? bottom;
@@ -71,21 +75,29 @@ class _SealPainter extends CustomPainter {
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = math.max(1.2, r * 0.085);
-    final outer = Path();
-    const steps = 72;
-    for (var i = 0; i <= steps; i++) {
-      final t = i / steps * math.pi * 2;
-      final wobble = 1 + (math.sin(t * 3 + seed % 7) * 0.006) + (math.sin(t * 7 + seed % 5) * 0.004);
-      final p = c + Offset(math.cos(t), math.sin(t)) * (r - ring.strokeWidth / 2 - 0.5) * wobble;
-      i == 0 ? outer.moveTo(p.dx, p.dy) : outer.lineTo(p.dx, p.dy);
-    }
-    canvas.drawPath(outer..close(), ring);
     final inner = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = math.max(0.6, r * 0.025);
     final innerR = r * 0.80;
-    canvas.drawCircle(c, innerR, inner);
+    if (square) {
+      // 角印：太い外枠と細い内枠。角は少しだけ丸める
+      final o = ring.strokeWidth / 2 + 0.5;
+      canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTRB(o, o, size.width - o, size.height - o), Radius.circular(r * 0.08)), ring);
+      final i = r - innerR;
+      canvas.drawRect(Rect.fromLTRB(i, i, size.width - i, size.height - i), inner);
+    } else {
+      final outer = Path();
+      const steps = 72;
+      for (var i = 0; i <= steps; i++) {
+        final t = i / steps * math.pi * 2;
+        final wobble = 1 + (math.sin(t * 3 + seed % 7) * 0.006) + (math.sin(t * 7 + seed % 5) * 0.004);
+        final p = c + Offset(math.cos(t), math.sin(t)) * (r - ring.strokeWidth / 2 - 0.5) * wobble;
+        i == 0 ? outer.moveTo(p.dx, p.dy) : outer.lineTo(p.dx, p.dy);
+      }
+      canvas.drawPath(outer..close(), ring);
+      canvas.drawCircle(c, innerR, inner);
+    }
 
     final base = fontSize ?? size.width * 0.2;
     if (bottom != null) {
@@ -139,7 +151,7 @@ class _SealPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_SealPainter old) => old.label != label || old.sub != sub || old.bottom != bottom || old.fontSize != fontSize || old.color != color;
+  bool shouldRepaint(_SealPainter old) => old.label != label || old.sub != sub || old.bottom != bottom || old.fontSize != fontSize || old.color != color || old.square != square;
 }
 
 /// ハンコが落ちてきてポンと押される動き。押した瞬間に音と振動を出す

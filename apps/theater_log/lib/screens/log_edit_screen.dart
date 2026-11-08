@@ -10,6 +10,7 @@ import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import '../catalog/theater_log.dart';
 import '../theme.dart';
 import '../widgets/community_widgets.dart';
+import '../widgets/form_parts.dart';
 import 'account_screen.dart';
 import 'venue_stamps_screen.dart';
 
@@ -50,10 +51,17 @@ class _LogEditScreenState extends State<LogEditScreen> {
   bool _saved = false;
   TextEditingController? _title;
 
+  // 劇団と劇場の候補は、その欄を触っている間だけ出す
+  late final _groupFocus = FocusNode()..addListener(_focusChanged);
+  late final _venueFocus = FocusNode()..addListener(_focusChanged);
+  void _focusChanged() => setState(() {});
+
   @override
   void dispose() {
     _group.dispose();
     _venue.dispose();
+    _groupFocus.dispose();
+    _venueFocus.dispose();
     _note.dispose();
     _seat.dispose();
     _price.dispose();
@@ -229,16 +237,23 @@ class _LogEditScreenState extends State<LogEditScreen> {
   @override
   Widget build(BuildContext context) {
     final plays = AppScope.of(context).catalog.plays;
-    const border = OutlineInputBorder();
     final initialTitle = _seed?.title ?? widget.play?.title ?? '';
+    final log = AppScope.of(context).log;
+    const gap = SizedBox(height: 24);
+    void pickInto(TextEditingController c, String v) {
+      setState(() => c.text = v);
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.entry == null ? '観劇を記録' : '記録を編集'),
-        actions: [TextButton(key: const Key('log-save'), onPressed: _save, child: const Text('保存'))],
+        actions: [TextButton(key: const Key('log-save'), onPressed: _save, child: const Text('保存', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)))],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
         children: [
+          const FieldLabel('作品名'),
           Autocomplete<Play>(
             initialValue: TextEditingValue(text: initialTitle),
             displayStringForOption: (p) => p.title,
@@ -251,14 +266,15 @@ class _LogEditScreenState extends State<LogEditScreen> {
             optionsViewBuilder: (context, onSelected, options) => Align(
               alignment: Alignment.topLeft,
               child: Material(
-                elevation: 3,
+                color: Palette.card,
+                elevation: 2,
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 280, maxWidth: 340),
                   child: ListView(
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
                     children: [
-                      for (final p in options) ListTile(dense: true, title: Text(p.title), subtitle: Text(p.author), onTap: () => onSelected(p)),
+                      for (final p in options) ListTile(dense: true, title: Text(p.title, style: const TextStyle(fontWeight: FontWeight.w700)), subtitle: Text(p.author), onTap: () => onSelected(p)),
                     ],
                   ),
                 ),
@@ -270,59 +286,58 @@ class _LogEditScreenState extends State<LogEditScreen> {
                 key: const Key('log-title'),
                 controller: controller,
                 focusNode: focusNode,
-                decoration: const InputDecoration(labelText: '作品名（必須）', helperText: '戯曲図書館の作品を選ぶと、台本につながります', border: border),
+                style: fieldStyle,
+                decoration: lineDecoration('作品名（必須）', helper: '戯曲図書館の作品を選ぶと、台本につながります'),
               );
             },
           ),
-          const SizedBox(height: 16),
-          if (AppScope.of(context).auth.signedIn)
-            ListTile(
+          gap,
+          if (AppScope.of(context).auth.signedIn) ...[
+            const FieldLabel('公演'),
+            LineRow(
               key: const Key('log-production'),
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.confirmation_number_outlined),
-              title: Text(_productionLabel ?? (_productionId == null ? '公演を選ぶ、または登録する' : '公演を選択済み')),
-              subtitle: const Text('同じ公演を観た人の感想とつながります', style: TextStyle(fontSize: 12)),
-              trailing: _productionId == null ? const Icon(Icons.chevron_right) : IconButton(tooltip: '公演を外す', icon: const Icon(Icons.close), onPressed: () => setState(() { _productionId = null; _productionLabel = null; })),
+              icon: Icons.confirmation_number_outlined,
+              text: _productionLabel ?? (_productionId == null ? '公演を選ぶ、または登録する' : '公演を選択済み'),
+              placeholder: _productionLabel == null && _productionId == null,
               onTap: _pickProduction,
+              trailing: _productionId == null
+                  ? null
+                  : IconButton(
+                      tooltip: '公演を外す',
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.close, size: 18),
+                      onPressed: () => setState(() {
+                        _productionId = null;
+                        _productionLabel = null;
+                      }),
+                    ),
             ),
-          ListTile(
-            key: const Key('log-date'),
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.event),
-            title: Text('${_date.year}年${_date.month}月${_date.day}日に観た'),
-            trailing: const Text('変更', style: TextStyle(color: Palette.navy)),
-            onTap: _pickDate,
-          ),
-          const SizedBox(height: 8),
-          TextField(controller: _group, decoration: const InputDecoration(labelText: '劇団・団体', border: border)),
-          // 同じ作品を別の劇団が上演することがあるので、自動では入れない
-          if (_play == null || _play!.groups.isEmpty) _Suggestions(values: AppScope.of(context).log.recent((e) => e.group), onPick: (v) => setState(() => _group.text = v)),
-          if (_play != null && _play!.groups.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            const Text('この作品を上演した劇団（押すと入ります）', style: TextStyle(fontSize: 12, color: Palette.inkSoft)),
-            Wrap(
-              spacing: 6,
-              children: [
-                for (final g in _play!.groups.take(8))
-                  ActionChip(
-                    key: Key('group-chip-$g'),
-                    label: Text(g),
-                    onPressed: () => setState(() => _group.text = g),
-                  ),
-              ],
-            ),
+            const Padding(padding: EdgeInsets.only(top: 4), child: Text('同じ公演を観た人の感想とつながります', style: TextStyle(fontSize: 12, color: Palette.inkSoft))),
+            gap,
           ],
-          const SizedBox(height: 16),
+          const FieldLabel('観た日'),
+          LineRow(key: const Key('log-date'), text: '${_date.year}年${_date.month}月${_date.day}日', action: '変える', onTap: _pickDate),
+          gap,
+          const FieldLabel('劇団・団体'),
+          TextField(key: const Key('log-group'), controller: _group, focusNode: _groupFocus, style: fieldStyle, decoration: lineDecoration('劇団名')),
+          // 同じ作品を別の劇団が上演することがあるので、自動では入れない。触っているときだけ候補を出す
+          if (_groupFocus.hasFocus)
+            (_play != null && _play!.groups.isNotEmpty)
+                ? Suggestions(caption: 'この作品を上演した劇団', values: _play!.groups.take(8).toList(), onPick: (v) => pickInto(_group, v))
+                : Suggestions(values: log.recent((e) => e.group), onPick: (v) => pickInto(_group, v)),
+          gap,
+          const FieldLabel('劇場'),
           TextField(
             key: const Key('log-venue'),
             controller: _venue,
-            decoration: InputDecoration(
-              labelText: '劇場',
-              border: border,
-              suffixIcon: IconButton(
+            focusNode: _venueFocus,
+            style: fieldStyle,
+            decoration: lineDecoration(
+              '劇場名',
+              suffix: IconButton(
                 key: const Key('log-venue-pick'),
                 tooltip: '劇場を探す',
-                icon: const Icon(Icons.place_outlined),
+                icon: const Icon(Icons.search, color: Palette.ink),
                 onPressed: () async {
                   final v = await VenuePickerSheet.open(context);
                   if (v != null && mounted) setState(() => _venue.text = v.name);
@@ -330,29 +345,48 @@ class _LogEditScreenState extends State<LogEditScreen> {
               ),
             ),
           ),
-          _Suggestions(values: AppScope.of(context).log.recent((e) => e.venue), onPick: (v) => setState(() => _venue.text = v)),
-          const SizedBox(height: 16),
-          const Text('評価', style: TextStyle(fontSize: 13, color: Palette.inkSoft)),
+          if (_venueFocus.hasFocus) Suggestions(values: log.recent((e) => e.venue), onPick: (v) => pickInto(_venue, v)),
+          gap,
+          const FieldLabel('評価'),
           Row(
             children: [
               for (var i = 1; i <= 5; i++)
                 IconButton(
                   key: Key('star-$i'),
                   tooltip: '$i',
+                  iconSize: 36,
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
                   onPressed: () => setState(() => _rating = _rating == i ? null : i),
                   icon: Icon((_rating ?? 0) >= i ? Icons.star : Icons.star_border, color: Palette.vermilion),
                 ),
             ],
           ),
-          const SizedBox(height: 8),
-          TextField(
-            key: const Key('log-note'),
-            controller: _note,
-            maxLines: 6,
-            minLines: 4,
-            maxLength: 2000,
-            decoration: const InputDecoration(labelText: 'ひとこと・感想', alignLabelWithHint: true, border: border),
+          gap,
+          const FieldLabel('ひとこと・感想'),
+          CustomPaint(
+            painter: const RuledPainter(lineHeight: 30, lines: 5),
+            child: TextField(
+              key: const Key('log-note'),
+              controller: _note,
+              maxLines: null,
+              minLines: 5,
+              maxLength: 2000,
+              style: const TextStyle(fontSize: 16, height: 30 / 16, color: Palette.ink),
+              decoration: const InputDecoration(
+                hintText: '心に残った場面や役者のこと',
+                hintStyle: TextStyle(fontSize: 16, height: 30 / 16, color: Color(0xFFA3A39D)),
+                filled: false,
+                isDense: true,
+                counterText: '',
+                contentPadding: EdgeInsets.zero,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+              ),
+            ),
           ),
+          const SizedBox(height: 8),
           SwitchListTile(
             key: const Key('log-public'),
             contentPadding: EdgeInsets.zero,
@@ -379,9 +413,9 @@ class _LogEditScreenState extends State<LogEditScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              TextField(controller: _seat, decoration: const InputDecoration(labelText: '座席（例: C列12番）', border: border)),
+              TextField(controller: _seat, style: fieldStyle, decoration: lineDecoration('座席（例: C列12番）')),
               const SizedBox(height: 12),
-              TextField(key: const Key('log-price'), controller: _price, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'チケット代（円）', border: border)),
+              TextField(key: const Key('log-price'), controller: _price, keyboardType: TextInputType.number, style: fieldStyle, decoration: lineDecoration('チケット代（円）')),
               const SizedBox(height: 12),
               Align(
                 alignment: Alignment.centerLeft,
@@ -453,25 +487,6 @@ class _LogEditScreenState extends State<LogEditScreen> {
             TextButton(onPressed: _delete, child: const Text('この記録を削除', style: TextStyle(color: Palette.vermilion))),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// 自分が前に入れた値を、押すだけで入れられるようにする
-class _Suggestions extends StatelessWidget {
-  const _Suggestions({required this.values, required this.onPick});
-  final List<String> values;
-  final ValueChanged<String> onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    if (values.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Wrap(
-        spacing: 6,
-        children: [for (final v in values.take(5)) ActionChip(label: Text(v), onPressed: () => onPick(v))],
       ),
     );
   }

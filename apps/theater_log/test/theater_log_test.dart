@@ -103,9 +103,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('野田秀樹'));
     await tester.pumpAndSettle();
-    expect(find.text('別の劇団'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('group-chip-別の劇団')));
+    // 劇団の候補は、劇団の欄を触るまで出さない
+    expect(find.text('別の劇団'), findsNothing);
+    await tester.tap(find.byKey(const Key('log-group')));
     await tester.pump();
+    expect(find.text('別の劇団'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('suggest-別の劇団')));
+    await tester.pump();
+    expect(find.text('別の劇団'), findsOneWidget);
     await tester.tap(find.byKey(const Key('star-5')));
     await tester.pump();
     await tester.tap(find.byKey(const Key('log-save')));
