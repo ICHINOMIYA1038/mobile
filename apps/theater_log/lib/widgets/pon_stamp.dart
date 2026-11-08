@@ -126,17 +126,41 @@ class _SealPainter extends CustomPainter {
       }
     }
 
-    // 朱肉のかすれ。紙の白が抜けたところを小さく散らす
+    // 朱肉のかすれ。紙の白が抜けたところを散らす
+    final unit = math.max(0.5, size.width / 120);
     final knock = Paint()..blendMode = BlendMode.dstOut;
-    final specks = (size.width * size.width / 55).round().clamp(18, 420);
+    final specks = (size.width * size.width / 26).round().clamp(28, 900);
     for (var i = 0; i < specks; i++) {
       final a = rnd.nextDouble() * math.pi * 2;
       final d = math.sqrt(rnd.nextDouble()) * r;
-      final pr = (0.25 + rnd.nextDouble() * 0.9) * math.max(0.5, size.width / 120);
-      knock.color = Colors.black.withValues(alpha: 0.35 + rnd.nextDouble() * 0.55);
+      final pr = (0.3 + rnd.nextDouble() * 1.3) * unit;
+      knock.color = Colors.black.withValues(alpha: 0.45 + rnd.nextDouble() * 0.55);
       canvas.drawCircle(c + Offset(math.cos(a), math.sin(a)) * d, pr, knock);
     }
-    // 片側が少し薄い（押す力のむら）
+    // 輪に沿って擦れた細い筋（押したときの紙の目）
+    final streak = Paint()
+      ..blendMode = BlendMode.dstOut
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 10; i++) {
+      final a = rnd.nextDouble() * math.pi * 2;
+      final rr = r * (0.55 + rnd.nextDouble() * 0.42);
+      streak
+        ..strokeWidth = (0.5 + rnd.nextDouble() * 0.8) * unit
+        ..color = Colors.black.withValues(alpha: 0.5 + rnd.nextDouble() * 0.4);
+      canvas.drawArc(Rect.fromCircle(center: c, radius: rr), a, 0.15 + rnd.nextDouble() * 0.35, false, streak);
+    }
+    // 朱肉の付きが悪かった所。縁に近いところが 2〜3 か所ぼんやり薄い
+    final worn = Paint()
+      ..blendMode = BlendMode.dstOut
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 3 * unit);
+    for (var i = 0; i < 2 + seed % 2; i++) {
+      final a = rnd.nextDouble() * math.pi * 2;
+      worn.color = Colors.black.withValues(alpha: 0.35 + rnd.nextDouble() * 0.25);
+      final p = c + Offset(math.cos(a), math.sin(a)) * r * (0.62 + rnd.nextDouble() * 0.3);
+      canvas.drawOval(Rect.fromCenter(center: p, width: r * (0.3 + rnd.nextDouble() * 0.3), height: r * (0.16 + rnd.nextDouble() * 0.16)), worn);
+    }
+    // 片側が薄い（押す力のむら）
     canvas.drawRect(
       Offset.zero & size,
       Paint()
@@ -144,7 +168,7 @@ class _SealPainter extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment(-0.9 + (seed % 5) * 0.1, -1),
           end: const Alignment(0.8, 1),
-          colors: [Colors.black.withValues(alpha: 0.18), Colors.transparent, Colors.black.withValues(alpha: 0.06)],
+          colors: [Colors.black.withValues(alpha: 0.3), Colors.transparent, Colors.black.withValues(alpha: 0.1)],
         ).createShader(Offset.zero & size),
     );
     canvas.restore();
