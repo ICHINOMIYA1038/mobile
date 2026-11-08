@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:theater_log/widgets/pon_stamp.dart';
 import 'package:theater_log/app_scope.dart';
 import 'package:theater_log/catalog/log_stats.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
@@ -102,7 +103,7 @@ void main() {
     await tester.pumpWidget(wrap(TheaterLog(), ShareCardScreen(entry: e), venues: const [Venue(1, '本多劇場', '東京都')]));
     await tester.pump();
     expect(find.byKey(const Key('card-venue-seal')), findsOneWidget);
-    expect(find.text('観劇済'), findsOneWidget);
+    expect(find.byWidgetPredicate((w) => w is PonSeal && w.label == '観劇済'), findsOneWidget);
     expect(find.byKey(const Key('card-seat-text')), findsNothing);
     final story = tester.getSize(find.byType(LogShareCard));
     expect(story.height / story.width, closeTo(16 / 9, 0.01));
