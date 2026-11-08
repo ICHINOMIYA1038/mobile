@@ -57,7 +57,7 @@ void main() {
       final log = TheaterLog();
       await log.upsert(_e('a', venue: '甲劇場'));
       await tester.pumpWidget(_scope(log, const SingleChildScrollView(child: VenueStampSummary())));
-      expect(find.text('劇場スタンプ 1 / 3'), findsOneWidget);
+      expect(find.text('1 / 3'), findsOneWidget);
       expect(find.textContaining('関係のない'), findsOneWidget);
       await tester.tap(find.byKey(const Key('pref-東京都')));
       await tester.pumpAndSettle();

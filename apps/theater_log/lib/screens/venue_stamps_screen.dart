@@ -19,28 +19,22 @@ class VenueStampSummary extends StatelessWidget {
     final stamps = venueStamps(scope.catalog.venues, scope.log.entries);
     final done = stamps.values.fold(0, (a, b) => a + b.count);
     final prefs = stamps.values.where((p) => p.count > 0).length;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Palette.card,
-        border: Border.all(color: Palette.line),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '劇場スタンプ $done / ${scope.catalog.venues.length}',
-            key: const Key('venue-count'),
-            style: const TextStyle(fontFamily: titleFont, fontSize: 18, fontWeight: FontWeight.w700),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Expanded(child: Text('劇場スタンプ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Palette.ink))),
+              Text('$done / ${scope.catalog.venues.length}', key: const Key('venue-count'), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: Palette.ink)),
+            ],
           ),
-          Text('$prefs 都道府県に足あと', style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
-          const SizedBox(height: 10),
+          Text('$prefs 都道府県に足あと。都道府県を押すと劇場の一覧', style: const TextStyle(fontSize: 12, color: Palette.inkSoft)),
+          const SizedBox(height: 12),
           PrefectureMap(stamps: stamps, onTap: (p) => VenueListScreen.open(context, p)),
           const SizedBox(height: 6),
           const Text('各劇場とは関係のない、このアプリの楽しみ方です。', style: TextStyle(fontSize: 11, color: Palette.inkSoft)),
         ],
-      ),
     );
   }
 }
@@ -88,11 +82,11 @@ class _Tile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(1),
       child: Material(
-        color: on ? Palette.vermilion : const Color(0xFFE9E2D2),
-        borderRadius: BorderRadius.circular(4),
+        color: on ? Palette.vermilion : const Color(0xFFE8E8E2),
+        borderRadius: BorderRadius.circular(2),
         child: InkWell(
           key: Key('pref-$name'),
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(2),
           onTap: s == null ? null : () => onTap(s),
           child: Center(
             child: FittedBox(

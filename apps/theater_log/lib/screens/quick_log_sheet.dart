@@ -18,6 +18,7 @@ import 'package:gikyoku_catalog/gikyoku_catalog.dart';
 import '../catalog/theater_log.dart';
 import '../theme.dart';
 import '../widgets/community_widgets.dart';
+import '../widgets/form_parts.dart';
 import '../widgets/pon_stamp.dart';
 import '../widgets/ticket_stub.dart';
 import 'log_edit_screen.dart';
@@ -514,20 +515,6 @@ class QuickLogSheetState extends State<QuickLogSheet> {
   static const _heading = TextStyle(fontFamily: displayFont, fontSize: 25, height: 1.3, color: Palette.sumi);
   static const _sub = TextStyle(fontSize: 13, height: 1.5, color: Palette.inkSoft);
 
-  static InputDecoration _line(String hint, {Widget? prefix}) => InputDecoration(
-    hintText: hint,
-    hintStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500, color: Color(0xFFA3A39D)),
-    prefixIcon: prefix,
-    prefixIconConstraints: const BoxConstraints(minWidth: 30),
-    filled: false,
-    isDense: true,
-    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-    border: const UnderlineInputBorder(borderSide: BorderSide(color: Palette.ink, width: 1.5)),
-    enabledBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Palette.ink, width: 1.5)),
-    focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Palette.sumi, width: 2.5)),
-  );
-
-  static const _field = TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: Palette.ink);
 
   /// 題名が決まったあとの画面の上に、何の記録かを 1 行出す。押すと題名に戻る
   Widget _titleLine() {
@@ -651,8 +638,8 @@ class QuickLogSheetState extends State<QuickLogSheet> {
           onChanged: (text) => setState(() {
             if (_production != null && _production!.title != text.trim()) _production = null;
           }),
-          style: _field,
-          decoration: _line('公演名、劇団、劇場で探す'),
+          style: fieldStyle,
+          decoration: lineDecoration('公演名、劇団、劇場で探す'),
         ),
         if (_scan != null) _ScanSummary(scan: _scan!, watchedOn: _watchedOn, onClear: () => setState(() => _scan = null)),
         if (_scan != null && production == null && !_hasTitle && _scan!.titleCandidates.isNotEmpty)
@@ -781,7 +768,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     child: Text(
                       '${fixedDate.year}年${fixedDate.month}月${fixedDate.day}日${_pickedDate == null && _scan?.showTime != null ? (_scan!.showTime == 'matinee' ? ' 昼の部' : ' 夜の部') : ''}',
-                      style: _field,
+                      style: fieldStyle,
                     ),
                   ),
                 ),
@@ -827,7 +814,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
                   Expanded(
                     child: Text(
                       venue ?? '劇場を選ぶ',
-                      style: venue == null ? const TextStyle(fontSize: 17, fontWeight: FontWeight.w500, color: Color(0xFFA3A39D)) : _field,
+                      style: venue == null ? const TextStyle(fontSize: 17, fontWeight: FontWeight.w500, color: Color(0xFFA3A39D)) : fieldStyle,
                     ),
                   ),
                   if (venue != null)
@@ -870,9 +857,9 @@ class QuickLogSheetState extends State<QuickLogSheet> {
           key: const Key('venue-query'),
           controller: _venueQuery,
           autofocus: true,
-          style: _field,
+          style: fieldStyle,
           onChanged: (_) => setState(() {}),
-          decoration: _line('劇場名か都道府県', prefix: const Icon(Icons.search, size: 20, color: Palette.ink)).copyWith(
+          decoration: lineDecoration('劇場名か都道府県', prefix: const Icon(Icons.search, size: 20, color: Palette.ink)).copyWith(
             suffixIcon: TextButton(
               key: const Key('venue-cancel'),
               onPressed: () {
@@ -965,7 +952,7 @@ class QuickLogSheetState extends State<QuickLogSheet> {
       _label('ひとこと（なくても大丈夫です）'),
       // 罫線のノートに書くように。行の高さと罫線の間隔をそろえる
       CustomPaint(
-        painter: const _RuledPainter(lineHeight: 30, lines: 4),
+        painter: const RuledPainter(lineHeight: 30, lines: 4),
         child: TextField(
           key: const Key('quick-note'),
           controller: _note,
@@ -1428,32 +1415,3 @@ class _TicketSlotPainter extends CustomPainter {
   bool shouldRepaint(_TicketSlotPainter old) => old.split != split;
 }
 
-/// ノートの罫線。少なくとも [lines] 本、書いた分だけ下まで引く
-class _RuledPainter extends CustomPainter {
-  const _RuledPainter({required this.lineHeight, required this.lines});
-  final double lineHeight;
-  final int lines;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = Palette.line
-      ..strokeWidth = 1;
-    final n = math.max(lines, (size.height / lineHeight).floor());
-    for (var i = 1; i <= n; i++) {
-      final y = i * lineHeight - 1;
-      canvas.drawLine(
-        Offset(0, y),
-        Offset(size.width, y),
-        i == n
-            ? (Paint()
-                ..color = Palette.ink
-                ..strokeWidth = 1.5)
-            : p,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_RuledPainter old) => old.lineHeight != lineHeight || old.lines != lines;
-}
