@@ -276,9 +276,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
       canPop: _shots.isEmpty,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
-        if (await _confirmDiscard() && mounted) {
-          Navigator.of(context).pop();
-        }
+        final discard = await _confirmDiscard();
+        if (!context.mounted || !discard) return;
+        Navigator.of(context).pop();
       },
       child: Scaffold(
       backgroundColor: Colors.black,
