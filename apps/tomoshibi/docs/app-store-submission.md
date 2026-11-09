@@ -5,6 +5,32 @@
 
 直近の却下と対応は [4.3a-rejection-response.md](4.3a-rejection-response.md) を参照。
 
+## 次回 1.0.3 の準備状況（2026-11-10）
+
+App Store で配信中の版は 1.0.2（ビルド 8）。次回のソースは 1.0.3（ビルド 9）。
+署名済み IPA は `build/ios/ipa/exported/*.ipa` に作成し、署名を検証済み。
+App Store Connect には未アップロードで、1.0.3 のバージョンもまだ作成していない。
+下の「2. 審査メモ」は過去に提出した文面の記録で、
+初期画面と購入復元ボタンの位置が現在の画面と異なる。次回の審査には使わない。
+
+次回の審査メモ案:
+
+```text
+TOMOSHIBI小屋 is the first-party iOS client of the stage-planning service developed and operated by 戯曲図書館. It combines scene-by-scene staging and lighting in one 3D workspace.
+
+How to try it without an account:
+1. Launch the app. The project list opens.
+2. Tap “新しいプロジェクトを作る” to open the editor.
+3. Tap the current scene card to open the chapter and scene list. Add another scene with the + button or the scene's ⋯ menu.
+4. Use the edit panel to add a performer, lighting fixture, or stage set. The floor plan and 3D view show the same stage.
+5. Tap “通しで見る” to play the scenes in order.
+
+Sign-in is optional. New Pro purchases use StoreKit inside the app. “購入を復元” remains available in the bar below the web content, including while signed out. The app uses native iOS integrations for ATT consent, sign-in, Universal Links, and StoreKit purchases and restoration.
+```
+
+提出前に iPhone・iPad のスクリーンショットを現在の画面で撮り直し、
+[掲載文案](store-listing.md) と表示内容を照合する。
+
 ## 0. 提出前チェック（必ず実行）
 
 ```sh
@@ -22,15 +48,15 @@ flutter test
 | Bundle ID | 済 | `com.gikyokutosyokan.tomoshibi` |
 | アプリアイコン | 済 | `assets/icon/app_icon.png`（`dart run flutter_launcher_icons`で反映） |
 | pubspec の説明文 | 済 | 2026-08-28に雛形の`"A new Flutter project."`から実内容へ修正 |
-| バージョン／ビルド番号 | **要更新** | 現在`1.0.1+7`。提出のたびに必ず上げる |
+| バージョン／ビルド番号 | ビルド済み | 配信中は `1.0.2+8`。次回ソースと IPA は `1.0.3+9`。提出のたびに必ず上げる |
 | 課金SDK | 済 | RevenueCat (`purchases_flutter`)。商品 `com.gikyokutosyokan.tomoshibi.pro.monthly` は2026-08-04に「審査用に追加」済み |
 | ATT | 済 | `NSUserTrackingUsageDescription` 設定済み。許諾結果は`X-ATT-Status`ヘッダでサイト側へ渡す |
 | プライバシーポリシーの公開URL | 要確認 | サイト側フッターの「プライバシー」。ASCの申告と一致しているか確認 |
 | 問い合わせ先 | 済 | support@gikyokutosyokan.com |
 | コンテンツ配信権 | 要注意 | WebViewで自社サイトを表示するため、「サードパーティのコンテンツを表示する」に該当しない旨を正しく申告すること |
-| ストア用スクリーンショット | 済（**ASCへの反映は未**） | 2026-08-28にWeb側修正の反映後、5枚を撮影し`frameit`で合成済み。実体は`ios/fastlane/screenshots/ja/*_framed.png` |
+| ストア用スクリーンショット | 次回版は要撮影 | 既存の画像は旧画面のもの。1.0.3 用に iPhone と iPad の画面を撮り直す |
 | 袖(sidewing)視点の不具合 | 済 | Web側 `src/App.tsx` の `CAMERA_VIEWS` を修正し、2026-08-28に本番反映済み（PR #1）。下記「3. スクリーンショット」参照 |
-| App Review Information の Notes | 済 | 2026-08-28にASC APIで更新済み。**上限4000文字**で、更新前は3997文字とほぼ限界だったため、解決済みの過去指摘を1行に圧縮して4.3(a)の説明を先頭に据えた。全文は下記「2. 審査メモ」 |
+| App Review Information の Notes | 次回版は要更新 | 既存の文面は旧画面の案内。1.0.3 の文案は上記「次回の審査メモ案」を参照 |
 | Team | 済 | `DEVELOPMENT_TEAM = SZFUZ58P49`、`CODE_SIGN_STYLE = Automatic` |
 | 端末上のアプリ名 | 済 | 2026-09-24に `CFBundleDisplayName` を「TOMOSHIBI小屋」に変更しストア名と統一（1.0.1〜）。ホーム画面では英字9文字+漢字2文字で収まる |
 
