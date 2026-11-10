@@ -244,7 +244,7 @@ class _ProScreenState extends State<ProScreen> {
             _Line('1日に AI と話せる回数が $freeCap回 から $proCap回 に増えます（会話・過去問の「AIに聞く」のどちらにも使えます）。'),
             const _Line('広告が出なくなります。'),
             const _Line('教材・過去問・図解・復習は、Pro でなくてもすべて使えます。'),
-            if (!isPro && ((state.home?['progress'] as Map?)?['seen'] as num? ?? 0) >= 10)
+            if (!isPro && state.home?['study'] is Map && ((state.home?['progress'] as Map?)?['seen'] as num? ?? 0) >= 10)
               TextButton(onPressed: _busy ? null : () => PlanPreviewScreen.show(context), child: const Text('自分の学習プランを1回体験する')),
             const SizedBox(height: 20),
             if (isPro)

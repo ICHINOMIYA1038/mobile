@@ -39,7 +39,7 @@ void main() {
     PurchaseService.purchaseForTest = null;
   });
 
-  Future<void> open(WidgetTester tester, {String priceLabel = _price}) async {
+  Future<void> open(WidgetTester tester, {String priceLabel = _price, Map<String, dynamic>? homeData}) async {
     final state = AppState(
       ApiClient(
         baseUrl: 'http://test',
@@ -49,6 +49,7 @@ void main() {
         }),
       ),
     );
+    state.home = homeData;
     await tester.runAsync(state.api.ensureUser);
     await tester.pumpWidget(
       AppScope(
@@ -62,6 +63,11 @@ void main() {
   }
 
   bool canClose(WidgetTester tester) => tester.widget<PopScope>(find.descendant(of: find.byType(ProScreen), matching: find.byWidgetPredicate((w) => w is PopScope))).canPop;
+
+  testWidgets('古いサーバーでは解答数が多くても新しい体験への入口を表示しない', (tester) async {
+    await open(tester, homeData: {'progress': {'seen': 10}});
+    expect(find.text('自分の学習プランを1回体験する'), findsNothing);
+  });
 
   testWidgets('価格と購入開始の計測はストアの金額を使い、キャンセルを区別する', (tester) async {
     final previous = Funnel.log;

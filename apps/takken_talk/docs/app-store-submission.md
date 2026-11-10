@@ -40,6 +40,10 @@ flutter drive --driver=test_driver/study_driver.dart \
 
 画像の保存先は `STUDY_SCREENSHOT_DIR`。未指定なら `/tmp/takken-conversion-screenshots`。
 
+2026-11-11 の確認結果：静的解析は問題なし、アプリのテスト841件と iOS シミュレーターでの通し確認が成功。確認画像は `screenshots/conversion/` に保存した。画像の解答記録はテスト用のデータ。
+
+1.0.3・ビルド14の公開用アーカイブを作成し、既存の配布用証明書とプロファイルで署名して書き出した。IPA は `build/ios/ipa/takken_talk.ipa`。署名、バージョン、ビルド番号、本番 API への接続設定、通常の起動ファイルを確認した。アップロード・審査提出・本番への反映は未実施。
+
 ## 計測の読み方
 
 | イベント | 数えるもの |
