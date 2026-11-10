@@ -13,6 +13,7 @@ import 'map_screen.dart';
 import 'pro/analysis_screen.dart';
 import 'pro/mock_screen.dart';
 import 'pro_screen.dart';
+import 'study_screen.dart';
 
 /// 「学ぶ」タブ（サイトの /takken と同じ並び: いまの状況 → 続きから → カリキュラム）。
 /// データは AppState.home（タブを開くたびに main.dart が取り直す）。
@@ -50,6 +51,10 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (home['study'] is Map) ...[
+                    StudyEntryCard(session: (home['study'] as Map).cast<String, dynamic>()),
+                    const SizedBox(height: 16),
+                  ],
                   _Status(home: home, progress: progress, state: state),
                   const SizedBox(height: 12),
                   _Next(home: home, first: chapters.firstOrNull, state: state),

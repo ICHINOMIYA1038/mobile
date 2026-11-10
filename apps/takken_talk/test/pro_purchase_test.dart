@@ -9,17 +9,18 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:takken_talk/api/client.dart';
 import 'package:takken_talk/config.dart';
+import 'package:takken_talk/funnel.dart';
 import 'package:takken_talk/purchase_service.dart';
 import 'package:takken_talk/screens/pro_screen.dart';
 import 'package:takken_talk/state/app_state.dart';
 
 const _price = '¥3,000';
 
-Package _package() => const Package(
+Package _package({double price = 3000, String label = _price}) => Package(
   r'$rc_monthly',
   PackageType.monthly,
-  StoreProduct(AppConfig.proProductId, '', 'Pro', 3000, _price, 'JPY'),
-  PresentedOfferingContext('default', null, null),
+  StoreProduct(AppConfig.proProductId, '', 'Pro', price, label, 'JPY'),
+  const PresentedOfferingContext('default', null, null),
 );
 
 void main() {
@@ -38,7 +39,7 @@ void main() {
     PurchaseService.purchaseForTest = null;
   });
 
-  Future<void> open(WidgetTester tester) async {
+  Future<void> open(WidgetTester tester, {String priceLabel = _price}) async {
     final state = AppState(
       ApiClient(
         baseUrl: 'http://test',
@@ -57,10 +58,27 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
-    expect(find.text(_price), findsOneWidget);
+    expect(find.text(priceLabel), findsOneWidget);
   }
 
   bool canClose(WidgetTester tester) => tester.widget<PopScope>(find.descendant(of: find.byType(ProScreen), matching: find.byWidgetPredicate((w) => w is PopScope))).canPop;
+
+  testWidgets('価格と購入開始の計測はストアの金額を使い、キャンセルを区別する', (tester) async {
+    final previous = Funnel.log;
+    final events = <(String, Map<String, Object>?)>[];
+    Funnel.log = (name, {parameters}) async { events.add((name, parameters)); };
+    addTearDown(() => Funnel.log = previous);
+    PurchaseService.offeringsForTest = () async => Offerings({'default': Offering('default', '', const {}, [_package(price: 2000, label: '¥2,000')])});
+    PurchaseService.purchaseForTest = (_) async => throw PurchaseCancelledException();
+    await open(tester, priceLabel: '¥2,000');
+    expect(find.text(_price), findsNothing);
+    await tester.tap(find.text('¥2,000'));
+    await tester.pumpAndSettle();
+    expect(events.where((e) => e.$1 == 'purchase_price_loaded'), hasLength(1));
+    expect(events.firstWhere((e) => e.$1 == 'begin_checkout').$2, containsPair('value', 2000.0));
+    expect(events.where((e) => e.$1 == 'purchase_cancelled'), hasLength(1));
+    expect(events.where((e) => e.$1 == 'purchase_failed'), isEmpty);
+  });
 
   testWidgets('App Store が応答しなくても、閉じられて、時間が来ればボタンが戻る', (tester) async {
     final never = Completer<void>();

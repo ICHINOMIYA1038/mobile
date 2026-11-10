@@ -7,6 +7,7 @@ import '../common/parts.dart';
 import '../pro_screen.dart';
 import 'analysis_logic.dart';
 import 'plan_tasks.dart';
+import 'plan_preview_screen.dart';
 
 /// 苦手分析と学習プラン（GET /pro/analysis → { pro, report, plan, plansLeft }。形はサイトの src/lib/server/analysis.ts の Report と
 /// pro.ts の Plan、考え方は docs/pro-analysis.md）。Pro の目玉なので、文の壁にせず「数字を大きく・カードで区切る」。
@@ -133,6 +134,8 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     final pace = (r['pace'] as Map?)?.cast<String, dynamic>();
     final sections = <Widget>[
       if (empty) _EmptyGuide(onStart: () => _kakomon(AppScope.read(context).chapters.firstOrNull?.id ?? 'ch01')),
+      if (!pro && d['preview'] is Map)
+        _PreviewOffer(data: (d['preview'] as Map).cast<String, dynamic>()),
       _ForecastCard(r: r),
       if (!pro)
         _Locked(onPro: _toPro)
@@ -187,6 +190,30 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 }
 
 List<Map<String, dynamic>> _maps(Object? v) => ((v as List?) ?? const []).map((x) => (x as Map).cast<String, dynamic>()).toList();
+
+class _PreviewOffer extends StatelessWidget {
+  const _PreviewOffer({required this.data});
+  final Map<String, dynamic> data;
+
+  @override
+  Widget build(BuildContext context) {
+    final used = data['used'] == true;
+    final eligible = used || data['eligible'] == true;
+    final remaining = ((data['minimum'] as num? ?? 10) - (data['answered'] as num? ?? 0)).toInt().clamp(0, 10);
+    return Card(color: Palette.primarySoft, child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const Text('自分の学習プランを1回体験', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 8),
+        Text(eligible ? '解いた記録から、次に取り組む1日分のプランを見られます。体験だけで支払いは発生しません。' : 'あと$remaining問に答えると、あなたの記録を使った学習プランを体験できます。'),
+        const SizedBox(height: 12),
+        FilledButton(onPressed: eligible ? () => PlanPreviewScreen.show(context) : null,
+          child: Text(used ? '体験した学習プランを見る' : '1日分の学習プランを体験')),
+        if (!eligible) TextButton(onPressed: () => openKakomon(context, set: 'ch01', label: '第1章'), child: const Text('続けて問題を解く')),
+      ]),
+    ));
+  }
+}
 
 /// プランを作っているあいだ（その日の最初は AI が書くので少し待つ）
 class _Making extends StatelessWidget {
