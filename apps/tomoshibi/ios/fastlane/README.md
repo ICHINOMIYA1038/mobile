@@ -31,6 +31,14 @@ Frame captured screenshots with a device bezel + title/subtitle (see fastlane/sc
 
 Upload store metadata + framed screenshots to App Store Connect (no binary upload)
 
+### ios upload_studio_screenshots
+
+```sh
+[bundle exec] fastlane ios upload_studio_screenshots
+```
+
+Upload framed studio screenshots to the 1.0.3 draft without submitting for review
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
