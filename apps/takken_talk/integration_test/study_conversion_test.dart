@@ -64,6 +64,7 @@ void main() {
           case '/api/v1/takken/answer':
             final q = (jsonDecode(req.body) as Map)['questionId'] as String;
             answers.add(q);
+            (home['progress'] as Map)['seen'] = answers.toSet().length;
             return ok({
               'correct': q != 'test_q1',
               'explanation': '説明に戻って、違いを確認しましょう。',

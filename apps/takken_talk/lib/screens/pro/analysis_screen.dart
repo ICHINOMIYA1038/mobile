@@ -135,7 +135,11 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     final sections = <Widget>[
       if (empty) _EmptyGuide(onStart: () => _kakomon(AppScope.read(context).chapters.firstOrNull?.id ?? 'ch01')),
       if (!pro && d['preview'] is Map)
-        _PreviewOffer(data: (d['preview'] as Map).cast<String, dynamic>()),
+        _PreviewOffer(
+          data: (d['preview'] as Map).cast<String, dynamic>(),
+          onContinue: () => _then(openKakomon(context, set: 'all', label: 'まだ解いていない問題', mode: 'new')),
+          onPreview: () => _then(PlanPreviewScreen.show(context)),
+        ),
       _ForecastCard(r: r),
       if (!pro)
         _Locked(onPro: _toPro)
@@ -192,8 +196,10 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 List<Map<String, dynamic>> _maps(Object? v) => ((v as List?) ?? const []).map((x) => (x as Map).cast<String, dynamic>()).toList();
 
 class _PreviewOffer extends StatelessWidget {
-  const _PreviewOffer({required this.data});
+  const _PreviewOffer({required this.data, required this.onContinue, required this.onPreview});
   final Map<String, dynamic> data;
+  final VoidCallback onContinue;
+  final VoidCallback onPreview;
 
   @override
   Widget build(BuildContext context) {
@@ -207,9 +213,9 @@ class _PreviewOffer extends StatelessWidget {
         const SizedBox(height: 8),
         Text(eligible ? '解いた記録から、次に取り組む1日分のプランを見られます。体験だけで支払いは発生しません。' : 'あと$remaining問に答えると、あなたの記録を使った学習プランを体験できます。'),
         const SizedBox(height: 12),
-        FilledButton(onPressed: eligible ? () => PlanPreviewScreen.show(context) : null,
+        FilledButton(onPressed: eligible ? onPreview : null,
           child: Text(used ? '体験した学習プランを見る' : '1日分の学習プランを体験')),
-        if (!eligible) TextButton(onPressed: () => openKakomon(context, set: 'ch01', label: '第1章'), child: const Text('続けて問題を解く')),
+        if (!eligible) TextButton(onPressed: onContinue, child: const Text('続けて問題を解く')),
       ]),
     ));
   }
