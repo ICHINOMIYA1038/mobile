@@ -11,6 +11,7 @@ import '../widgets/rich_text.dart';
 import 'common/parts.dart';
 import 'kakomon/explain_sheet.dart';
 import 'pro/analysis_screen.dart';
+import 'study_next_step.dart';
 
 class StudyEntryCard extends StatefulWidget {
   const StudyEntryCard({super.key, required this.session});
@@ -123,6 +124,7 @@ class StudyScreen extends StatefulWidget {
 
 class _StudyScreenState extends State<StudyScreen> {
   late int _index = _initialIndex();
+  int _nextStepRevision = 0;
   bool _sending = false;
   final _scroll = ScrollController();
   StudyDraft get _draft => widget.draft;
@@ -272,6 +274,15 @@ class _StudyScreenState extends State<StudyScreen> {
     const SizedBox(height: 8),
     Text('今回の正解は ${_draft.correct} / ${_questions.length}問です。'),
     const SizedBox(height: 20),
+    if (AppScope.of(context).me?['pro'] != true &&
+        AppScope.of(context).home?['study'] is Map) ...[
+      StudyNextStepCard(
+        key: ValueKey(_nextStepRevision),
+        userId: _draft.userId,
+        chapterId: _questions.first['chapterId'] as String?,
+      ),
+      const SizedBox(height: 20),
+    ],
     const Text(
       '今回確認したこと',
       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
@@ -307,23 +318,31 @@ class _StudyScreenState extends State<StudyScreen> {
           : '明日もホームの「今日の復習3問」で確かめましょう。',
     ),
     const SizedBox(height: 20),
-    if (AppScope.of(context).me?['pro'] != true) ...[
-      const Text('10問の記録がたまると、自分の記録を使った学習プランを1回体験できます。'),
-      const SizedBox(height: 8),
-    ],
     OutlinedButton(
-      onPressed: () => Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          settings: const RouteSettings(name: 'pro_analysis'),
-          builder: (_) => const AnalysisScreen(),
-        ),
-      ),
+      onPressed: () async {
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute(
+            settings: const RouteSettings(name: 'pro_analysis'),
+            builder: (_) => const AnalysisScreen(),
+          ),
+        );
+        if (mounted) {
+          setState(() => _nextStepRevision++);
+          if (_scroll.hasClients) _scroll.jumpTo(0);
+        }
+      },
       child: const Text('解いた記録と学習プランを見る'),
     ),
-    TextButton(
-      onPressed: () => openKakomon(context, set: _questions.first['chapterId'] as String, label: '問題を続ける'),
-      child: const Text('もう少し問題を解く'),
-    ),
+    if (AppScope.of(context).me?['pro'] == true ||
+        AppScope.of(context).home?['study'] is! Map)
+      TextButton(
+        onPressed: () => openKakomon(
+          context,
+          set: _questions.first['chapterId'] as String,
+          label: '問題を続ける',
+        ),
+        child: const Text('もう少し問題を解く'),
+      ),
     const SizedBox(height: 8),
     FilledButton(
       onPressed: () => Navigator.of(context).pop(),

@@ -133,6 +133,13 @@ void main() {
     final api = ApiClient(
       baseUrl: 'http://test',
       client: MockClient((req) async {
+        if (req.url.path == '/api/v1/takken/home') {
+          return ok({
+            'pro': false,
+            'study': session(),
+            'progress': {'seen': 3},
+          });
+        }
         expect(req.url.path, '/api/v1/takken/answer');
         final body = jsonDecode(req.body) as Map;
         requested.add(body['questionId'] as String);
@@ -147,7 +154,7 @@ void main() {
     final draft = StudyDraft(userId: 'u_test', session: session());
     await tester.pumpWidget(
       AppScope(
-        state: AppState(api),
+        state: AppState(api)..home = {'study': session()},
         child: MaterialApp(
           theme: buildTheme(),
           home: StudyScreen(draft: draft),
@@ -167,6 +174,8 @@ void main() {
     expect(requested, ['q0', 'q1', 'q2']);
     expect(find.text('3問、おつかれさまでした'), findsOneWidget);
     expect(find.textContaining('明日は、今回まちがえた問題'), findsOneWidget);
+    expect(find.textContaining('異なる3問に答えました。あと7問'), findsOneWidget);
+    expect(tester.getBottomRight(find.text('まだ解いていない問題を解く')).dy, lessThan(844));
     expect(events.where((e) => e.$1 == 'study_first_completed'), hasLength(1));
     expect((await StudyDraft.load('u_test', session())).complete, true);
     expect(tester.takeException(), isNull);
