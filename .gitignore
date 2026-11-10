@@ -22,6 +22,9 @@ apps/*/screenshots/
 apps/*/screenshots_ipad/
 apps/*/store_screenshots/
 apps/*/store_screenshots_ipad/
+apps/tomoshibi/screenshots_103_*/
+apps/tomoshibi/ios/fastlane/store_upload/
+scripts/asc/__pycache__/
 
 # env
 .env

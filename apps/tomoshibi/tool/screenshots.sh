@@ -6,8 +6,8 @@
 #
 # screenshots/ に PNG が書き出される。
 #
-# 撮る内容は integration_test/screenshots_test.dart、
-# 表示するシーン(器具の吊り込み・視点・客電)は tool/build_scene_urls.py にある。
+# 撮る内容は integration_test/screenshots_test.dart にある。
+# 実画面に変更があったら、同ファイルと Framefile.json の文言を合わせて直す。
 # 撮影方式は sound_shield の tool/screenshots.sh と同じマーカーファイル方式。
 #
 # 注意: このアプリはWebView (Web版 TOMOSHIBI小屋) を表示するため、撮影には
@@ -20,9 +20,6 @@ DEVICE_NAME="${1:-iPhone 16 Pro Max}"
 OUT_DIR="${2:-screenshots}"
 
 BUNDLE_ID="com.gikyokutosyokan.tomoshibi"
-
-echo "== シーンURLを生成 =="
-python3 tool/build_scene_urls.py --dart
 
 echo "== $DEVICE_NAME を起動 =="
 UDID=$(xcrun simctl list devices available \
@@ -44,6 +41,7 @@ xcrun simctl shutdown "$UDID" 2>/dev/null || true
 xcrun simctl boot "$UDID" 2>/dev/null || true
 # 起動しきる前に流し込むと落ちるので待つ
 xcrun simctl bootstatus "$UDID" -b
+xcrun simctl status_bar "$UDID" override --time '9:41' --batteryState charged --batteryLevel 100
 
 mkdir -p "$OUT_DIR"
 
@@ -58,15 +56,15 @@ echo "== 撮影用の常駐プロセスを起動 =="
       sleep 0.3
     fi
   done
-
   while true; do
     for request in "$TMP_DIR"/shot_*.request; do
       [ -e "$request" ] || continue
       base=$(basename "$request" .request)
       name=${base#shot_}
-      xcrun simctl io "$UDID" screenshot "$OUT_DIR/$name.png" >/dev/null 2>&1
-      rm -f "$request"
-      touch "$TMP_DIR/shot_$name.done"
+      if xcrun simctl io "$UDID" screenshot "$OUT_DIR/$name.png" >/dev/null 2>&1; then
+        rm -f "$request"
+        touch "$TMP_DIR/shot_$name.done"
+      fi
     done
     sleep 0.05
   done
@@ -78,11 +76,12 @@ POLLER_PID=$!
 # 成否にかかわらず通常アプリのRelease設定へ戻す。
 cleanup() {
   kill "$POLLER_PID" 2>/dev/null || true
+  xcrun simctl status_bar "$UDID" clear >/dev/null 2>&1 || true
   flutter build ios --config-only --release >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
-echo "== 撮影 (1枚あたり25秒ほどWebGLの描画を待ちます) =="
+echo "== 撮影 (WebGLの描画を待ちながら5画面を撮ります) =="
 flutter test integration_test/screenshots_test.dart -d "$UDID"
 
 cleanup
@@ -90,9 +89,10 @@ trap - EXIT
 
 # アプリがシミュレータのメモリ不足で落ちると `flutter test` が死んだ接続を待って
 # 固まったままになり、途中までのスクショだけが残る。撮れた枚数を必ず突き合わせる。
-EXPECTED=$(python3 tool/build_scene_urls.py --json | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
+SHOT_NAMES=(01_projects 02_3d 03_map 04_scenes 05_playback)
+EXPECTED=${#SHOT_NAMES[@]}
 MISSING=0
-for name in $(python3 tool/build_scene_urls.py --json | python3 -c 'import json,sys; [print(s["name"]) for s in json.load(sys.stdin)]'); do
+for name in "${SHOT_NAMES[@]}"; do
   if [ ! -e "$OUT_DIR/$name.png" ]; then
     echo "エラー: $OUT_DIR/$name.png が撮れていません" >&2
     MISSING=1
@@ -107,7 +107,7 @@ echo
 echo "== 完了 (${EXPECTED}枚) =="
 ls -la "$OUT_DIR/" 2>/dev/null || echo "$OUT_DIR/ が空です"
 echo
-echo "解像度を確認してください（App Store 6.9インチは 1320x2868 が必須）:"
+echo "App Store の端末枠に合う解像度か確認してください:"
 for f in "$OUT_DIR"/*.png; do
   [ -e "$f" ] || continue
   printf "  %s: " "$(basename "$f")"

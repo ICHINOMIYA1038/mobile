@@ -62,4 +62,19 @@ platform :ios do
       force: true,
     )
   end
+
+  desc "Upload framed studio screenshots to the 1.0.3 draft without submitting for review"
+  lane :upload_studio_screenshots do
+    deliver(
+      api_key: api_key,
+      app_version: "1.0.3",
+      screenshots_path: "fastlane/store_upload",
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_app_version_update: true,
+      overwrite_screenshots: true,
+      submit_for_review: false,
+      force: true,
+    )
+  end
 end

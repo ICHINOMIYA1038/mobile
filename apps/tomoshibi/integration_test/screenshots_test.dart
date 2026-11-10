@@ -1,49 +1,12 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:tomoshibi/main.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
-import 'scene_urls.g.dart';
-
-/// ストア掲載用のスクリーンショットを撮る。
-///
-///   ./tool/screenshots.sh
-///
-/// 実行すると screenshots/ に書き出される。
-///
-/// 撮影方法は他アプリ (sound_shield 等) と同じで、シミュレータのtmpディレクトリに
-/// マーカーファイルを置き、tool/screenshots.sh 側の常駐プロセスがそのタイミングで
-/// `xcrun simctl io screenshot` により実画面を撮る方式。
-///
-/// このアプリ固有の事情:
-///
-/// - 画面の中身はWebView (Web版TOMOSHIBI小屋) なので、WidgetTesterから器具を
-///   並べたり視点を切り替えたりはできない。代わりにWeb側の `#scene=<base64>`
-///   共有URL (tomoshibi/src/io/sceneIO.ts) を使い、器具・役者・カメラ視点・客電を
-///   すべて含んだシーンをURLとして流し込む。URLは tool/build_scene_urls.py が
-///   組み立て、scene_urls.g.dart として吐き出す。
-/// - WebGLの描画完了はFlutter側から観測できないため、pumpAndSettleではなく
-///   固定時間ポンプし続けて待つ。ローディングのインジケータが回り続けるので
-///   pumpAndSettleはそもそも収束しない。
-/// - ATT許諾ダイアログはOSのアラートでWidgetTesterから閉じられないため、
-///   requestTracking: false でリクエスト自体を止める。
-/// - iPadではビューポート幅が768pxを超えるため、Web側がデスクトップ扱いになり
-///   オブジェクトパネルが画面右に常時ドッキングされる (settings.panelOpen は
-///   モバイルのボトムシート専用で、こちらには効かない)。iPadのスクリーンショットに
-///   パネルが写るのは仕様どおり。横向きで撮れば3Dを広く取れるが、integration_test
-///   からの SystemChrome.setPreferredOrientations ではシミュレータは回転しない
-///   (2026-08-28に確認)。
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-
-  Future<void> pumpFor(WidgetTester tester, Duration duration) async {
-    final deadline = DateTime.now().add(duration);
-    while (DateTime.now().isBefore(deadline)) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-  }
 
   Future<void> shoot(WidgetTester tester, String name) async {
     final dir = Directory.systemTemp;
@@ -51,39 +14,95 @@ void main() {
     final done = File('${dir.path}/shot_$name.done');
     if (done.existsSync()) done.deleteSync();
     request.writeAsStringSync('go');
-
-    final deadline = DateTime.now().add(const Duration(seconds: 10));
+    final deadline = DateTime.now().add(const Duration(seconds: 30));
     while (!done.existsSync() && DateTime.now().isBefore(deadline)) {
-      await tester.pump(const Duration(milliseconds: 50));
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await tester.pump();
     }
-    if (!done.existsSync()) {
-      fail('スクリーンショット $name が撮られませんでした。'
-          'tool/screenshots.sh 経由で実行していますか?');
-    }
+    if (!done.existsSync()) fail('スクリーンショット $name を撮れませんでした。');
   }
 
-  testWidgets('ストア用スクリーンショット', (tester) async {
-    for (final spec in shotSpecs) {
-      // 次のシーンを作る前に、前のWebViewを完全に破棄させる。
-      // WebGLコンテキストとボリュメトリックのレンダーターゲットは重く、
-      // 破棄を待たずに作り直し続けるとシミュレータのメモリを使い切って
-      // アプリごと落ちる (2026-08-28に4枚目で実際に落ちた)。
-      await tester.pumpWidget(const SizedBox.shrink());
-      await pumpFor(tester, const Duration(seconds: 3));
-
-      // ValueKeyを変えることでWebViewごと作り直させ、新しいURLを最初から読ませる。
-      // (ハッシュだけ変えてもWeb側の tryLoadFromHash は初回マウント時にしか
-      //  走らないため、シーンが切り替わらない。)
-      await tester.pumpWidget(
-        TomoshibiApp(
-          key: ValueKey(spec.name),
-          startUrl: spec.url,
-          requestTracking: false,
-        ),
-      );
-      // ページ読込 + Three.jsのシーン構築 + シェーダのコンパイルを待つ。
-      await pumpFor(tester, const Duration(seconds: 25));
-      await shoot(tester, spec.name);
+  testWidgets('現在のスタジオ画面をストア用に撮影する', (tester) async {
+    await tester.pumpWidget(const TomoshibiApp(
+      startUrl: 'https://tomoshibi.gikyokutosyokan.com/studio/?demo=2',
+      requestTracking: false,
+    ));
+    final webView = find.byType(WebViewWidget);
+    for (var i = 0; i < 120 && webView.evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 250));
     }
-  }, timeout: const Timeout(Duration(minutes: 15)));
+    expect(webView, findsOneWidget);
+    final controller = WebViewController.fromPlatform(
+      tester.widget<WebViewWidget>(webView).platform.params.controller,
+    );
+
+    Future<void> waitFor(String expression) async {
+      for (var i = 0; i < 160; i++) {
+        try {
+          if ((await controller.runJavaScriptReturningResult(expression)).toString() == 'true') return;
+        } catch (_) {}
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+        await tester.pump();
+      }
+      fail('WebView内で条件を確認できませんでした: $expression');
+    }
+
+    Future<void> click(String selector) async {
+      final result = await controller.runJavaScriptReturningResult('''(() => {
+        const button = document.querySelector('$selector');
+        if (!button) return false;
+        button.click();
+        return true;
+      })()''');
+      expect(result.toString(), 'true');
+    }
+
+    await waitFor("location.pathname === '/studio/' && document.body.innerText.includes('雨を待つ図書室')");
+    await controller.runJavaScript('window.confirm = () => true;');
+    await click('button[aria-label="名前をつけて保存"]');
+    await waitFor("Boolean(document.querySelector('.scene-panel .scene-cta.primary'))");
+    await click('.scene-panel .scene-cta.primary');
+    await waitFor("document.body.innerText.includes('この端末に保存しました')");
+    await click('.scene-panel .icon-btn');
+    await Future<void>.delayed(const Duration(seconds: 6));
+    await shoot(tester, '03_map');
+
+    await click('button[aria-label="平面図を閉じる"]');
+    await waitFor("document.querySelector('.unified-shell')?.classList.contains('map-hidden') === true");
+    final outlineAlreadyOpen = (await controller.runJavaScriptReturningResult(
+      "document.querySelector('.unified-shell')?.classList.contains('outline-visible') === true",
+    )).toString() == 'true';
+    if (outlineAlreadyOpen) {
+      await Future<void>.delayed(const Duration(seconds: 2));
+      await shoot(tester, '04_scenes');
+      await click('button[aria-label="シーン一覧を閉じる"]');
+    }
+    await Future<void>.delayed(const Duration(seconds: 2));
+    await shoot(tester, '02_3d');
+
+    if (!outlineAlreadyOpen) {
+      await click('.workspace-display-trigger');
+      final showOutline = await controller.runJavaScriptReturningResult('''(() => {
+        const button = [...document.querySelectorAll('.workspace-display-menu button')]
+          .find(item => item.textContent?.includes('シーン一覧'));
+        button?.click();
+        return Boolean(button);
+      })()''');
+      expect(showOutline.toString(), 'true');
+      await waitFor("document.querySelector('.unified-shell')?.classList.contains('outline-visible') === true");
+      await Future<void>.delayed(const Duration(seconds: 1));
+      await shoot(tester, '04_scenes');
+      await click('button[aria-label="シーン一覧を閉じる"]');
+    }
+    await click('.workspace-play-button');
+    await waitFor("Boolean(document.querySelector('.stage-playback'))");
+    await Future<void>.delayed(const Duration(seconds: 2));
+    await shoot(tester, '05_playback');
+
+    await click('.stage-playback-close');
+    await click('button[aria-label="プロジェクト一覧へ戻る"]');
+    await waitFor("location.pathname === '/studio/projects/' && document.body.innerText.includes('雨を待つ図書室')");
+    await Future<void>.delayed(const Duration(seconds: 1));
+    await shoot(tester, '01_projects');
+  }, timeout: const Timeout(Duration(minutes: 10)));
 }

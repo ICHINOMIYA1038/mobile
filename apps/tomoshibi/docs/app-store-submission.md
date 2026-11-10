@@ -5,11 +5,16 @@
 
 直近の却下と対応は [4.3a-rejection-response.md](4.3a-rejection-response.md) を参照。
 
-## 次回 1.0.3 の準備状況（2026-11-10）
+## 1.0.3 の準備状況（2026-11-11）
 
 App Store で配信中の版は 1.0.2（ビルド 8）。次回のソースは 1.0.3（ビルド 9）。
 署名済み IPA は `build/ios/ipa/exported/*.ipa` に作成し、署名を検証済み。
-App Store Connect には未アップロードで、1.0.3 のバージョンもまだ作成していない。
+App Store Connect に 1.0.3 の下書きを作成し、掲載文と審査メモを更新した。
+iPhone・iPad 各5枚の実画面を撮影・アップロードした。画像は Apple 側で処理中。
+IPA のビルド9は処理済み（VALID）で、下書きに紐付けた。暗号化申告も設定済み。
+旧照明プランの読み取り専用試算では、9件・4ユーザー分が4プロジェクトへ移行済みで、
+追加対象と不整合はともに0件だった。DBの変更はしていない。
+審査提出は未実施。
 下の「2. 審査メモ」は過去に提出した文面の記録で、
 初期画面と購入復元ボタンの位置が現在の画面と異なる。次回の審査には使わない。
 
@@ -28,8 +33,7 @@ How to try it without an account:
 Sign-in is optional. New Pro purchases use StoreKit inside the app. “購入を復元” remains available in the bar below the web content, including while signed out. The app uses native iOS integrations for ATT consent, sign-in, Universal Links, and StoreKit purchases and restoration.
 ```
 
-提出前に iPhone・iPad のスクリーンショットを現在の画面で撮り直し、
-[掲載文案](store-listing.md) と表示内容を照合する。
+撮影済みの画面と [掲載文案](store-listing.md) は照合済み。
 
 ## 0. 提出前チェック（必ず実行）
 
@@ -51,12 +55,12 @@ flutter test
 | バージョン／ビルド番号 | ビルド済み | 配信中は `1.0.2+8`。次回ソースと IPA は `1.0.3+9`。提出のたびに必ず上げる |
 | 課金SDK | 済 | RevenueCat (`purchases_flutter`)。商品 `com.gikyokutosyokan.tomoshibi.pro.monthly` は2026-08-04に「審査用に追加」済み |
 | ATT | 済 | `NSUserTrackingUsageDescription` 設定済み。許諾結果は`X-ATT-Status`ヘッダでサイト側へ渡す |
-| プライバシーポリシーの公開URL | 要確認 | サイト側フッターの「プライバシー」。ASCの申告と一致しているか確認 |
+| プライバシーポリシーの公開URL | 済 | ASC の登録 URL とサイトの `/privacy` が一致し、HTTP 200 を確認 |
 | 問い合わせ先 | 済 | support@gikyokutosyokan.com |
 | コンテンツ配信権 | 要注意 | WebViewで自社サイトを表示するため、「サードパーティのコンテンツを表示する」に該当しない旨を正しく申告すること |
-| ストア用スクリーンショット | 次回版は要撮影 | 既存の画像は旧画面のもの。1.0.3 用に iPhone と iPad の画面を撮り直す |
+| ストア用スクリーンショット | アップロード済み・処理中 | プロジェクト一覧・3D・平面図・章とシーン・通し再生を iPhone と iPad で各5枚 |
 | 袖(sidewing)視点の不具合 | 済 | Web側 `src/App.tsx` の `CAMERA_VIEWS` を修正し、2026-08-28に本番反映済み（PR #1）。下記「3. スクリーンショット」参照 |
-| App Review Information の Notes | 次回版は要更新 | 既存の文面は旧画面の案内。1.0.3 の文案は上記「次回の審査メモ案」を参照 |
+| App Review Information の Notes | 済 | 1.0.3 の下書きに上記の審査メモ案を設定・照合済み |
 | Team | 済 | `DEVELOPMENT_TEAM = SZFUZ58P49`、`CODE_SIGN_STYLE = Automatic` |
 | 端末上のアプリ名 | 済 | 2026-09-24に `CFBundleDisplayName` を「TOMOSHIBI小屋」に変更しストア名と統一（1.0.1〜）。ホーム画面では英字9文字+漢字2文字で収まる |
 
@@ -96,32 +100,40 @@ Previously reported issues - 2.1(b) IAP not submitted, 3.1.2(c) EULA link, 3.1.1
 
 ## 3. スクリーンショット
 
-撮影から合成までスクリプト化してある。UIやシーンを変えたら撮り直すこと。
+1.0.3 は実際のスタジオ画面を iPhone と iPad で各5枚撮影した。
+画面や掲載文を変えたら撮り直すこと。
 
 ```sh
-./tool/screenshots.sh                                  # iPhone 16 Pro Max (1320x2868)
-./tool/screenshots.sh "iPad Pro 13-inch (M4)" screenshots_ipad
-cp screenshots/*.png ios/fastlane/screenshots/ja/
-cd ios && bundle install && bundle exec fastlane ios compose_screenshots
+./tool/screenshots.sh "iPhone 16 Pro Max" screenshots_103_iphone
+./tool/screenshots.sh "iPad Pro 13-inch (M4)" screenshots_103_ipad
+cp screenshots_103_iphone/*.png ios/fastlane/screenshots/ja/
+for f in screenshots_103_ipad/*.png; do sips -z 2732 2048 "$f" --out "ios/fastlane/screenshots/ja/$(basename "$f" .png)_ipad.png" >/dev/null; done
+cd ios && RBENV_VERSION=3.4.4 rbenv exec fastlane ios compose_screenshots
 ```
 
-仕組み（このアプリ固有の事情）:
+合成画像だけを `ios/fastlane/store_upload/ja/` に置き、
+`fastlane ios upload_studio_screenshots` で 1.0.3 の下書きに反映する。
+元の画像はアップロード対象に混ぜない。
+
+```sh
+mkdir -p ios/fastlane/store_upload/ja
+cp ios/fastlane/screenshots/ja/*_framed.png ios/fastlane/store_upload/ja/
+cd ios && RBENV_VERSION=3.4.4 rbenv exec fastlane ios upload_studio_screenshots
+```
+
+撮影の仕組み:
 
 - 画面の中身はWebViewなので、WidgetTesterから器具を並べたり視点を切り替えたりできない。
-  代わりにWeb側の共有URL `#scene=<base64>`（`tomoshibi/src/io/sceneIO.ts`）を使い、
-  **器具・役者・カメラ視点・客電を全部含んだシーンをURLとして流し込む**。
-  1枚のスクリーンショット = 1つのURL。
-- URLの元データは `tool/build_scene_urls.py` の `SHOTS` / `FIXTURES` / `PERFORMERS` が
-  唯一の出典。ここから `integration_test/scene_urls.g.dart`（撮影用）と
-  `ios/fastlane/screenshots/Framefile.json`（見出し）の両方を生成する。
-  見出しを変えたいときも**このPythonを編集して再生成する**こと。
+  `integration_test/screenshots_test.dart` が `?demo=2` の実画面を操作し、
+  プロジェクトの保存、平面図、3D、章とシーン、通し再生、一覧の順で撮影する。
+- 見出しは `ios/fastlane/screenshots/Framefile.json` で管理する。
 - `lib/main.dart` の `TomoshibiApp` は `startUrl` / `requestTracking` を受け取れる。
   撮影時のみ `requestTracking: false` にしてATTのOSダイアログが写り込むのを防いでいる。
   リリースビルドの挙動は変わらない。
 - 撮影前にシミュレータを必ずシャットダウンしてから起動する。直前に別アプリを触っていると
   ステータスバーに「◀ Safari」のような戻りリンクが残り、写り込む
   （過去の提出物に「◀ 猫と学ぶ高校化学」が写っていた原因）。
-- WebViewの中のWebGLの描画完了はFlutter側から観測できないため、1枚あたり25秒待っている。
+- WebViewの中のWebGLの描画完了はFlutter側から観測できないため、画面ごとに描画待ちを入れている。
 
 ### 前提: Web側の変更はデプロイしないとスクショに反映されない
 
@@ -144,16 +156,7 @@ curl -s "https://tomoshibi.gikyokutosyokan.com/$B" | grep -c '\-6\.8,1\.7,1\.4' 
 
 Web側のUIやカメラを触ったら、デプロイ → 撮り直し → 合成の順でやり直すこと。
 
-### 既知の落とし穴: 連続撮影中のクラッシュ
-
-WebGLコンテキストとボリュメトリックのレンダーターゲットは重く、前のWebViewを破棄せずに
-シーンを作り直し続けると、シミュレータのメモリを使い切ってアプリごと落ちる
-（2026-08-28に4枚目で発生）。`screenshots_test.dart` は1枚ごとに
-`pumpWidget(SizedBox.shrink())` を挟んで明示的に破棄させている。
-
-またアプリが落ちると `flutter test` は死んだ接続を待ったまま固まり、途中までの
-スクショだけが残る。`tool/screenshots.sh` は最後に**期待枚数がすべて揃っているか
-突き合わせ、欠けていれば異常終了する**ようにしてある。
+`tool/screenshots.sh` は最後に期待する5枚がすべて揃っているか確認する。
 
 ## 4. アプリの暗号化書類
 

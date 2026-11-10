@@ -17,48 +17,48 @@
   },
   "data": [
     {
-      "filter": "01_audience",
+      "filter": "01_projects",
       "title": {
-        "text": "客席からの見え方を\nそのまま確認"
+        "text": "舞台ごとにプランを\nひとつに整理"
       },
       "keyword": {
-        "text": "本番と同じ目線で"
+        "text": "プロジェクトからすぐ開ける"
       }
     },
     {
-      "filter": "02_aerial",
+      "filter": "02_3d",
       "title": {
-        "text": "吊り位置と当たりを\n俯瞰でチェック"
+        "text": "舞台の見え方を\n客席視点で確認"
       },
       "keyword": {
-        "text": "仕込み図がそのまま3Dに"
+        "text": "演出と照明を同じ3Dで"
       }
     },
     {
-      "filter": "03_sidewing",
+      "filter": "03_map",
       "title": {
-        "text": "袖からの抜けも\n確かめられる"
+        "text": "役者・セット・照明を\n平面図で配置"
       },
       "keyword": {
-        "text": "客席・俯瞰・袖・自由の4視点"
+        "text": "立ち位置と灯りの狙いを合わせる"
       }
     },
     {
-      "filter": "04_houselights",
+      "filter": "04_scenes",
       "title": {
-        "text": "客電を入れて\n明転も再現"
+        "text": "章とシーンで\n公演の流れをつくる"
       },
       "keyword": {
-        "text": "作業灯と本番の差がわかる"
+        "text": "場面ごとの変化をまとめる"
       }
     },
     {
-      "filter": "05_panel",
+      "filter": "05_playback",
       "title": {
-        "text": "在来もLEDも\n22機種を収録"
+        "text": "通しで見て\n切り替えを確かめる"
       },
       "keyword": {
-        "text": "PAR・Fresnel・Source Four・ETC"
+        "text": "全シーンを順に再生"
       }
     }
   ]
