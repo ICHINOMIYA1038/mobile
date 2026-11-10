@@ -5,20 +5,18 @@
 
 直近の却下と対応は [4.3a-rejection-response.md](4.3a-rejection-response.md) を参照。
 
-## 1.0.3 の準備状況（2026-11-11）
+## 1.0.3 の審査状況（2026-11-11）
 
-App Store で配信中の版は 1.0.2（ビルド 8）。次回のソースは 1.0.3（ビルド 9）。
-署名済み IPA は `build/ios/ipa/exported/*.ipa` に作成し、署名を検証済み。
-App Store Connect に 1.0.3 の下書きを作成し、掲載文と審査メモを更新した。
-iPhone・iPad 各5枚の実画面を撮影・アップロードした。画像は Apple 側で処理中。
-IPA のビルド9は処理済み（VALID）で、下書きに紐付けた。暗号化申告も設定済み。
+App Store で配信中の版は 1.0.2（ビルド 8）。1.0.3（ビルド 9）は
+2026-11-11 03:07 JST に審査へ提出し、現在は審査待ち（WAITING_FOR_REVIEW）。
+ビルド9は VALID、iPhone・iPad の掲載画像は各5枚すべて処理完了。
+暗号化申告と審査メモも設定済み。審査通過後は自動公開される設定。
 旧照明プランの読み取り専用試算では、9件・4ユーザー分が4プロジェクトへ移行済みで、
-追加対象と不整合はともに0件だった。DBの変更はしていない。
-審査提出は未実施。
+追加対象と不整合はともに0件だった。DBは変更していない。
 下の「2. 審査メモ」は過去に提出した文面の記録で、
-初期画面と購入復元ボタンの位置が現在の画面と異なる。次回の審査には使わない。
+初期画面と購入復元ボタンの位置が現在の画面と異なる。1.0.3 の審査には使っていない。
 
-次回の審査メモ案:
+1.0.3 で提出した審査メモ:
 
 ```text
 TOMOSHIBI小屋 is the first-party iOS client of the stage-planning service developed and operated by 戯曲図書館. It combines scene-by-scene staging and lighting in one 3D workspace.
@@ -52,15 +50,15 @@ flutter test
 | Bundle ID | 済 | `com.gikyokutosyokan.tomoshibi` |
 | アプリアイコン | 済 | `assets/icon/app_icon.png`（`dart run flutter_launcher_icons`で反映） |
 | pubspec の説明文 | 済 | 2026-08-28に雛形の`"A new Flutter project."`から実内容へ修正 |
-| バージョン／ビルド番号 | ビルド済み | 配信中は `1.0.2+8`。次回ソースと IPA は `1.0.3+9`。提出のたびに必ず上げる |
+| バージョン／ビルド番号 | 審査待ち | 配信中は `1.0.2+8`。提出済みは `1.0.3+9`。提出のたびに必ず上げる |
 | 課金SDK | 済 | RevenueCat (`purchases_flutter`)。商品 `com.gikyokutosyokan.tomoshibi.pro.monthly` は2026-08-04に「審査用に追加」済み |
 | ATT | 済 | `NSUserTrackingUsageDescription` 設定済み。許諾結果は`X-ATT-Status`ヘッダでサイト側へ渡す |
 | プライバシーポリシーの公開URL | 済 | ASC の登録 URL とサイトの `/privacy` が一致し、HTTP 200 を確認 |
 | 問い合わせ先 | 済 | support@gikyokutosyokan.com |
 | コンテンツ配信権 | 要注意 | WebViewで自社サイトを表示するため、「サードパーティのコンテンツを表示する」に該当しない旨を正しく申告すること |
-| ストア用スクリーンショット | アップロード済み・処理中 | プロジェクト一覧・3D・平面図・章とシーン・通し再生を iPhone と iPad で各5枚 |
+| ストア用スクリーンショット | 処理完了 | プロジェクト一覧・3D・平面図・章とシーン・通し再生を iPhone と iPad で各5枚 |
 | 袖(sidewing)視点の不具合 | 済 | Web側 `src/App.tsx` の `CAMERA_VIEWS` を修正し、2026-08-28に本番反映済み（PR #1）。下記「3. スクリーンショット」参照 |
-| App Review Information の Notes | 済 | 1.0.3 の下書きに上記の審査メモ案を設定・照合済み |
+| App Review Information の Notes | 済 | 1.0.3 に上記の審査メモを設定・照合済み |
 | Team | 済 | `DEVELOPMENT_TEAM = SZFUZ58P49`、`CODE_SIGN_STYLE = Automatic` |
 | 端末上のアプリ名 | 済 | 2026-09-24に `CFBundleDisplayName` を「TOMOSHIBI小屋」に変更しストア名と統一（1.0.1〜）。ホーム画面では英字9文字+漢字2文字で収まる |
 
@@ -111,15 +109,18 @@ for f in screenshots_103_ipad/*.png; do sips -z 2732 2048 "$f" --out "ios/fastla
 cd ios && RBENV_VERSION=3.4.4 rbenv exec fastlane ios compose_screenshots
 ```
 
-合成画像だけを `ios/fastlane/store_upload/ja/` に置き、
-`fastlane ios upload_studio_screenshots` で 1.0.3 の下書きに反映する。
+合成画像から掲載用の10枚を用意し、1.0.3 の下書きに反映する。
 元の画像はアップロード対象に混ぜない。
 
 ```sh
-mkdir -p ios/fastlane/store_upload/ja
-cp ios/fastlane/screenshots/ja/*_framed.png ios/fastlane/store_upload/ja/
+python3 tool/prepare_studio_store_upload.py
 cd ios && RBENV_VERSION=3.4.4 rbenv exec fastlane ios upload_studio_screenshots
 ```
+
+2026-11-11 の提出では、プロジェクト一覧の PNG 2枚だけが Apple 側で1時間以上
+`UPLOAD_COMPLETE` のままだった。同じ画面を JPEG に変換して再登録すると2枚とも
+`COMPLETE` となり、審査提出できた。ほかの8枚は PNG のまま。
+Apple 側で処理が止まった根本原因は未確認。
 
 撮影の仕組み:
 
@@ -179,6 +180,7 @@ Web側のUIやカメラを触ったら、デプロイ → 撮り直し → 合�
 | 2026-08-28 14:54 | Resolution Centerへ4.3(a)への返信を送信 |
 | 2026-09-02 | **1.0 審査通過・App Store公開**（返信とメタデータ差し替えのみで通過。バイナリ側の対策は不要になった） |
 | 2026-09-24 | 1.0.1(7) を提出（審査待ち）。コールドスタート時のUniversal Linkがホームに上書きされる不具合、サインイン直後のセッション確認の競合、about:blank等を外部に投げて例外になる問題、端末上の表示名を「TOMOSHIBI小屋」に統一、キーワード整理（下記「6. ASO」）。ASC API でバージョン作成→ビルド添付→輸出コンプライアンス→キーワード/リリースノート→reviewSubmission まで実施 |
+| 2026-11-11 03:07 JST | 1.0.3(9) を審査提出。プロジェクト・章・シーン・平面図の現行 UI に合わせて掲載文と画像を更新。iPhone・iPad 各5枚、暗号化申告、審査メモ、ビルド添付を確認済み。提出後の状態は WAITING_FOR_REVIEW |
 
 ## 6. ASO（キーワード・検索順位）
 
