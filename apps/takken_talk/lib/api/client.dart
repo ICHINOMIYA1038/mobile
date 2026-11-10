@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config.dart';
+import '../funnel.dart';
+import '../study_draft.dart';
 
 class ApiException implements Exception {
   ApiException(this.status, this.code, [this.message]);
@@ -78,6 +80,11 @@ class ApiClient {
   /// トークンを捨てる（学習データの削除のあと）。次の通信の前に ensureUser で作り直す。
   Future<void> forgetUser() async {
     final prefs = await SharedPreferences.getInstance();
+    final previousUser = userId ?? prefs.getString(_prefUserId);
+    if (previousUser != null) {
+      await StudyDraft.clear(previousUser);
+      await Funnel.clearUser(previousUser);
+    }
     await prefs.remove(_prefToken);
     await prefs.remove(_prefUserId);
     _token = null;
@@ -158,6 +165,8 @@ class ApiClient {
   Future<Map<String, dynamic>> proAnalysis({bool refresh = false}) => refresh
       ? _json('POST', '$_examPath/pro/analysis', body: {'refresh': true}, timeout: const Duration(seconds: 60))
       : _json('GET', '$_examPath/pro/analysis', timeout: const Duration(seconds: 60));
+
+  Future<Map<String, dynamic>> proPreview() => _json('POST', '$_examPath/pro/preview', timeout: const Duration(seconds: 90));
 
   /// 7日の予定のタスクを自分で済み・未済みにする（自動で済みになったものも外せる）→ { plan }（進み具合つき）
   Future<Map<String, dynamic>> checkPlanTask({required num planAt, required String taskId, required bool done}) =>

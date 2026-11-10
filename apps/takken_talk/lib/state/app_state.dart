@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../api/client.dart';
+import '../funnel.dart';
 import '../models/core.dart';
 
 /// 日本時間の日付。1日の回数の区切りはサーバーも日本時間
@@ -55,6 +56,7 @@ class AppState extends ChangeNotifier {
       final results = await Future.wait([api.me(), api.home(), api.review(), api.figureBookmarks()]);
       me = results[0] as Map<String, dynamic>;
       home = results[1] as Map<String, dynamic>;
+      if (api.userId case final id?) await Funnel.visit(id, (home?['study'] as Map?)?['day'] as String? ?? jstDay());
       bookmarks
         ..clear()
         ..addAll((((results[2] as Map<String, dynamic>)['bookmarked'] as List?) ?? const []).cast<String>());

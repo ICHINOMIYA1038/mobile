@@ -7,10 +7,12 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config.dart';
+import '../funnel.dart';
 import '../purchase_service.dart';
 import '../state/app_state.dart';
 import '../theme.dart';
 import '../widgets/readable.dart';
+import 'pro/plan_preview_screen.dart';
 
 /// Pro（月額の自動更新サブスクリプション）の案内。価格は RevenueCat の Offerings から出す。
 /// Pro でなくても全章・過去問・図解・復習を使える。Pro で変わるのは、広告が出なくなること・1日に AI と話せる回数・
@@ -52,16 +54,21 @@ class _ProScreenState extends State<ProScreen> {
   }
 
   Future<void> _load() async {
+    var result = 'success';
     try {
       // App Store に繋がらないと RevenueCat の初期化が返ってこないことがある。
       // 待ち続けるとスピナーのまま固まるので、打ち切ってプランの内容だけ見せる。
       _offerings = await PurchaseService.offerings(_userId).timeout(const Duration(seconds: 12));
       if (_offerings != null) _error = null;
     } on TimeoutException {
+      result = 'timeout';
       _error = '価格の取得に時間がかかっています。通信環境を確認して、もう一度お試しください。';
     } catch (_) {
+      result = 'error';
       _error = 'プラン情報を取得できませんでした。少し待ってからもう一度お試しください。';
     }
+    if (result == 'success' && _pro == null) result = 'empty';
+    Funnel.event(result == 'success' ? 'purchase_price_loaded' : 'purchase_price_failed', parameters: {'result': result, 'reason': widget.reason});
     if (mounted) setState(() => _loading = false);
   }
 
@@ -122,6 +129,7 @@ class _ProScreenState extends State<ProScreen> {
   Future<void> _buy(Package pkg) async {
     final state = AppScope.read(context);
     setState(() => _busy = true);
+    Funnel.event('begin_checkout', parameters: {'product': pkg.storeProduct.identifier, 'value': pkg.storeProduct.price, 'currency': pkg.storeProduct.currencyCode, 'reason': widget.reason});
     final pending = PurchaseService.purchase(_userId, pkg);
     try {
       await pending.timeout(PurchaseService.storeWait);
@@ -138,8 +146,9 @@ class _ProScreenState extends State<ProScreen> {
       AppInsights.logEvent('purchase_stalled', parameters: {'stage': 'connect'});
       if (mounted) await _tell('App Store に接続できませんでした', '通信環境を確認して、もう一度お試しください。');
     } on PurchaseCancelledException {
-      // 自分でやめたので何も出さない
+      Funnel.event('purchase_cancelled', parameters: {'reason': widget.reason});
     } catch (e, st) {
+      Funnel.event('purchase_failed', parameters: {'reason': widget.reason, 'code': e is PlatformException ? PurchasesErrorHelper.getErrorCode(e).name : 'unknown'});
       AppInsights.recordError(e, st, reason: 'purchase');
       if (mounted) await _tell('購入できませんでした', _why(e));
     } finally {
@@ -224,16 +233,19 @@ class _ProScreenState extends State<ProScreen> {
                 'cap' => '今日の AI の回数を使い切りました',
                 'analysis' => '苦手分析と学習プランは Pro の機能です',
                 'mock' => '模擬試験は Pro の機能です',
-                _ => '広告なしで、AI の先生ともっと話す',
+                'preview' => '自分の記録に合わせて、学習プランを更新する',
+                _ => '次に学ぶことがわかる、あなたの学習プラン',
               },
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Palette.ink),
             ),
             const SizedBox(height: 12),
-            const _Line('広告が出なくなります。'),
-            _Line('1日に AI と話せる回数が $freeCap回 から $proCap回 に増えます（会話・過去問の「AIに聞く」のどちらにも使えます）。'),
             const _Line('苦手分析と AI の学習プラン（答えた記録から苦手な論点を出し、AI が今週やることを決めます）。'),
             const _Line('模擬試験（本番の比率で50問・30分。AI の講評つき）。'),
+            _Line('1日に AI と話せる回数が $freeCap回 から $proCap回 に増えます（会話・過去問の「AIに聞く」のどちらにも使えます）。'),
+            const _Line('広告が出なくなります。'),
             const _Line('教材・過去問・図解・復習は、Pro でなくてもすべて使えます。'),
+            if (!isPro && state.home?['study'] is Map && ((state.home?['progress'] as Map?)?['seen'] as num? ?? 0) >= 10)
+              TextButton(onPressed: _busy ? null : () => PlanPreviewScreen.show(context), child: const Text('自分の学習プランを1回体験する')),
             const SizedBox(height: 20),
             if (isPro)
               const _Box(child: Text('いまは Pro です。ありがとうございます。', style: TextStyle(fontWeight: FontWeight.w700, color: Palette.success)))
