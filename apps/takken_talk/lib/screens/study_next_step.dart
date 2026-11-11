@@ -132,7 +132,7 @@ class _StudyNextStepCardState extends State<StudyNextStepCard> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              eligible ? 'あなたの学習プランを体験できます' : '記録から、次に学ぶことを見つけましょう',
+              eligible ? 'あなたの学習プランを体験できます' : '次の学習を、あなたの記録から',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
