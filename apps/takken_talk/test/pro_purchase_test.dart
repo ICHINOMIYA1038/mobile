@@ -23,6 +23,18 @@ Package _package({double price = 3000, String label = _price}) => Package(
   const PresentedOfferingContext('default', null, null),
 );
 
+EntitlementInfo _entitlement({bool willRenew = false, String? expires = '2026-12-03T11:32:24Z', String? billingIssue}) => EntitlementInfo(
+  'pro',
+  true,
+  willRenew,
+  '2026-11-03T11:32:24Z',
+  '2026-11-03T11:32:24Z',
+  AppConfig.proProductId,
+  false,
+  expirationDate: expires,
+  billingIssueDetectedAt: billingIssue,
+);
+
 void main() {
   late bool serverPro;
 
@@ -37,6 +49,7 @@ void main() {
   tearDown(() {
     PurchaseService.offeringsForTest = null;
     PurchaseService.purchaseForTest = null;
+    PurchaseService.proEntitlementForTest = null;
   });
 
   Future<void> open(WidgetTester tester, {String priceLabel = _price, Map<String, dynamic>? homeData}) async {
@@ -132,5 +145,52 @@ void main() {
     await tester.pump();
     expect(find.text('購入を受け付けました'), findsOneWidget);
     expect(canClose(tester), isTrue);
+  });
+
+  group('解約済みの案内', () {
+    final now = DateTime.utc(2026, 11, 3, 12);
+
+    test('残りの日数と日本時間の日付を出す', () {
+      expect(proCancelNotice(_entitlement(), now), '解約済みです。Pro はあと 30 日（12月3日まで）使えます。');
+      expect(proCancelNotice(_entitlement(expires: '2026-12-03T15:00:00Z'), now), '解約済みです。Pro はあと 31 日（12月4日まで）使えます。');
+    });
+
+    test('1日に満たなくても「あと 1 日」', () {
+      expect(proCancelNotice(_entitlement(expires: '2026-11-03T12:05:00Z'), now), contains('あと 1 日'));
+    });
+
+    test('解約していない、支払いの問題、期限なし、期限切れでは出さない', () {
+      expect(proCancelNotice(_entitlement(willRenew: true), now), isNull);
+      expect(proCancelNotice(_entitlement(billingIssue: '2026-11-03T00:00:00Z'), now), isNull);
+      expect(proCancelNotice(_entitlement(expires: null), now), isNull);
+      expect(proCancelNotice(_entitlement(expires: '2026-11-03T11:00:00Z'), now), isNull);
+      expect(proCancelNotice(null, now), isNull);
+    });
+
+    testWidgets('Pro の画面に出て、アプリに戻ると読み直す', (tester) async {
+      var entitlement = _entitlement(willRenew: true, expires: DateTime.now().toUtc().add(const Duration(days: 10)).toIso8601String());
+      PurchaseService.proEntitlementForTest = () async => entitlement;
+      final state = AppState(ApiClient(baseUrl: 'http://test', client: MockClient((_) async => http.Response('{}', 200))))..me = const {'pro': true};
+      await tester.pumpWidget(
+        AppScope(
+          state: state,
+          child: const MaterialApp(home: ProScreen(reason: 'settings')),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(find.byKey(const Key('pro-cancel-notice')), findsNothing);
+
+      entitlement = _entitlement(expires: DateTime.now().toUtc().add(const Duration(days: 10)).toIso8601String());
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      await tester.pump();
+      expect(find.textContaining('あと 10 日'), findsOneWidget);
+    });
   });
 }

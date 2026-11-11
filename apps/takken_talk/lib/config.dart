@@ -14,6 +14,7 @@ class AppConfig {
   );
 
   static const proProductId = 'jp.pairof.takken.talk.pro.monthly';
+  static const proEntitlementId = 'pro';
 
   static const privacyPolicyUrl = 'https://shikaku.pairof.jp/privacy';
   static const termsUrl = 'https://www.apple.com/legal/internet-services/itunes/dev/stdeula/';
