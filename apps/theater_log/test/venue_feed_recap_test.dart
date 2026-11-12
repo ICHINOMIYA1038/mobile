@@ -96,6 +96,22 @@ void main() {
       });
     });
 
+    testWidgets('タブを開くたびに読み直し、公開したばかりの感想も出す', (tester) async {
+      await tester.runAsync(() async {
+        var rows = <Object>[];
+        final client = CommunityApi(offlineAuth(), client: MockClient((_) async => http.Response.bytes(utf8.encode(jsonEncode({'reviews': rows})), 200)));
+        await tester.pumpWidget(_scope(TheaterLog(), FeedScreen(api: client)));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        await tester.pump();
+        expect(find.byKey(const Key('feed-empty')), findsOneWidget);
+        rows = [row];
+        FeedScreen.opened.value++;
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+        await tester.pump();
+        expect(find.text('面白かった'), findsOneWidget);
+      });
+    });
+
     testWidgets('空のときは正直に空と伝え、記録へ案内する', (tester) async {
       await tester.runAsync(() async {
         await tester.pumpWidget(_scope(TheaterLog(), FeedScreen(api: api([]))));

@@ -114,6 +114,7 @@ class _ShellState extends State<Shell> {
           onDestinationSelected: (i) {
             setState(() => _tab = i);
             AppInsights.logScreen(_names[i]);
+            if (i == 1) FeedScreen.opened.value++;
           },
           destinations: const [
             NavigationDestination(icon: Icon(Icons.local_activity_outlined), selectedIcon: Icon(Icons.local_activity), label: '半券帳'),

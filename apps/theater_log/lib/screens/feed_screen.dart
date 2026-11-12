@@ -14,6 +14,9 @@ class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key, this.api});
   final CommunityApi? api;
 
+  /// タブを開いた回数。開くたびに一覧を読み直して、公開したばかりの感想も出す
+  static final opened = ValueNotifier<int>(0);
+
   @override
   State<FeedScreen> createState() => _FeedScreenState();
 }
@@ -24,6 +27,18 @@ class _FeedScreenState extends State<FeedScreen> {
   bool _more = false;
   bool _failed = false;
   CommunityApi get _api => widget.api ?? CommunityApi(AppScope.of(context).auth);
+
+  @override
+  void initState() {
+    super.initState();
+    FeedScreen.opened.addListener(_load);
+  }
+
+  @override
+  void dispose() {
+    FeedScreen.opened.removeListener(_load);
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
