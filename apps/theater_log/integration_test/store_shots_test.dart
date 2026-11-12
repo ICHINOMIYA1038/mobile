@@ -1,14 +1,22 @@
 // App Store の画像の素材を撮る。iPhone 16 Pro Max（1320×2868）のシミュレーターで流し、
 // 「SHOT 名前」が出たところで xcrun simctl io screenshot する（tool/store_compose/shoot.sh）。
-// 記録はこの端末の中の見本で、作品と劇場はカタログにある実在のもの。感想は見本の文で、他の人の感想は出さない。
+// 作品名・劇団名・劇場名・写真はすべて架空（実在の公演と取り違えられないように）。カタログの劇場もこのテストの中だけ架空のものに差し替える。
+// 写真は tool/store_compose/photos/ の JPEG を --dart-define=PHOTOS=<そのフォルダの絶対パス> で読む（シミュレーターは Mac のファイルを読める）。
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gikyoku_catalog/gikyoku_catalog.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:theater_log/account/auth_service.dart';
+import 'package:theater_log/app_scope.dart';
 import 'package:theater_log/catalog/achievements.dart';
+import 'package:theater_log/catalog/log_photos.dart';
 import 'package:theater_log/catalog/theater_log.dart';
+import 'package:theater_log/catalog/ticket_scan.dart';
 import 'package:theater_log/main.dart';
 import 'package:theater_log/screens/quick_log_sheet.dart';
 import 'package:theater_log/screens/recap_screen.dart';
@@ -26,40 +34,59 @@ void main() {
   testWidgets('store shots', (tester) async {
     SharedPreferences.setMockInitialValues({'community_rules_v2': true});
     final repository = CatalogRepository();
-    final catalog = await repository.load();
-    final plays = {for (final p in catalog.plays) p.title: p};
+    final real = await repository.load();
+    // 架空の劇場（都道府県だけは実在。地図に足あとを付けるため）
+    const fictional = [
+      ('下北沢ほとり座', '東京都'), ('中野こもれび劇場', '東京都'), ('高円寺あかり小劇場', '東京都'), ('池袋まわり舞台', '東京都'),
+      ('横浜みなと座', '神奈川県'), ('京都いとへん劇場', '京都府'), ('大阪ともしびホール', '大阪府'), ('名古屋ひだまり座', '愛知県'),
+      ('福岡なぎさ劇場', '福岡県'), ('札幌ゆきあかり劇場', '北海道'), ('仙台けやき座', '宮城県'), ('金沢こはく劇場', '石川県'),
+      ('広島みずべ劇場', '広島県'), ('松山いでゆ座', '愛媛県'), ('那覇あおぞら劇場', '沖縄県'), ('新潟こめどころ座', '新潟県'),
+      ('静岡ちゃばたけ劇場', '静岡県'), ('神戸はとば座', '兵庫県'), ('岡山ももいろ劇場', '岡山県'), ('熊本ひのくに座', '熊本県'),
+      ('長野やまなみ劇場', '長野県'), ('盛岡いわて座', '岩手県'), ('高松うどん座', '香川県'), ('鹿児島さくらじま劇場', '鹿児島県'),
+    ];
+    final catalog = Catalog(
+      generatedAt: real.generatedAt,
+      categories: real.categories,
+      plays: const [],
+      venues: [for (final (i, v) in fictional.indexed) Venue(9001 + i, v.$1, v.$2)],
+    );
+    const photoDir = String.fromEnvironment('PHOTOS');
+    Future<List<String>> photos(List<String> names) async => [
+      for (final n in names)
+        if (photoDir.isNotEmpty) await LogPhotos.save(File('$photoDir/$n.jpg')),
+    ];
     final log = TheaterLog();
     final y = DateTime.now().year;
-    // （題名, 月, 日, 劇場, 劇団, 評価, 昼夜, ひとこと）
+    // （題名, 月, 日, 劇場, 劇団, 評価, 昼夜, ひとこと, 写真）
     const rows = [
-      ('東京ノート', 1, 18, 'こまばアゴラ劇場', '青年団', 5, 'soiree', '美術館のロビーだけで、遠い戦争の気配が伝わってくる。'),
-      ('赤鬼', 2, 9, '本多劇場', null, 4, 'matinee', ''),
-      ('三月の5日間', 3, 5, 'KAAT神奈川芸術劇場', null, 4, 'soiree', '語りのリズムが体に残る。'),
-      ('エダニク', 4, 20, 'ザ・スズナリ', null, 5, 'soiree', '休憩室だけで、ここまで緊張が続くとは。'),
-      ('わが星', 5, 11, '座・高円寺', null, 5, 'matinee', 'ラップと時報。帰り道ずっと口ずさんでいた。'),
-      ('かもめ', 6, 2, '世田谷パブリックシアター', null, 3, 'soiree', ''),
-      ('夏の夜の夢', 7, 26, 'ロームシアター京都', null, 4, 'matinee', '京都まで遠征。森の場面の照明がきれい。'),
-      ('赤鬼', 8, 30, 'in→dependent theatre', null, 4, 'soiree', '大阪の小さな劇場で、同じ作品をもう一度。'),
-      ('東京ノート', 9, 14, '名古屋市芸術創造センター', null, 4, 'matinee', ''),
-      ('エダニク', 10, 4, 'アートマネージメントセンター福岡', null, 5, 'soiree', '福岡でも。客席の笑いの起き方が違う。'),
-      ('わが星', 10, 25, '本多劇場', null, 5, 'soiree', ''),
+      ('夜明けの待合室', 1, 18, '下北沢ほとり座', 'ユニット灯台', 5, 'soiree', '駅の待合室だけで、ひと晩の人生が見えてくる。', ['stage_blue']),
+      ('港町クロニクル', 3, 14, '横浜みなと座', '劇団あおぞら座', 4, 'matinee', '', ['flyer_minato']),
+      ('さよならの温度', 4, 5, '中野こもれび劇場', '劇団ひとつぶ', 4, 'soiree', '台詞の少ない場面ほど、ずっと覚えている。', ['stage_amber']),
+      ('月曜日の鯨', 5, 11, '下北沢ほとり座', 'ユニット灯台', 5, 'matinee', '笑って、最後に少し泣いた。帰り道ずっと考えていた。', ['flyer_kujira', 'stage_green']),
+      ('赤い傘の午後', 7, 2, '中野こもれび劇場', '劇団ひとつぶ', 3, 'soiree', '', ['flyer_kasa']),
+      ('三番線のベンチ', 7, 26, '京都いとへん劇場', '東風舎', 4, 'matinee', '京都まで遠征。小さな劇場の近さがいい。', ['stage_red']),
+      ('ひとりぼっちの合唱', 8, 30, '大阪ともしびホール', '劇団つきよみ', 4, 'soiree', '大阪でもう一度。客席の笑いの起き方が違う。', <String>[]),
+      ('星を数える部屋', 9, 14, '名古屋ひだまり座', '東風舎', 4, 'matinee', '', ['flyer_hoshi']),
+      ('灯台守の娘', 10, 4, '福岡なぎさ劇場', '劇団つきよみ', 5, 'soiree', '福岡で。最後の明かりがずっと目に残っている。', ['flyer_tomoshibi', 'stage_dawn']),
+      ('透明な隣人', 10, 25, '高円寺あかり小劇場', '劇団ひとつぶ', 5, 'soiree', '', ['stage_green']),
+      ('雨宿りの研究', 11, 3, '下北沢ほとり座', 'ユニット灯台', 5, 'matinee', '同じ劇団を観るのは 3 回目。毎回ちがう顔がある。', ['stage_amber']),
     ];
     for (final (i, r) in rows.indexed) {
-      final p = plays[r.$1];
       await log.upsert(TheaterLogEntry(
         id: 'shot$i',
         title: r.$1,
         watchedOn: DateTime(y, r.$2, r.$3),
-        playId: p?.id,
-        author: p?.author,
         venue: r.$4,
         group: r.$5,
         rating: r.$6,
         showTime: r.$7,
         note: r.$8,
+        photos: await photos(r.$9),
       ));
     }
-    await tester.pumpWidget(App(repository: repository, catalog: catalog, log: log, auth: AuthService()));
+    // 撮影中に本物のカタログに入れ替わらないよう、取りに行く先は「変わりなし」を返す
+    final offline = CatalogRepository(client: MockClient((_) async => http.Response('', 304)));
+    await tester.pumpWidget(App(repository: offline, catalog: catalog, log: log, auth: AuthService()));
     await tester.pumpAndSettle();
 
     // 半券帳（1 枚ずつの表示）
@@ -75,33 +102,50 @@ void main() {
     QuickLogSheet.open(ctx);
     await tester.pumpAndSettle();
     await _shot('record');
-    await tester.enterText(find.byKey(const Key('quick-title')), 'エダニク');
+    // チケットを撮って読み取ったところ。文字認識の結果は架空のチケット（photos/ticket_amayadori.jpg）に書いてある文字
+    TicketScanner.override = (_) async => ['ユニット灯台 第12回公演', '雨宿りの研究', '2026年11月12日(木) 14:00開演', '会場 下北沢ほとり座', '座席 A列 12番', '一般 ¥4,500'];
+    final sheet = tester.state<QuickLogSheetState>(find.byType(QuickLogSheet));
+    final ticket = photoDir.isEmpty ? null : '$photoDir/ticket_amayadori.jpg';
+    await sheet.scanPath(ticket ?? '/dev/null', AppScope.of(tester.element(find.byType(QuickLogSheet))));
+    if (ticket != null) sheet.adoptTicketPhoto(await LogPhotos.save(File(ticket)));
+    await tester.pumpAndSettle();
+    // 読み取った題名の候補から選んだところ
+    await tester.tap(find.widgetWithText(ActionChip, '雨宿りの研究'));
+    await tester.pumpAndSettle();
+    await _shot('scan');
+    await tester.enterText(find.byKey(const Key('quick-title')), '雨宿りの研究');
     await tester.pumpAndSettle();
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('flow-next')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('venue-open')));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('venue-query')), '本多');
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('venue-hit-4')));
-    await tester.pumpAndSettle();
+    // 劇場はチケットから入っている。読み取らなかったときだけ選ぶ
+    if (find.byKey(const Key('venue-open')).evaluate().isNotEmpty) {
+      await tester.tap(find.byKey(const Key('venue-open')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('venue-query')), 'ほとり');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('venue-hit-9001')));
+      await tester.pumpAndSettle();
+    }
     await tester.tap(find.byKey(const Key('flow-next')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('quick-star-5')));
-    await tester.enterText(find.byKey(const Key('quick-note')), '同じ作品を 3 回目。見るたびに発見がある。');
+    await tester.enterText(find.byKey(const Key('quick-note')), '同じ劇団を観るのは 4 回目。毎回ちがう顔がある。');
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
     await _shot('rating');
 
-    // 半券を切って、ハンコが押された画面
+    // 半券を切って、ハンコが押された画面。写真の画面でチラシに差し替えた記録として撮る
+    if (photoDir.isNotEmpty) sheet.adoptTicketPhoto(await LogPhotos.save(File('$photoDir/flyer_amayadori.jpg')));
+    await tester.pumpAndSettle();
     final before = log.entries;
     await tester.tap(find.byKey(const Key('quick-save')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 2600));
     await _shot('stamp');
     expect(newlyEarned(before, log.entries), isA<List<Achievement>>());
+    TicketScanner.override = null;
     await tester.tap(find.byKey(const Key('stamped-close')));
     await tester.pumpAndSettle();
 
