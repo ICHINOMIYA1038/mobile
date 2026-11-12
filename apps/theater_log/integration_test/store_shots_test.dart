@@ -12,9 +12,11 @@ import 'package:http/testing.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:theater_log/account/auth_service.dart';
+import 'package:theater_log/app_scope.dart';
 import 'package:theater_log/catalog/achievements.dart';
 import 'package:theater_log/catalog/log_photos.dart';
 import 'package:theater_log/catalog/theater_log.dart';
+import 'package:theater_log/catalog/ticket_scan.dart';
 import 'package:theater_log/main.dart';
 import 'package:theater_log/screens/quick_log_sheet.dart';
 import 'package:theater_log/screens/recap_screen.dart';
@@ -100,18 +102,32 @@ void main() {
     QuickLogSheet.open(ctx);
     await tester.pumpAndSettle();
     await _shot('record');
+    // チケットを撮って読み取ったところ。文字認識の結果は架空のチケット（photos/ticket_amayadori.jpg）に書いてある文字
+    TicketScanner.override = (_) async => ['ユニット灯台 第12回公演', '雨宿りの研究', '2026年11月12日(木) 14:00開演', '会場 下北沢ほとり座', '座席 A列 12番', '一般 ¥4,500'];
+    final sheet = tester.state<QuickLogSheetState>(find.byType(QuickLogSheet));
+    final ticket = photoDir.isEmpty ? null : '$photoDir/ticket_amayadori.jpg';
+    await sheet.scanPath(ticket ?? '/dev/null', AppScope.of(tester.element(find.byType(QuickLogSheet))));
+    if (ticket != null) sheet.adoptTicketPhoto(await LogPhotos.save(File(ticket)));
+    await tester.pumpAndSettle();
+    // 読み取った題名の候補から選んだところ
+    await tester.tap(find.widgetWithText(ActionChip, '雨宿りの研究'));
+    await tester.pumpAndSettle();
+    await _shot('scan');
     await tester.enterText(find.byKey(const Key('quick-title')), '雨宿りの研究');
     await tester.pumpAndSettle();
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('flow-next')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('venue-open')));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('venue-query')), 'ほとり');
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('venue-hit-9001')));
-    await tester.pumpAndSettle();
+    // 劇場はチケットから入っている。読み取らなかったときだけ選ぶ
+    if (find.byKey(const Key('venue-open')).evaluate().isNotEmpty) {
+      await tester.tap(find.byKey(const Key('venue-open')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('venue-query')), 'ほとり');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('venue-hit-9001')));
+      await tester.pumpAndSettle();
+    }
     await tester.tap(find.byKey(const Key('flow-next')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('quick-star-5')));
@@ -120,13 +136,16 @@ void main() {
     await tester.pumpAndSettle();
     await _shot('rating');
 
-    // 半券を切って、ハンコが押された画面
+    // 半券を切って、ハンコが押された画面。写真の画面でチラシに差し替えた記録として撮る
+    if (photoDir.isNotEmpty) sheet.adoptTicketPhoto(await LogPhotos.save(File('$photoDir/flyer_amayadori.jpg')));
+    await tester.pumpAndSettle();
     final before = log.entries;
     await tester.tap(find.byKey(const Key('quick-save')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 2600));
     await _shot('stamp');
     expect(newlyEarned(before, log.entries), isA<List<Achievement>>());
+    TicketScanner.override = null;
     await tester.tap(find.byKey(const Key('stamped-close')));
     await tester.pumpAndSettle();
 

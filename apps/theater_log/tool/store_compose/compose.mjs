@@ -2,7 +2,7 @@
 //   node tool/store_compose/compose.mjs [--only 1,2]
 // 素材は raw/（shoot.sh で撮った iPhone 16 Pro Max の画面、1320×2868）。出力は out/（1320×2868、アルファなし）。
 // 1 枚目はアイコン・アプリ名・「観劇記録アプリ」・3 つの特徴を入れて、何のアプリかを伝える（2026-11-12 オーナー判断）。
-// 画面の作品名・劇団名・劇場名・写真はすべて架空（integration_test/store_shots_test.dart と photos/）。価格の表記は入れない（ガイドライン 2.3.7）。
+// 画面の作品名・劇団名・劇場名・写真はすべて架空（integration_test/store_shots_test.dart と photos/）。photos/ は Codex の画像生成で作った架空のチラシ・舞台写真・チケット（印刷の文字は指定どおりか目で確かめた）。価格の表記は入れない（ガイドライン 2.3.7）。
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -20,15 +20,16 @@ mkdirSync(out, { recursive: true });
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const W = 1320, H = 2868, RW = 1320, RH = 2868;
 
-// crop は拡大パネルに出す元画面の範囲 [x, y, 幅, 高さ]（raw の px）
+// crop は拡大パネルに出す元画面の範囲 [x, y, 幅, 高さ]（raw の px）。photo は端末の右下に重ねる写真（photos/ の架空のチケット）
 const slots = [
   { n: '1', name: '01_stamp', raw: 'stamp', head: '観た舞台を、\n半券とハンコで残す。', crop: [30, 720, 1260, 620], seal: '観劇' },
-  { n: '2', name: '02_record', raw: 'rating', head: '星とひとことで、\n記録はすぐ。', sub: 'チケットを撮れば、題名や劇場も読み取ります', crop: [30, 450, 1260, 560], seal: '記録' },
-  { n: '3', name: '03_list', raw: 'list', head: '観た舞台が、\n半券になってたまる。', sub: '写真やチラシも一緒に残せます', crop: [30, 640, 1260, 640], seal: '半券' },
-  { n: '4', name: '04_story', raw: 'story', head: '1 本ずつ、\n思い出をめくる。', sub: '写真を表紙に、観た日と劇場と一緒に振り返れます', crop: [0, 1760, 1100, 540], seal: '思出', dark: true },
-  { n: '5', name: '05_book', raw: 'book', head: '集めたスタンプで、\n観劇の歩みが見える。', sub: '本数や劇場めぐりで、印が増えていきます', crop: [60, 880, 1200, 600], seal: '初日' },
-  { n: '6', name: '06_map', raw: 'map', head: '全国の劇場を\nめぐって集める。', sub: '行った劇場にスタンプ。地図に足あとが残ります', crop: [230, 640, 1060, 760], seal: '劇場' },
-  { n: '7', name: '07_recap', raw: 'recap', head: '1 年の観劇を、\n1 枚にまとめて。', sub: '観た本数やよく通った劇場をシェアできます', crop: [40, 910, 1240, 760], seal: '千秋楽' },
+  { n: '2', name: '02_scan', raw: 'scan', head: 'チケットを撮れば、\n日付も劇場も入る。', sub: '座席や金額も読み取ります。読み取りは端末の中だけ', crop: [30, 540, 1260, 400], seal: '読取', photo: 'ticket_amayadori_crop.jpg' },
+  { n: '3', name: '03_record', raw: 'rating', head: '星とひとことで、\n記録はすぐ。', sub: 'あとから感想を書き足すこともできます', crop: [30, 450, 1260, 560], seal: '記録' },
+  { n: '4', name: '04_list', raw: 'list', head: '観た舞台が、\n半券になってたまる。', sub: '写真やチラシも一緒に残せます', crop: [30, 640, 1260, 640], seal: '半券' },
+  { n: '5', name: '05_story', raw: 'story', head: '1 本ずつ、\n思い出をめくる。', sub: '写真を表紙に、観た日と劇場と一緒に振り返れます', crop: [0, 1760, 1100, 540], seal: '思出', dark: true },
+  { n: '6', name: '06_book', raw: 'book', head: '集めたスタンプで、\n観劇の歩みが見える。', sub: '本数や劇場めぐりで、印が増えていきます', crop: [60, 880, 1200, 600], seal: '初日' },
+  { n: '7', name: '07_map', raw: 'map', head: '全国の劇場を\nめぐって集める。', sub: '行った劇場にスタンプ。地図に足あとが残ります', crop: [230, 640, 1060, 760], seal: '劇場' },
+  { n: '8', name: '08_recap', raw: 'recap', head: '1 年の観劇を、\n1 枚にまとめて。', sub: '観た本数やよく通った劇場をシェアできます', crop: [40, 910, 1240, 760], seal: '千秋楽' },
 ];
 
 function html(s) {
@@ -61,12 +62,14 @@ function html(s) {
   .dev img{display:block;width:${sw}px;height:${shH}px;border-radius:124px}
   .zoom{position:absolute;left:${(W - pw) / 2 + 50}px;top:${py}px;width:${pw}px;height:${ch * ps}px;overflow:hidden;border-radius:44px;background:#fff;box-shadow:0 40px 90px ${shadow},0 0 0 6px #161616}
   .zoom img{display:block;width:${RW * ps}px;margin-left:${-cx * ps}px;margin-top:${-cy * ps}px}
+  .photo{position:absolute;right:50px;bottom:520px;width:780px;transform:rotate(6deg);border-radius:18px;border:12px solid #fff;box-shadow:0 40px 90px rgba(0,0,0,.30);z-index:2}
   .seal{position:absolute;right:56px;top:${s.n === '1' ? 820 : 640}px;z-index:3;background:${bg};width:190px;height:190px;border-radius:50%;border:10px solid #D0342C;box-sizing:border-box;transform:rotate(-12deg);display:grid;place-items:center;color:#D0342C;font-family:'Hiragino Mincho ProN',serif;font-weight:800;font-size:${sealF}px}
   .seal::after{content:'';position:absolute;inset:10px;border-radius:50%;border:3px solid #D0342C}
   </style></head><body>
   ${s.n === '1' ? hero : ''}<div class="head">${s.head}</div>${s.n === '1' ? '' : hero}
   <div class="dev"><img src="file://${raw}"></div>
   <div class="zoom"><img src="file://${raw}"></div>
+  ${s.photo ? `<img class="photo" src="file://${join(here, 'photos', s.photo)}">` : ''}
   <div class="seal">${s.seal}</div>
   </body></html>`;
 }
