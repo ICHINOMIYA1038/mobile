@@ -126,6 +126,7 @@ class _StudyScreenState extends State<StudyScreen> {
   late int _index = _initialIndex();
   int _nextStepRevision = 0;
   bool _sending = false;
+  bool _openingNext = false;
   final _scroll = ScrollController();
   StudyDraft get _draft => widget.draft;
   List<Map<String, dynamic>> get _questions => _draft.questions;
@@ -149,7 +150,7 @@ class _StudyScreenState extends State<StudyScreen> {
       final result = await AppScope.read(context).api.answer(
         q['id'] as String,
         answer,
-        via: _draft.kind == 'starter' ? 'kakomon' : 'review',
+        via: _draft.kind == 'daily' ? 'review' : 'kakomon',
       );
       _draft.answers[q['id'] as String] = {...result, 'answer': answer};
       await _draft.save();
@@ -186,9 +187,56 @@ class _StudyScreenState extends State<StudyScreen> {
     if (_scroll.hasClients) _scroll.jumpTo(0);
   }
 
+  /// 解き終えたその場で、次の論点の説明と3問へ進む。初日に3回以上答えた人ほど後日戻るため（pairof-shikaku の docs/takken-retention.md）
+  Future<void> _openNextThree() async {
+    if (_openingNext) return;
+    setState(() => _openingNext = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final session = await AppScope.read(
+        context,
+      ).api.nextStudy(_questions.last['pointId'] as String?);
+      if (!mounted) return;
+      if (session == null ||
+          (session['questions'] as List?)?.isEmpty != false) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('まだ解いていない問題はもうありません。')),
+        );
+        return;
+      }
+      final next = StudyDraft(
+        userId: _draft.userId,
+        session: session,
+        persist: false,
+      );
+      Funnel.event(
+        'study_next_three_open',
+        parameters: {'from': _draft.kind, 'version': 1},
+      );
+      await Funnel.studyStarted(next.userId, next.kind, next.day);
+      if (!mounted) return;
+      await Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          settings: const RouteSettings(name: 'study_session'),
+          builder: (_) => StudyScreen(draft: next),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(errorText(e))));
+    } finally {
+      if (mounted) setState(() => _openingNext = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(_draft.kind == 'starter' ? 'はじめの3問' : '今日の復習')),
+    appBar: AppBar(
+      title: Text(switch (_draft.kind) {
+        'starter' => 'はじめの3問',
+        'next' => '続きの3問',
+        _ => '今日の復習',
+      }),
+    ),
     body: Readable(
       child: ListView(
         controller: _scroll,
@@ -273,6 +321,18 @@ class _StudyScreenState extends State<StudyScreen> {
     ),
     const SizedBox(height: 8),
     Text('今回の正解は ${_draft.correct} / ${_questions.length}問です。'),
+    const SizedBox(height: 16),
+    FilledButton.icon(
+      onPressed: _openingNext ? null : _openNextThree,
+      icon: const Icon(Icons.arrow_forward),
+      label: const Text('続きの3問へ'),
+    ),
+    const SizedBox(height: 4),
+    const Text(
+      '次の論点の短い説明と3問です。',
+      textAlign: TextAlign.center,
+      style: TextStyle(fontSize: 13, color: Palette.inkSoft),
+    ),
     const SizedBox(height: 20),
     if (AppScope.of(context).me?['pro'] != true &&
         AppScope.of(context).home?['study'] is Map) ...[

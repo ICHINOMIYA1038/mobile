@@ -181,6 +181,59 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('解き終えたら「続きの3問へ」で次の論点に進み、今日の3問の記録は上書きしない', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    String? after;
+    final today = session();
+    for (final q in today['questions'] as List) {
+      (q as Map)['pointId'] = 'ch01-a';
+    }
+    final next = session(kind: 'next');
+    for (final q in next['questions'] as List) {
+      (q as Map)['id'] = 'n${q['id']}';
+      q['pointId'] = 'ch01-b';
+      q['lesson'] = {'title': '次の論点', 'text': '次の説明です。'};
+    }
+    final api = ApiClient(
+      baseUrl: 'http://test',
+      client: MockClient((req) async {
+        if (req.url.path == '/api/v1/takken/home') {
+          return ok({'pro': false, 'study': today, 'progress': {'seen': 3}});
+        }
+        expect(req.url.path, '/api/v1/takken/study/next');
+        after = req.url.queryParameters['after'];
+        return ok({'session': next});
+      }),
+    );
+    await api.ensureUser();
+    final draft = StudyDraft(userId: 'u_test', session: today);
+    for (final q in draft.questions) {
+      draft.answers[q['id'] as String] = {'answer': true, 'correct': true, 'explanation': ''};
+    }
+    await draft.save();
+    await tester.pumpWidget(
+      AppScope(
+        state: AppState(api)..home = {'study': today},
+        child: MaterialApp(theme: buildTheme(), home: StudyScreen(draft: draft)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getBottomRight(find.text('続きの3問へ')).dy, lessThan(844));
+    await tester.tap(find.text('続きの3問へ'));
+    await tester.pumpAndSettle();
+    expect(after, 'ch01-a');
+    expect(find.text('続きの3問'), findsOneWidget);
+    expect(find.text('次の説明です。'), findsOneWidget);
+    expect(events.where((e) => e.$1 == 'study_next_three_open'), hasLength(1));
+    final saved = await StudyDraft.load('u_test', today);
+    expect(saved.kind, 'starter');
+    expect(saved.complete, true);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('プラン体験は実際の記録と次の行動を表示し、予測点を表示しない', (tester) async {
     final api = ApiClient(
       baseUrl: 'http://test',
