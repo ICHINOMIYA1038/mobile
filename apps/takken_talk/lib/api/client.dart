@@ -126,6 +126,12 @@ class ApiClient {
   Future<Map<String, dynamic>> kakomonSet(String set, {String mode = 'all', String? point}) =>
       _json('GET', '$_examPath/kakomon/$set?mode=$mode${point == null ? '' : '&point=${Uri.encodeQueryComponent(point)}'}');
   Future<Map<String, dynamic>> review() => _json('GET', '$_examPath/review');
+
+  /// 3問を解き終えたあとの「続きの3問」。after の論点の次から未回答の問題を最大3問（無ければ null）
+  Future<Map<String, dynamic>?> nextStudy(String? after) async {
+    final r = await _json('GET', '$_examPath/study/next${after == null ? '' : '?after=${Uri.encodeQueryComponent(after)}'}');
+    return (r['session'] as Map?)?.cast<String, dynamic>();
+  }
   Future<Map<String, dynamic>> figures() => _json('GET', '$_examPath/figures');
   Future<Map<String, dynamic>> settings() => _json('GET', '$_examPath/settings');
 

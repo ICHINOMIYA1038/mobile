@@ -7,7 +7,11 @@ class StudyDraft {
     required this.userId,
     required this.session,
     Map<String, Map<String, dynamic>>? answers,
+    this.persist = true,
   }) : answers = answers ?? {};
+
+  /// false なら端末に残さない（「続きの3問」は、ホームの今日の3問の途中経過を上書きしない）
+  final bool persist;
 
   final String userId;
   final Map<String, dynamic> session;
@@ -24,6 +28,7 @@ class StudyDraft {
   static String _key(String userId) => 'study_draft_$userId';
 
   Future<void> save() async {
+    if (!persist) return;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       _key(userId),

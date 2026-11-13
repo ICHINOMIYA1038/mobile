@@ -62,7 +62,7 @@ class Funnel {
   }
 
   static Future<void> studyCompleted(String userId, String kind, String day, int correct, int total) async {
-    await _once(userId, 'completed_$day', 'study_session_completed', parameters: {'kind': kind, 'correct': correct, 'total': total, 'version': 1});
+    await _once(userId, kind == 'next' ? 'completed_next_$day' : 'completed_$day', 'study_session_completed', parameters: {'kind': kind, 'correct': correct, 'total': total, 'version': 1});
     if (kind == 'starter') await _once(userId, 'first_completed', 'study_first_completed', parameters: {'version': 1});
   }
 
