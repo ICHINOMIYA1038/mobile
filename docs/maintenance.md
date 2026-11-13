@@ -58,7 +58,7 @@ python3 scripts/asc/search_rank.py  # 主要キーワードの検索順位（KW 
 
 - **原価**: 次の1行で日ごとのターン数・推定USD・ユーザー数が出る。
   ```sh
-  cd ~/private && bws-run --app TAKKEN_TALK_API shared -- sh -c 'curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+  cd ~/private && bws-run --app TAKKEN_TALK_API_PROD shared -- sh -c 'curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
     "https://takken-talk-api.ichiryo108.workers.dev/admin/stats?days=31"' | python3 -m json.tool | head -40
   ```
   見るところ: `est_usd` の合計が月の見込みを超えていないか、`turns` が急に跳ねていないか
