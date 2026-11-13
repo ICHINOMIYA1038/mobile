@@ -1,10 +1,35 @@
 # 宅建の App Store 提出・配信記録
 
-2026-11-11 更新。1.0.3・ビルド14は国内ストアで配信を確認済み。
+2026-11-13 更新。1.0.4・ビルド15は配信中（App Store Connect で `READY_FOR_DISTRIBUTION` を確認）。
 
-1.0.4・ビルド15は審査に提出し、`WAITING_FOR_REVIEW` を確認した。承認後は自動公開。価格は月額3,000円のまま。
+1.0.5・ビルド16は審査に提出し、`WAITING_FOR_REVIEW` を確認した。承認後は自動公開。価格は月額3,000円のまま。
 
-## 1.0.4・ビルド15
+## 1.0.5・ビルド16
+
+- 提出日時: 2026-11-13 23:50 JST
+- バージョン ID: `5b9f4609-393b-4d9a-91be-b219b2ce257c`
+- ビルド ID: `0f0749d9-74cd-498d-8e43-3771f623c6ae`（`VALID`。輸出コンプライアンスは「該当なし」）
+- 審査提出 ID: `94823d88-8823-4f1c-b6b1-1bf3d3de41fb`
+- 提出後の状態: `WAITING_FOR_REVIEW`
+- 公開方法: `AFTER_APPROVAL`（承認後に自動公開）
+
+変更内容: 3問の結果画面に「続きの3問へ」を置き、次の論点の説明と未回答の3問にそのまま進めるようにした（[mobile #63](https://github.com/ICHINOMIYA1038/mobile/pull/63)）。問題はサーバーの `GET /api/v1/takken/study/next` から取る（[pairof-shikaku #15](https://github.com/ICHINOMIYA1038/pairof-shikaku/pull/15)、本番反映済み）。版上げは [mobile #64](https://github.com/ICHINOMIYA1038/mobile/pull/64)。
+
+更新内容（提出前にオーナーが了承。窓口経由）:
+
+> ・3問を解き終えたら、結果画面から続きの3問にそのまま進めるようになりました。
+
+審査メモ・説明文・キーワード・掲載画像は1.0.4から引き継いだ。
+
+main（#64 取り込み後と同じ内容）から公開用アーカイブを作り、配布用証明書で手動署名して書き出した。IPA で、1.0.5・16、配布用署名、本番 API（`shikaku.pairof.jp`）、続きの3問の処理が入っていることを確かめた。アップロード後、TestFlight の内部テストが `IN_BETA_TESTING` になったことを確認した（内部グループ「開発」は全ビルドを受け取る）。実機の TestFlight での確認は、この記録の時点では未実施。
+
+署名のとき、専用キーチェーンが `keychain_password.txt` で開けなかった（11/10 に作り直されていた）。2026-11-13 に `dist.p12` から作り直した。経緯は台帳の secrets.md「Apple配布署名」。
+
+承認後は [国内ストアの Lookup API](https://itunes.apple.com/lookup?id=6816080810&country=jp&entity=software&lang=ja_jp) で1.0.5の配信を確認する。審査待ちの時点では公開済みと扱わない。
+
+## 1.0.4・ビルド15の履歴
+
+2026-11-13に App Store Connect で `READY_FOR_DISTRIBUTION` を確認した。以下は提出時の記録。
 
 - 提出日時: 2026-11-11 12:48 JST
 - バージョン ID: `a8aa2ba2-8d74-42ac-9092-2be982a4c2d7`
