@@ -9,9 +9,9 @@ TOMOSHIBI小屋の審査却下(2026-07-31 提出分、Submission ID `c976f520-27
 | ファイル | 場所 | 備考 |
 | --- | --- | --- |
 | `AuthKey_3URMU94JK9.p8` | `~/.appstoreconnect/private_keys/` | Xcode/altoolがこのディレクトリを自動的に見に行く標準の置き場所 |
-| `AuthKey_B9H23HBRM7.p8` | `~/.appstoreconnect/private_keys/` と `~/.secrets/tomoshibi/` の両方に存在 | |
-| `AuthKey_QPR5F336K4.p8` | `~/.secrets/tomoshibi/`(base64エンコード版 `.p8.base64.txt` も同居、CI用シークレット投入向けと思われる) | |
-| `SubscriptionKey_NV27Q8657Q.p8` | `~/.secrets/tomoshibi/` | ファイル名から見て「App Store Server API / Subscription Key」(サブスクリプション状態通知・レシート検証用)の可能性が高い。ビルドアップロード用の`AuthKey_*`とは別用途と思われるので、使う前に用途を要確認 |
+| `AuthKey_B9H23HBRM7.p8` | Bitwarden Secrets Manager（`shared`、`ASC__AUTHKEY_B9H23HBRM7_P8`）。ノートPC の平文は 2026-11-14 に消した | |
+| `AuthKey_QPR5F336K4.p8` | Bitwarden Secrets Manager（`laptop`、`TOMOSHIBI__AUTHKEY_QPR5F336K4_P8`）。ノートPC の平文は 2026-11-14 に消した（base64 版 `~/.secrets/tomoshibi/AuthKey_QPR5F336K4.p8.base64.txt` は残っている） | |
+| `SubscriptionKey_NV27Q8657Q.p8` | Bitwarden Secrets Manager（`laptop`、`TOMOSHIBI__SUBSCRIPTIONKEY_NV27Q8657Q_P8`）。ノートPC の平文は 2026-11-14 に消した | ファイル名から見て「App Store Server API / Subscription Key」(サブスクリプション状態通知・レシート検証用)の可能性が高い。ビルドアップロード用の`AuthKey_*`とは別用途と思われるので、使う前に用途を要確認 |
 
 各キーの **Key ID と Issuer ID の対応関係、権限(Admin/App Manager等)** はこの調査時点では未確認だったが、2026-08-18に`AuthKey_3URMU94JK9.p8`(Key ID `3URMU94JK9`)で以下のIssuer IDを使い、tomoshibiのビルドアップロードが実際に成功することを確認済み(apps/neta_makerの提出メモに記載されていたのと同じキー・Issuer ID)。
 

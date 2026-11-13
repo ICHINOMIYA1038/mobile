@@ -58,8 +58,8 @@ python3 scripts/asc/search_rank.py  # 主要キーワードの検索順位（KW 
 
 - **原価**: 次の1行で日ごとのターン数・推定USD・ユーザー数が出る。
   ```sh
-  curl -s -H "Authorization: Bearer $(cat ~/.secrets/takken-talk/admin_token.txt)" \
-    "https://takken-talk-api.ichiryo108.workers.dev/admin/stats?days=31" | python3 -m json.tool | head -40
+  cd ~/private && bws-run --app TAKKEN_TALK_API shared -- sh -c 'curl -s -H "Authorization: Bearer $ADMIN_TOKEN" \
+    "https://takken-talk-api.ichiryo108.workers.dev/admin/stats?days=31"' | python3 -m json.tool | head -40
   ```
   見るところ: `est_usd` の合計が月の見込みを超えていないか、`turns` が急に跳ねていないか
   （跳ねていたら1人が延々と回している可能性。`users` と突き合わせる）。
@@ -137,4 +137,17 @@ security list-keychains -d user -s takken.keychain ~/Library/Keychains/login.key
 #    （"Cloud signing permission error"）。だから手動署名にしている。
 ```
 
-秘密鍵・p12・各パスワードは `~/.secrets/apple-signing/` に置いてある（リポジトリには入れない）。
+秘密鍵・p12・各パスワードは Bitwarden Secrets Manager（個人の組織、プロジェクト `laptop`、名前の頭 `APPLE_SIGNING__`）にある。
+`~/.secrets/apple-signing/` の平文のファイルは 2026-11-14 に消した。使うときは `~/private` で次のように戻し、使い終わったら消す
+（`bws-run` は台帳 `~/private/ledger/bin/bws-run`。詳しくは台帳 `docs/bitwarden-migration.md`）。
+
+```sh
+cd ~/private
+# 専用キーチェーンを開ける（ファイルに戻さずに使う）
+bws-run --app APPLE_SIGNING laptop -- sh -c 'security unlock-keychain -p "$KEYCHAIN_PASSWORD" takken.keychain'
+# キーチェーンを作り直すときは、p12 と秘密鍵をファイルに戻す（元とバイト単位で同じになる）
+bws-run --app APPLE_SIGNING --write-file DIST_P12_BASE64 ~/.secrets/apple-signing/dist.p12 --base64 laptop
+bws-run --app APPLE_SIGNING --write-file DIST_KEY ~/.secrets/apple-signing/dist.key laptop
+bws-run --app APPLE_SIGNING laptop -- sh -c 'security import ~/.secrets/apple-signing/dist.p12 -k takken.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security -A'
+rm ~/.secrets/apple-signing/dist.p12 ~/.secrets/apple-signing/dist.key
+```
