@@ -287,7 +287,7 @@ class _EntryCard extends StatelessWidget {
           TextButton.icon(
             key: const Key('log-to-play'),
             style: TextButton.styleFrom(foregroundColor: Palette.moegi, padding: const EdgeInsets.only(left: 8), minimumSize: const Size(0, 32)),
-            onPressed: () => launchUrl(play!.siteUrl, mode: LaunchMode.externalApplication),
+            onPressed: () => launchUrl(play!.siteUrl, mode: LaunchMode.inAppBrowserView),
             icon: const Icon(Icons.menu_book_outlined, size: 16),
             label: Text('この作品の台本（${play!.author}）', style: const TextStyle(fontSize: 13)),
           ),
@@ -582,7 +582,7 @@ class _StoryPageState extends State<_StoryPage> {
                     TextButton.icon(
                       key: const Key('log-to-play'),
                       style: TextButton.styleFrom(foregroundColor: Colors.white70, padding: EdgeInsets.zero, minimumSize: const Size(0, 36)),
-                      onPressed: () => launchUrl(play.siteUrl, mode: LaunchMode.externalApplication),
+                      onPressed: () => launchUrl(play.siteUrl, mode: LaunchMode.inAppBrowserView),
                       icon: const Icon(Icons.menu_book_outlined, size: 16),
                       label: Text('この作品の台本（${play.author}）', style: const TextStyle(fontSize: 13)),
                     ),

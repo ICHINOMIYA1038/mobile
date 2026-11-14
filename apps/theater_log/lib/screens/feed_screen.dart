@@ -133,7 +133,7 @@ class _FeedScreenState extends State<FeedScreen> {
                   review: r,
                   api: _api,
                   onBlocked: (id) => setState(() => _reviews = _reviews?.where((x) => x.authorId != id).toList()),
-                  onOpenTitle: plays[r.postId] == null ? null : () => launchUrl(plays[r.postId]!.siteUrl, mode: LaunchMode.externalApplication),
+                  onOpenTitle: plays[r.postId] == null ? null : () => launchUrl(plays[r.postId]!.siteUrl, mode: LaunchMode.inAppBrowserView),
                 ),
               if (_next != null)
                 Padding(

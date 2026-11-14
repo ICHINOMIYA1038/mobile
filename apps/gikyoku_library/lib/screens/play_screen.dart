@@ -17,7 +17,7 @@ class PlayScreen extends StatelessWidget {
 
   Future<void> _open(String kind, Uri url) async {
     AppInsights.logEvent('link_open', parameters: {'kind': kind, 'play_id': play.id});
-    await launchUrl(url, mode: LaunchMode.externalApplication);
+    await launchUrl(url, mode: LaunchMode.inAppBrowserView);
   }
 
   @override

@@ -19,7 +19,7 @@ class CommunityRules {
     if (prefs.getBool(_key) == true) return true;
     if (!context.mounted) return false;
     Widget link(String label, String url) => TextButton(
-      onPressed: () => launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
+      onPressed: () => launchUrl(Uri.parse(url), mode: LaunchMode.inAppBrowserView),
       style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4), minimumSize: const Size(0, 36)),
       child: Text(label),
     );

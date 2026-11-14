@@ -135,7 +135,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   TextButton(key: const Key('sign-out'), onPressed: _busy ? null : _signOut, child: const Text('ログアウト')),
                   TextButton(
                     key: const Key('delete-account'),
-                    onPressed: () => launchUrl(Uri.parse('https://id.gikyokutosyokan.com/delete'), mode: LaunchMode.externalApplication),
+                    onPressed: () => launchUrl(Uri.parse('https://id.gikyokutosyokan.com/delete'), mode: LaunchMode.inAppBrowserView),
                     child: const Text('アカウントを削除', style: TextStyle(color: Palette.vermilion)),
                   ),
                   const Text('削除すると、観劇の記録と公開した感想も消えます。戯曲 ID のページで手続きします。', style: TextStyle(fontSize: 12, height: 1.6, color: Palette.inkSoft)),
