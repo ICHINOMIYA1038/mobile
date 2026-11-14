@@ -24,7 +24,7 @@ class AboutScreen extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       title: Text(label),
       trailing: const Icon(Icons.open_in_new, size: 18),
-      onTap: () => launchUrl(url, mode: LaunchMode.externalApplication),
+      onTap: () => launchUrl(url, mode: LaunchMode.inAppBrowserView),
     );
     return Scaffold(
       appBar: AppBar(title: const Text('このアプリについて')),
