@@ -76,3 +76,26 @@ const authCallbackUrl = 'tomoshibi://auth-callback';
 // スキームへのリンクを出す。ここへの遷移はネットワークに出る前に横取りする。
 bool isNativePurchaseRequest(Uri uri) =>
     uri.scheme == authCallbackUrlScheme && uri.host == 'native-purchase';
+
+// アカウントの管理・ログアウト・退会は、戯曲 ID のアカウント画面・退会画面で行う
+// （戯曲図書館のマイページや古い退会 API は使わない。2026-11-14 オーナー決定）。
+// どちらもログインが要り、Apple の連携の取り消しにはログインしたときの Cookie が要るので、
+// ログインと同じシート（ASWebAuthenticationSession）で開く。閉じるとき戯曲 ID が
+// tomoshibi://account?result=closed|logged_out|deleted|kept に戻す。
+const _portalHost = 'id.gikyokutosyokan.com';
+const accountReturnUrl = 'tomoshibi://account';
+
+bool isAccountPageRequest(Uri uri) =>
+    uri.host == _portalHost && (uri.path == '/account' || uri.path == '/delete');
+
+/// シートで開く URL。戻り先は必ずアプリにする
+Uri buildAccountPageUri(Uri requested) => Uri.https(_portalHost, requested.path, {
+  'return_to': accountReturnUrl,
+});
+
+/// シートから戻ってきた URL が、アプリの画面もログアウトすべき結果（ログアウト・退会）か
+bool needsLogoutAfterAccountPage(Uri uri) =>
+    uri.scheme == authCallbackUrlScheme &&
+    uri.host == 'account' &&
+    (uri.queryParameters['result'] == 'logged_out' ||
+        uri.queryParameters['result'] == 'deleted');

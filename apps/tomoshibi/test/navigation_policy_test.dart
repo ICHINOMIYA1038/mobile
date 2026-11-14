@@ -48,6 +48,21 @@ void main() {
     expect(opensInAppBrowser(Uri.parse('sms:0000000000')), isFalse);
   });
 
+  test('戯曲 ID のアカウント・退会の画面はシートで開き、戻り値でログアウトが要るかを見分ける', () {
+    expect(isAccountPageRequest(Uri.parse('https://id.gikyokutosyokan.com/account?return_to=tomoshibi%3A%2F%2Faccount')), isTrue);
+    expect(isAccountPageRequest(Uri.parse('https://id.gikyokutosyokan.com/delete')), isTrue);
+    expect(isAccountPageRequest(Uri.parse('https://id.gikyokutosyokan.com/refresh')), isFalse);
+    expect(isAccountPageRequest(Uri.parse('https://gikyokutosyokan.com/mypage')), isFalse);
+    final opened = buildAccountPageUri(Uri.parse('https://id.gikyokutosyokan.com/account?return_to=https%3A%2F%2Fevil.example.com'));
+    expect(opened.path, '/account');
+    expect(opened.queryParameters['return_to'], 'tomoshibi://account');
+    expect(needsLogoutAfterAccountPage(Uri.parse('tomoshibi://account?result=deleted')), isTrue);
+    expect(needsLogoutAfterAccountPage(Uri.parse('tomoshibi://account?result=logged_out')), isTrue);
+    expect(needsLogoutAfterAccountPage(Uri.parse('tomoshibi://account?result=closed')), isFalse);
+    expect(needsLogoutAfterAccountPage(Uri.parse('tomoshibi://account?result=kept')), isFalse);
+    expect(needsLogoutAfterAccountPage(Uri.parse('tomoshibi://auth-callback?result=deleted')), isFalse);
+  });
+
   test('App Store の管理画面は App Store アプリで開く', () {
     expect(opensInOtherApp(Uri.parse('https://apps.apple.com/account/subscriptions')), isTrue);
     expect(opensInOtherApp(Uri.parse('https://palette.gikyokutosyokan.com/')), isFalse);

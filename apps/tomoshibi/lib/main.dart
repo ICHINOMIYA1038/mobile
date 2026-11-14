@@ -270,6 +270,12 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
       unawaited(_startWebAuth(uri).whenComplete(() => _authFlowBusy = false));
       return NavigationDecision.prevent;
     }
+    if (isAccountPageRequest(uri)) {
+      if (_authFlowBusy) return NavigationDecision.prevent;
+      _authFlowBusy = true;
+      unawaited(_openAccountPage(uri).whenComplete(() => _authFlowBusy = false));
+      return NavigationDecision.prevent;
+    }
     if (isLogoutRequest(uri)) {
       // _startLogout自身が最後にこの同じURLをWebViewへ読み込むため、
       // その2回目はここで再度横取りせずそのまま通す(でないと無限ループする)。
@@ -339,6 +345,36 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     } catch (e) {
       _showMessage('サインインに失敗しました: $e');
     }
+  }
+
+  /// 戯曲 ID のアカウント画面・退会画面をログインと同じシートで開く。そこでログアウトか退会をしたら、
+  /// アプリの画面とシート側に残る戯曲図書館のセッションも消すため、ログアウトの流れを続けて行う。
+  Future<void> _openAccountPage(Uri requested) async {
+    final Uri returned;
+    try {
+      returned = Uri.parse(await FlutterWebAuth2.authenticate(
+        url: buildAccountPageUri(requested).toString(),
+        callbackUrlScheme: authCallbackUrlScheme,
+      ));
+    } on PlatformException catch (e) {
+      // CANCELED はシートを閉じただけ
+      if (e.code != 'CANCELED') {
+        _showMessage('アカウントの画面を開けませんでした: [${e.code}] ${e.message}');
+      }
+      return;
+    } catch (e) {
+      _showMessage('アカウントの画面を開けませんでした: $e');
+      return;
+    }
+    if (!needsLogoutAfterAccountPage(returned)) return;
+    if (returned.queryParameters['result'] == 'deleted') {
+      _showMessage('退会しました。ご利用ありがとうございました');
+    }
+    await _startLogout(
+      Uri.https('gikyokutosyokan.com', '/api/tomoshibi/logout', {
+        'callbackUrl': _homeUrl,
+      }),
+    );
   }
 
   /// ログアウトはアプリ本体WebViewのCookieストアだけでなく、
