@@ -5,6 +5,14 @@
 
 直近の却下と対応は [4.3a-rejection-response.md](4.3a-rejection-response.md) を参照。
 
+## 1.0.4 の TestFlight（2026-11-14）
+
+1.0.3（ビルド 9）は 2026-11-14 に配信中（READY_FOR_SALE）を確認した。1.0.4（ビルド 10）は、アプリ外のページをアプリ内ブラウザで開く修正（#67）を入れて TestFlight に上げ、内部テスト（`IN_BETA_TESTING`）で使える状態にした。審査には未提出（オーナーの実機確認と「このバージョンの新機能」の文面の確認待ち）。
+
+- 署名: 宅建アプリと同じく、専用キーチェーン `takken.keychain` を開けて手動署名で書き出す（手順は `docs/maintenance.md`）。キーチェーンが閉じたままだと、codesign がパスワードのダイアログを出して止まる。プロファイルは ASC の「Tomoshibi App Store」（`DQY5KPMD6W`、期限 2027-09-25）を API で取り、ExportOptions を `signingStyle: manual` にした。API キーでのクラウド署名は権限エラーで通らない
+- 輸出コンプライアンス: ビルド 9 と同じ `usesNonExemptEncryption: false` を API で設定した
+- TestFlight の内部グループ: それまで無かったので、ほかのアプリと同じ「開発」（全ビルドを受け取る）を作り、オーナーを入れた
+
 ## 1.0.3 の審査状況（2026-11-11）
 
 App Store で配信中の版は 1.0.2（ビルド 8）。1.0.3（ビルド 9）は
