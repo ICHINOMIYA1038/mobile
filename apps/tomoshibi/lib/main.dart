@@ -278,11 +278,21 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     if (isInAppHost(host)) {
       return NavigationDecision.navigate;
     }
+    // ページ内の iframe（決済画面や広告の部品）の読み込みも、ここを通る。外で開くと、利用者が
+    // 何も押していないのにブラウザが開いてアプリから離れてしまうので、ページの一部として読ませる。
+    if (!request.isMainFrame) {
+      return NavigationDecision.navigate;
+    }
     // about:blank / blob: / data: 等はOSに渡しても開けず launchUrl が例外を投げる
     // (NavigationDelegate内の未捕捉例外はWebViewの操作不能につながる)。
     if (canOpenExternally(uri)) {
       try {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        await launchUrl(
+          uri,
+          mode: opensInAppBrowser(uri)
+              ? LaunchMode.inAppBrowserView
+              : LaunchMode.externalApplication,
+        );
       } catch (_) {
         _showMessage('リンクを開けませんでした');
       }
