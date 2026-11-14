@@ -24,6 +24,9 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # 手元のビルドと揃える。3.47 から package:flutter/material.dart が非推奨になり、
+          # 最新の stable では analyze が既存のコードで落ちる（2026-11-14）
+          flutter-version: 3.44.8
 
       - name: Install dependencies
         run: flutter pub get

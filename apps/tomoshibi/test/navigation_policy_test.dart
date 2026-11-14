@@ -38,4 +38,13 @@ void main() {
     expect(canOpenExternally(Uri.parse('blob:https://tomoshibi.gikyokutosyokan.com/abc')), isFalse);
     expect(canOpenExternally(Uri.parse('javascript:void(0)')), isFalse);
   });
+
+  test('アプリ外のページはアプリ内ブラウザで開き、メール・電話はOSのアプリで開く', () {
+    expect(opensInAppBrowser(Uri.parse('https://palette.gikyokutosyokan.com/')), isTrue);
+    expect(opensInAppBrowser(Uri.parse('https://id.gikyokutosyokan.com/refresh')), isTrue);
+    expect(opensInAppBrowser(Uri.parse('http://example.com/')), isTrue);
+    expect(opensInAppBrowser(Uri.parse('mailto:support@gikyokutosyokan.com')), isFalse);
+    expect(opensInAppBrowser(Uri.parse('tel:0000000000')), isFalse);
+    expect(opensInAppBrowser(Uri.parse('sms:0000000000')), isFalse);
+  });
 }

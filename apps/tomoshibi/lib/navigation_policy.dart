@@ -1,5 +1,5 @@
 // tomoshibi本体とログイン(Google/Apple OAuth)・決済管理(Stripe portal)に必要な
-// ホストのみアプリ内WebViewで開き、それ以外(GitHubリンク等)は端末のブラウザに逃がす。
+// ホストのみアプリ内WebViewで開き、それ以外(戯曲パレット・GitHubリンク等)はアプリ内ブラウザのシートで開く。
 //
 // checkout.stripe.com (新規Pro購入) は意図的に含めない。
 // App Store審査 3.1.1 によりアプリ内で消費するデジタル機能の新規購入は
@@ -29,6 +29,13 @@ bool isUniversalLinkHost(String host) =>
 const _externalSchemes = {'http', 'https', 'mailto', 'tel', 'sms'};
 
 bool canOpenExternally(Uri uri) => _externalSchemes.contains(uri.scheme);
+
+// アプリ内で開かない http(s) のページ（戯曲パレット・戯曲 ID・GitHub 等）は、端末のブラウザではなく
+// アプリ内のブラウザ（SFSafariViewController）で開く。端末のブラウザに渡すと、そこから先のリダイレクトや
+// ログインを経てもアプリには戻らず、利用者が取り残される（2026-11-14 オーナー報告。
+// 戯曲パレットへのリンクが Chrome で開き、アプリに戻れなかった）。
+// アプリ内のブラウザなら「完了」でアプリに戻れる。メール・電話・SMS は OS のアプリでしか開けない。
+bool opensInAppBrowser(Uri uri) => uri.scheme == 'http' || uri.scheme == 'https';
 
 // Googleは埋め込みWebView内でのOAuthをセキュリティ上ブロックすることがあり、
 // (accounts.google.comをisInAppHostに含めていても)端末の外部Safariに逃げてしまう
