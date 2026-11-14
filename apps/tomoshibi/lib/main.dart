@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import 'firebase_options.dart';
 import 'navigation_policy.dart';
@@ -148,6 +149,12 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
           },
         ),
       );
+    // iOS の画面の端からのスワイプで前のページに戻れるようにする。アプリには戻るボタンが無く、
+    // アカウント管理（戯曲図書館のマイページ）などに移ると TOMOSHIBI に戻れなかった（2026-11-14 オーナー報告）
+    final platform = _controller.platform;
+    if (platform is WebKitWebViewController) {
+      platform.setAllowsBackForwardNavigationGestures(true);
+    }
     unawaited(_bootstrap());
     _initUniversalLinks();
   }
@@ -289,7 +296,7 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
       try {
         await launchUrl(
           uri,
-          mode: opensInAppBrowser(uri)
+          mode: opensInAppBrowser(uri) && !opensInOtherApp(uri)
               ? LaunchMode.inAppBrowserView
               : LaunchMode.externalApplication,
         );

@@ -47,4 +47,9 @@ void main() {
     expect(opensInAppBrowser(Uri.parse('tel:0000000000')), isFalse);
     expect(opensInAppBrowser(Uri.parse('sms:0000000000')), isFalse);
   });
+
+  test('App Store の管理画面は App Store アプリで開く', () {
+    expect(opensInOtherApp(Uri.parse('https://apps.apple.com/account/subscriptions')), isTrue);
+    expect(opensInOtherApp(Uri.parse('https://palette.gikyokutosyokan.com/')), isFalse);
+  });
 }

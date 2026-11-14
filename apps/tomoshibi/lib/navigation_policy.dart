@@ -37,6 +37,10 @@ bool canOpenExternally(Uri uri) => _externalSchemes.contains(uri.scheme);
 // アプリ内のブラウザなら「完了」でアプリに戻れる。メール・電話・SMS は OS のアプリでしか開けない。
 bool opensInAppBrowser(Uri uri) => uri.scheme == 'http' || uri.scheme == 'https';
 
+// App Store の「サブスクリプション」など、App Store アプリで開くべきページ。アプリ内ブラウザで開くと
+// Web の案内ページになり、契約の管理・解約ができない。
+bool opensInOtherApp(Uri uri) => uri.host == 'apps.apple.com';
+
 // Googleは埋め込みWebView内でのOAuthをセキュリティ上ブロックすることがあり、
 // (accounts.google.comをisInAppHostに含めていても)端末の外部Safariに逃げてしまう
 // ことがある(App Store審査 Guideline 4 で指摘)。サインイン導線だけはWebViewで
