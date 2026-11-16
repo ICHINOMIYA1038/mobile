@@ -6,7 +6,7 @@ import 'package:fp1_talk/main.dart';
 import 'package:fp1_talk/state/app_state.dart';
 
 /// サブスクリプションの審査用スクリーンショット（Pro の購入画面）を撮る。「SHOT 名前」で外から撮る（tool/shots.sh）。
-///   tool/shots.sh <UDID> build/paywall integration_test/paywall_shot_test.dart
+///   `tool/shots.sh <UDID> build/paywall integration_test/paywall_shot_test.dart`
 /// 価格（¥3,000）が出るまで待つ。出なければ、読み込めなかった状態のまま撮る（ログに出す）。
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
