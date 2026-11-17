@@ -66,4 +66,11 @@ class PurchaseService {
     }
     return Purchases.restorePurchases();
   }
+
+  /// アプリで買った Pro が有効か（広告を出さない判断に使う）
+  static Future<bool> hasActivePro() async {
+    await ensureConfigured();
+    final info = await Purchases.getCustomerInfo();
+    return info.entitlements.active.isNotEmpty;
+  }
 }

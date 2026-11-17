@@ -36,7 +36,7 @@ How to try it without an account:
 4. Use the edit panel to add a performer, lighting fixture, or stage set. The floor plan and 3D view show the same stage.
 5. Tap “通しで見る” to play the scenes in order.
 
-Sign-in is optional. New Pro purchases use StoreKit inside the app. “購入を復元” remains available in the bar below the web content, including while signed out. The app uses native iOS integrations for ATT consent, sign-in, Universal Links, and StoreKit purchases and restoration.
+Sign-in is optional. New Pro purchases use StoreKit inside the app. “購入を復元” is available on the Pro plan page (below the subscribe button) and in the ⋯ menu of the editor, including while signed out. Free users see a Google AdMob banner at the bottom of the screen; Pro users do not. The app uses native iOS integrations for ATT consent, sign-in, Universal Links, and StoreKit purchases and restoration.
 ```
 
 撮影済みの画面と [掲載文案](store-listing.md) は照合済み。

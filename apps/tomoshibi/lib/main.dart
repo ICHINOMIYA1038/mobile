@@ -7,10 +7,12 @@ import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
+import 'ad_service.dart';
 import 'firebase_options.dart';
 import 'navigation_policy.dart';
 import 'purchase_service.dart';
@@ -91,6 +93,12 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
   double _progress = 0;
   String? _loadError;
   bool _purchaseBusy = false;
+  // 画面の下のバナー広告。Web が「出してよい」と知らせ（無料の人）、アプリで Pro を買っていないときだけ出す
+  bool _adsAllowedByWeb = false;
+  bool _hasNativePro = false;
+  bool _trackingAuthorized = false;
+  BannerAd? _banner;
+  bool _bannerLoading = false;
   Completer<String?>? _sessionCompleter;
   Map<String, String> _attHeaders = const {};
   bool _skipNextLogoutIntercept = false;
@@ -123,6 +131,21 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
           // タイムアウト後に遅れて届いた応答で二重completeしないようにする。
           if (completer != null && !completer.isCompleted) {
             completer.complete(data['userId'] as String?);
+          }
+        },
+      )
+      // Web から届く知らせ。いまは広告を出してよいか（{type: 'ads', show: bool}）だけ
+      ..addJavaScriptChannel(
+        'TomoshibiApp',
+        onMessageReceived: (message) {
+          try {
+            final data = jsonDecode(message.message) as Map<String, dynamic>;
+            if (data['type'] == 'ads') {
+              _adsAllowedByWeb = data['show'] == true;
+              unawaited(_syncBanner());
+            }
+          } catch (_) {
+            // 形の違う知らせは無視する
           }
         },
       )
@@ -163,6 +186,7 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _linkSubscription?.cancel();
+    _banner?.dispose();
     super.dispose();
   }
 
@@ -202,6 +226,8 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     if (widget.requestTracking && status == TrackingStatus.notDetermined) {
       status = await AppTrackingTransparency.requestTrackingAuthorization();
     }
+    _trackingAuthorized = status == TrackingStatus.authorized;
+    unawaited(_checkNativePro());
     _attHeaders = {
       'X-ATT-Status': status == TrackingStatus.authorized
           ? 'authorized'
@@ -264,6 +290,10 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     }
     // サインイン導線はWebView埋め込みではなくASWebAuthenticationSessionで開く
     // (Guideline 4対応、navigation_policy.dartのコメント参照)。
+    if (isRestorePurchasesRequest(uri)) {
+      if (!_purchaseBusy) unawaited(_restorePurchases());
+      return NavigationDecision.prevent;
+    }
     if (isAuthSignInRequest(uri)) {
       if (_authFlowBusy) return NavigationDecision.prevent;
       _authFlowBusy = true;
@@ -427,6 +457,8 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
       final userId = await _fetchSessionUserId();
       await PurchaseService.purchasePro(gikyokutosyokanUserId: userId);
       _showMessage('ご購入ありがとうございます。Pro プランが有効になりました');
+      _hasNativePro = true;
+      unawaited(_syncBanner());
       if (userId == null) {
         await _offerOptionalSignInAfterPurchase();
       } else {
@@ -494,6 +526,10 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
       final info = await PurchaseService.restorePurchases(
         gikyokutosyokanUserId: userId,
       );
+      if (info.entitlements.active.isNotEmpty) {
+        _hasNativePro = true;
+        unawaited(_syncBanner());
+      }
       if (info.entitlements.active.isEmpty) {
         _showMessage('復元できる購入が見つかりませんでした');
       } else if (userId == null) {
@@ -507,6 +543,39 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     } finally {
       if (mounted) setState(() => _purchaseBusy = false);
     }
+  }
+
+  /// アプリで Pro を買ってある人には、Web の知らせを待たずに広告を出さない
+  Future<void> _checkNativePro() async {
+    try {
+      _hasNativePro = await PurchaseService.hasActivePro();
+    } catch (_) {
+      // 確かめられなければ Web の知らせに任せる
+    }
+    unawaited(_syncBanner());
+  }
+
+  /// 出してよいならバナーを読み込み、出さないなら片付ける
+  Future<void> _syncBanner() async {
+    if (!mounted) return;
+    final show = _adsAllowedByWeb && !_hasNativePro;
+    if (!show) {
+      final old = _banner;
+      if (old != null) {
+        setState(() => _banner = null);
+        old.dispose();
+      }
+      return;
+    }
+    if (_banner != null || _bannerLoading) return;
+    _bannerLoading = true;
+    final ad = await AdService.loadBanner(personalized: _trackingAuthorized);
+    _bannerLoading = false;
+    if (!mounted || !(_adsAllowedByWeb && !_hasNativePro)) {
+      ad?.dispose();
+      return;
+    }
+    setState(() => _banner = ad);
   }
 
   void _showMessage(String text) {
@@ -555,11 +624,15 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
             ],
           ),
         ),
+        // 下の帯はバナー広告（無料の人だけ）。「購入を復元」は Web の ⋯ メニューと Pro のページに移した（2026-11-18）
         bottomNavigationBar:
-            _progress >= 1 && !_purchaseBusy && _loadError == null
-            ? SafeArea(
-                top: false,
-                child: _RestorePurchasesBar(onPressed: _restorePurchases),
+            _banner != null && _progress >= 1 && !_purchaseBusy && _loadError == null
+            ? ColoredBox(
+                color: const Color(0xFF171316),
+                child: SafeArea(
+                  top: false,
+                  child: Center(heightFactor: 1, child: BannerSlot(ad: _banner!)),
+                ),
               )
             : null,
       ),
@@ -603,31 +676,6 @@ class _BusyOverlay extends StatelessWidget {
       color: Colors.black54,
       alignment: Alignment.center,
       child: const CircularProgressIndicator(color: Color(0xFFC8482D)),
-    );
-  }
-}
-
-class _RestorePurchasesBar extends StatelessWidget {
-  const _RestorePurchasesBar({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFF171316),
-      child: SizedBox(
-        height: 48,
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: onPressed,
-            style: TextButton.styleFrom(minimumSize: const Size(0, 48)),
-            icon: const Icon(Icons.restore, size: 18),
-            label: const Text('購入を復元'),
-          ),
-        ),
-      ),
     );
   }
 }
