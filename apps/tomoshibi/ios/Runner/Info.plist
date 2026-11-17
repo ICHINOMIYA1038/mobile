@@ -2,9 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- AdMob（2026-11-18）。本番のアプリ ID が出来るまでは Google のテスト用の ID -->
+	<!-- AdMob のアプリ「TOMOSHIBI小屋」（2026-11-18 登録）。広告ユニットの ID は lib/ad_service.dart -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-8691137965825158~7443829911</string>
 	<key>SKAdNetworkItems</key>
 	<array>
 		<dict>

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/widgets.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
@@ -11,15 +12,15 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 class AdService {
   AdService._();
 
-  /// AdMob のテスト専用のバナー ID。本番の ID が空のあいだはこちらを使う。
-  /// 実際の ID でテスト表示を繰り返すと、AdMob のポリシー違反になる。
+  /// AdMob のテスト専用のバナー ID。リリース版でない（手元で試す）ときはこちらを使う。
+  /// 本物の ID で試しの表示を繰り返すと、AdMob のポリシー違反になる。
   static const _testBannerIos = 'ca-app-pub-3940256099942544/2934735716';
 
-  /// 本番のバナー ID（AdMob のアプリ「TOMOSHIBI小屋」の広告ユニット）。空ならテスト ID。
-  static const _prodBannerIos = '';
+  /// 本番のバナー ID（AdMob のアプリ「TOMOSHIBI小屋」の広告ユニット「画面下バナー」、2026-11-18 作成）
+  static const _prodBannerIos = 'ca-app-pub-8691137965825158/6850922645';
 
   static String get bannerUnitId =>
-      _prodBannerIos.isEmpty ? _testBannerIos : _prodBannerIos;
+      kReleaseMode ? _prodBannerIos : _testBannerIos;
 
   static bool _initialized = false;
 
