@@ -77,6 +77,11 @@ const authCallbackUrl = 'tomoshibi://auth-callback';
 bool isNativePurchaseRequest(Uri uri) =>
     uri.scheme == authCallbackUrlScheme && uri.host == 'native-purchase';
 
+/// 購入の復元。Web の ⋯ メニューと Pro のページの「購入を復元」から呼ぶ
+/// （画面の下の「購入を復元」の帯は、2026-11-18 に広告の帯に替えた）。
+bool isRestorePurchasesRequest(Uri uri) =>
+    uri.scheme == authCallbackUrlScheme && uri.host == 'restore-purchases';
+
 // アカウントの管理・ログアウト・退会は、戯曲 ID のアカウント画面・退会画面で行う
 // （戯曲図書館のマイページや古い退会 API は使わない。2026-11-14 オーナー決定）。
 // どちらもログインが要り、Apple の連携の取り消しにはログインしたときの Cookie が要るので、

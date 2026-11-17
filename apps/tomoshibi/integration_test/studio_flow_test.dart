@@ -46,7 +46,6 @@ void main() {
     }
 
     await waitFor("Boolean(document.querySelector('button.project-library-create'))");
-    expect(find.text('購入を復元'), findsOneWidget);
     await click('button.project-library-create');
     await waitFor("location.pathname === '/studio/'");
     await click('button[aria-label*="シーン一覧を開く"]');
