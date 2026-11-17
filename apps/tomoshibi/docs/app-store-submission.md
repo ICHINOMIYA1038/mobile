@@ -5,6 +5,15 @@
 
 直近の却下と対応は [4.3a-rejection-response.md](4.3a-rejection-response.md) を参照。
 
+## 1.0.4 ビルド 14（AdMob、2026-11-18）
+
+- 下の「購入を復元」の帯を AdMob のバナー（320×50、無料の人だけ）に替えた（mobile#75）。復元は Web の ⋯ メニューと Pro のページから `tomoshibi://restore-purchases` で呼ぶ（tomoshibi#95）
+- AdMob: アプリ「TOMOSHIBI小屋」（`ca-app-pub-8691137965825158~7443829911`）、広告ユニット「画面下バナー」。手元で試す版は Google のテスト用の ID
+- app-ads.txt: tomoshibi.gikyokutosyokan.com は公開済み（tomoshibi#96）。gikyokutosyokan.com は gikyoku_tosyokan#666（次の本番の出し直しで出る）。AdMob のアプリの確認は、それを出したあと「アップデートを確認」で通す
+- TestFlight: ビルド 14 を `xcrun altool` で上げ、`usesNonExemptEncryption: false` を API で設定。内部テストで使える（READY_FOR_BETA_TESTING）。署名は 1.0.4 と同じ手動署名（ExportOptions は `signingStyle: manual`、プロファイル「Tomoshibi App Store」）
+- App のプライバシー（2026-11-18 公開）: おおよその場所（広告・分析、紐づかない、トラッキング）・その他の診断データ（分析）を追加。製品の操作に広告とトラッキング、広告データに分析とトラッキングを追加
+- 審査には未提出。オーナーの実機確認（広告・購入の復元・1.0.4 のほかの変更）を待つ
+
 ## 1.0.4 の TestFlight（2026-11-14）
 
 1.0.3（ビルド 9）は 2026-11-14 に配信中（READY_FOR_SALE）を確認した。1.0.4（ビルド 10）は、アプリ外のページをアプリ内ブラウザで開く修正（#67）を入れて TestFlight に上げ、内部テスト（`IN_BETA_TESTING`）で使える状態にした。審査には未提出（オーナーの実機確認と「このバージョンの新機能」の文面の確認待ち）。
