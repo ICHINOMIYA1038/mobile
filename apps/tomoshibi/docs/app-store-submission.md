@@ -12,7 +12,8 @@
 - app-ads.txt: tomoshibi.gikyokutosyokan.com は公開済み（tomoshibi#96）。gikyokutosyokan.com は gikyoku_tosyokan#666（次の本番の出し直しで出る）。AdMob のアプリの確認は、それを出したあと「アップデートを確認」で通す
 - TestFlight: ビルド 14 を `xcrun altool` で上げ、`usesNonExemptEncryption: false` を API で設定。内部テストで使える（READY_FOR_BETA_TESTING）。署名は 1.0.4 と同じ手動署名（ExportOptions は `signingStyle: manual`、プロファイル「Tomoshibi App Store」）
 - App のプライバシー（2026-11-18 公開）: おおよその場所（広告・分析、紐づかない、トラッキング）・その他の診断データ（分析）を追加。製品の操作に広告とトラッキング、広告データに分析とトラッキングを追加
-- 審査には未提出。オーナーの実機確認（広告・購入の復元・1.0.4 のほかの変更）を待つ
+- オーナーが実機で確認（2026-11-18）: 無料で広告が出て、Pro では出ない。「購入を復元」は押すと「復元できる購入が見つかりませんでした」（Web の Stripe の Pro は対象外、Sandbox では未購入のため。文の改善は見送り）
+- 2026-11-18 オーナーの了承で審査に提出。ASC で 1.0.4 の版を作り（9bac70ab）、「このバージョンの新機能」と審査メモ（購入を復元の場所と広告）を入れ、ビルド 14 を添付。提出 bb2f18e0、状態は WAITING_FOR_REVIEW
 
 ## 1.0.4 の TestFlight（2026-11-14）
 
