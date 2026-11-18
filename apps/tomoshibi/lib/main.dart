@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:app_insights/app_insights.dart';
 import 'package:app_links/app_links.dart';
@@ -8,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
@@ -114,6 +117,8 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
   bool _bootstrapped = false;
   // loadRequest したページの onPageFinished を待つための口。
   Completer<void>? _pageFinishedCompleter;
+  // ファイル App などで開かれた .tomoshibi のうち、まだ Web に渡していないもの（{name, text}）
+  final List<Map<String, String>> _pendingProjectFiles = [];
 
   @override
   void initState() {
@@ -134,7 +139,7 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
           }
         },
       )
-      // Web から届く知らせ。いまは広告を出してよいか（{type: 'ads', show: bool}）だけ
+      // Web から届く知らせ。広告を出してよいか（{type: 'ads', show: bool}）と、ファイルの書き出し（{type: 'export', name, text}）
       ..addJavaScriptChannel(
         'TomoshibiApp',
         onMessageReceived: (message) {
@@ -143,6 +148,12 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
             if (data['type'] == 'ads') {
               _adsAllowedByWeb = data['show'] == true;
               unawaited(_syncBanner());
+            }
+            if (data['type'] == 'export') {
+              unawaited(_shareProjectFile(
+                data['name'] as String? ?? 'TOMOSHIBI.tomoshibi',
+                data['text'] as String? ?? '',
+              ));
             }
           } catch (_) {
             // 形の違う知らせは無視する
@@ -163,7 +174,8 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
           onPageStarted: (_) {
             if (mounted) setState(() => _loadError = null);
           },
-          onPageFinished: (_) {
+          onPageFinished: (url) {
+            unawaited(_announceAppFeatures(url));
             final completer = _pageFinishedCompleter;
             _pageFinishedCompleter = null;
             if (completer != null && !completer.isCompleted) {
@@ -262,12 +274,102 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
   }
 
   void _openUniversalLink(Uri uri) {
+    // ファイル App・AirDrop・メールの添付などで .tomoshibi を開いたとき（Info.plist の CFBundleDocumentTypes）
+    if (uri.scheme == 'file') {
+      unawaited(_receiveProjectFile(uri));
+      return;
+    }
     if (!isUniversalLinkHost(uri.host)) return;
     if (!_bootstrapped) {
       _pendingUniversalLink = uri;
       return;
     }
     _controller.loadRequest(uri, headers: _attHeaders);
+  }
+
+  /// ページを読み終えるたびに、このアプリにできることを Web に知らせる（Web の src/io/appBridge.ts）。
+  /// TOMOSHIBI のページなら、開かれたまま渡していないファイルもここで渡す。
+  Future<void> _announceAppFeatures(String url) async {
+    if (!_isStudioUrl(url)) return;
+    try {
+      await _controller.runJavaScript(
+        "window.__tomoshibiAppFeatures = ['fileExport', 'fileImport'];",
+      );
+    } catch (_) {
+      return;
+    }
+    await _deliverProjectFiles();
+  }
+
+  bool _isStudioUrl(String url) {
+    final uri = Uri.tryParse(url);
+    return uri != null &&
+        uri.host == Uri.parse(_homeUrl).host &&
+        uri.path.startsWith('/studio');
+  }
+
+  /// 開かれた .tomoshibi を読み、Web に渡す。起動直後でページがまだなら、読み終えたときに渡す
+  Future<void> _receiveProjectFile(Uri uri) async {
+    try {
+      final file = File(uri.toFilePath());
+      final text = await file.readAsString();
+      final name = uri.pathSegments.isEmpty ? 'TOMOSHIBI.tomoshibi' : uri.pathSegments.last;
+      _pendingProjectFiles.add({'name': name, 'text': text});
+      // iOS が受け取り箱（Documents/Inbox）に写したものなので、読んだら消す
+      unawaited(file.delete().catchError((_) => file));
+    } catch (_) {
+      return;
+    }
+    if (!_bootstrapped) return;
+    final current = await _controller.currentUrl();
+    if (current == null || !_isStudioUrl(current)) {
+      // アカウントの画面などにいるときは、プロジェクト一覧を開いてから渡す（読み終えたときに渡る）
+      await _loadAndWaitFinished(Uri.parse(_homeUrl));
+      return;
+    }
+    await _deliverProjectFiles();
+  }
+
+  Future<void> _deliverProjectFiles() async {
+    if (_pendingProjectFiles.isEmpty) return;
+    final files = jsonEncode(_pendingProjectFiles);
+    _pendingProjectFiles.clear();
+    try {
+      await _controller.runJavaScript(
+        'window.__tomoshibiPendingImports = (window.__tomoshibiPendingImports || []).concat($files);'
+        "window.dispatchEvent(new Event('tomoshibi:app-import'));",
+      );
+    } catch (_) {
+      // 渡せなかったら、次にページを読み終えたときにもう一度渡す
+      _pendingProjectFiles.addAll(
+        (jsonDecode(files) as List).map((e) => Map<String, String>.from(e as Map)),
+      );
+    }
+  }
+
+  /// Web から渡された .tomoshibi の中身を一時ファイルにして、共有シートを開く（保存先は利用者が選ぶ）
+  Future<void> _shareProjectFile(String name, String text) async {
+    try {
+      final safe = name.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/$safe');
+      await file.writeAsString(text);
+      if (!mounted) return;
+      final size = MediaQuery.of(context).size;
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path, mimeType: 'application/vnd.tomoshibi+json')],
+          // iPad では共有シートの出どころが要る。画面の真ん中から出す
+          sharePositionOrigin: Rect.fromCenter(
+            center: Offset(size.width / 2, size.height / 2),
+            width: 1,
+            height: 1,
+          ),
+        ),
+      );
+    } catch (_) {
+      // 共有をやめた・失敗したときは何もしない（Web の画面はそのまま）
+    }
   }
 
   Future<NavigationDecision> _handleNavigationRequest(
