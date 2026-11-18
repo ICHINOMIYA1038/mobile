@@ -238,49 +238,6 @@
 	<true/>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>広告の配信・最適化とご利用状況の分析のために使用します。許可しない場合でもアプリの全機能はご利用いただけます。</string>
-	<key>CFBundleDocumentTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeName</key>
-			<string>TOMOSHIBI プロジェクト</string>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>LSHandlerRank</key>
-			<string>Owner</string>
-			<key>LSItemContentTypes</key>
-			<array>
-				<string>com.gikyokutosyokan.tomoshibi.project</string>
-			</array>
-		</dict>
-	</array>
-	<key>LSSupportsOpeningDocumentsInPlace</key>
-	<false/>
-	<key>UTExportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>com.gikyokutosyokan.tomoshibi.project</string>
-			<key>UTTypeDescription</key>
-			<string>TOMOSHIBI プロジェクト</string>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.json</string>
-				<string>public.data</string>
-				<string>public.content</string>
-			</array>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<array>
-					<string>tomoshibi</string>
-				</array>
-				<key>public.mime-type</key>
-				<array>
-					<string>application/vnd.tomoshibi+json</string>
-				</array>
-			</dict>
-		</dict>
-	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
