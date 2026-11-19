@@ -19,6 +19,16 @@ import 'purchase_service.dart';
 
 const _homeUrl = 'https://tomoshibi.gikyokutosyokan.com/studio/projects/';
 const _sessionApiUrl = 'https://gikyokutosyokan.com/api/tomoshibi/session';
+// アプリで買った Pro を、Webhook を待たずにアカウントへ反映させる（サーバーが RevenueCat から取り直す）
+const _appStoreSyncUrl = 'https://gikyokutosyokan.com/api/tomoshibi/revenuecat-sync';
+
+/// Web のセッションの確かめの結果。ok が false なら、通信の失敗などで確かめられなかった（ログインしていないとは限らない）
+class _SessionInfo {
+  const _SessionInfo({required this.ok, this.userId, this.isPro = false});
+  final bool ok;
+  final String? userId;
+  final bool isPro;
+}
 
 /// 起動時に開くURL。既定は本番のプロジェクト一覧。
 /// ストア用スクリーンショットの撮影 (tool/screenshots.sh) から、シーンを
@@ -99,7 +109,7 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
   bool _trackingAuthorized = false;
   BannerAd? _banner;
   bool _bannerLoading = false;
-  Completer<String?>? _sessionCompleter;
+  Completer<_SessionInfo>? _sessionCompleter;
   Map<String, String> _attHeaders = const {};
   bool _skipNextLogoutIntercept = false;
   // ログイン/ログアウトの連打でASWebAuthenticationSessionが多重起動されるのを防ぐ
@@ -130,7 +140,11 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
           _sessionCompleter = null;
           // タイムアウト後に遅れて届いた応答で二重completeしないようにする。
           if (completer != null && !completer.isCompleted) {
-            completer.complete(data['userId'] as String?);
+            completer.complete(_SessionInfo(
+              ok: data['ok'] != false,
+              userId: data['userId'] as String?,
+              isPro: data['plan'] == 'pro',
+            ));
           }
         },
       )
@@ -237,7 +251,9 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     // コールドスタート時にUniversal Linkで起動された場合はそのURLを優先する。
     final initial = _pendingUniversalLink ?? Uri.parse(widget.startUrl);
     _pendingUniversalLink = null;
-    await _controller.loadRequest(initial, headers: _attHeaders);
+    await _loadAndWaitFinished(initial);
+    // 前回からログインしている人にも、RevenueCat の利用者を合わせる（以前の版で匿名のまま買った分を付ける）
+    unawaited(_linkPurchasesToSignedInUser());
   }
 
   /// [uri] を読み込み、そのページの onPageFinished まで待つ。
@@ -366,6 +382,7 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
               'token': token,
             });
       await _loadAndWaitFinished(target);
+      await _linkPurchasesToSignedInUser();
     } on PlatformException catch (e) {
       // "CANCELED" はユーザーが自分でシートを閉じた場合のみ。
       // それ以外(ACQUIRE_ROOT_VIEW_CONTROLLER_FAILED 等)は本物のエラーなので表示する。
@@ -428,22 +445,56 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     _skipNextLogoutIntercept = true;
     // アプリ本体WebView側のCookieは元のcallbackUrl(通常はホーム)への遷移で消す。
     await _controller.loadRequest(logoutUri, headers: _attHeaders);
+    // RevenueCat の利用者も匿名に戻す。広告の判断も、この端末の匿名の購入だけで取り直す
+    try {
+      await PurchaseService.logOut();
+    } catch (_) {
+      // 次にログインしたときに合わせ直す
+    }
+    _hasNativePro = false;
+    unawaited(_checkNativePro());
   }
 
-  /// tomoshibi Webセッションから戯曲図書館のユーザーIDを取得する。未ログインなら null。
-  Future<String?> _fetchSessionUserId() async {
-    final completer = Completer<String?>();
+  /// tomoshibi Webセッションを確かめる。通信の失敗・時間切れは ok: false（ログインしていない扱いにしない）
+  Future<_SessionInfo> _fetchSession() async {
+    final completer = Completer<_SessionInfo>();
     _sessionCompleter = completer;
     await _controller.runJavaScript('''
       fetch('$_sessionApiUrl', { credentials: 'include' })
         .then(r => r.json())
-        .then(d => TomoshibiSession.postMessage(JSON.stringify({ userId: d.user ? d.user.id : null })))
-        .catch(e => TomoshibiSession.postMessage(JSON.stringify({ userId: null })));
+        .then(d => TomoshibiSession.postMessage(JSON.stringify({ ok: true, userId: d.user ? d.user.id : null, plan: d.user ? d.user.plan : null })))
+        .catch(e => TomoshibiSession.postMessage(JSON.stringify({ ok: false })));
     ''');
     return completer.future.timeout(
       const Duration(seconds: 10),
-      onTimeout: () => null,
+      onTimeout: () => const _SessionInfo(ok: false),
     );
+  }
+
+  /// アプリで買った Pro を、いまのアカウントへ反映するようサーバーに頼む（結果は待たない）。
+  /// 匿名で買ってからログインした場合、RevenueCat は Webhook を送らないので、これで取り直す
+  Future<void> _syncAppStoreToAccount() async {
+    try {
+      await _controller.runJavaScript('''
+        fetch('$_appStoreSyncUrl', { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: '{}' }).catch(() => {});
+      ''');
+    } catch (_) {
+      // 反映は Webhook でも届くので、失敗しても止めない
+    }
+  }
+
+  /// ログインしている人に、RevenueCat の利用者を合わせる。端末に Pro があれば、アカウントへの反映も頼む。
+  /// 購入・復元のときだけ合わせていたので、ふつうにログインした人の匿名の購入がアカウントに付かなかった（2026-11-19 点検）
+  Future<void> _linkPurchasesToSignedInUser() async {
+    final session = await _fetchSession();
+    final userId = session.userId;
+    if (!session.ok || userId == null) return;
+    try {
+      await PurchaseService.linkPurchaseToAccount(userId);
+      if (await PurchaseService.hasActivePro()) await _syncAppStoreToAccount();
+    } catch (_) {
+      // 次のログイン・購入・復元でもう一度合わせる
+    }
   }
 
   /// Guideline 5.1.1(v)対応: アカウントに紐付かない購入の前にサイトへの
@@ -454,7 +505,18 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
   Future<void> _startNativePurchase() async {
     setState(() => _purchaseBusy = true);
     try {
-      final userId = await _fetchSessionUserId();
+      final session = await _fetchSession();
+      // 確かめられないまま匿名で買わせると、ログインしている人の購入がアカウントに付かない（2026-11-19 点検）
+      if (!session.ok) {
+        _showMessage('通信を確かめられませんでした。接続を確認して、もう一度お試しください');
+        return;
+      }
+      // Web（Stripe）などですでに Pro の人には、二重に買わせない
+      if (session.isPro) {
+        _showMessage('すでに Pro プランをご利用中です');
+        return;
+      }
+      final userId = session.userId;
       await PurchaseService.purchasePro(gikyokutosyokanUserId: userId);
       _showMessage('ご購入ありがとうございます。Pro プランが有効になりました');
       _hasNativePro = true;
@@ -462,6 +524,7 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
       if (userId == null) {
         await _offerOptionalSignInAfterPurchase();
       } else {
+        await _syncAppStoreToAccount();
         await _controller.reload();
       }
     } on PurchaseCancelledException {
@@ -505,14 +568,7 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
     } finally {
       _authFlowBusy = false;
     }
-    final newUserId = await _fetchSessionUserId();
-    if (newUserId != null) {
-      try {
-        await PurchaseService.linkPurchaseToAccount(newUserId);
-      } catch (_) {
-        // リンクに失敗しても購入自体は既に有効なので致命的ではない。
-      }
-    }
+    // _startWebAuth のあとで、購入をアカウントに付けて反映まで頼んである
     await _controller.reload();
   }
 
@@ -522,7 +578,8 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
   Future<void> _restorePurchases() async {
     setState(() => _purchaseBusy = true);
     try {
-      final userId = await _fetchSessionUserId();
+      final session = await _fetchSession();
+      final userId = session.ok ? session.userId : null;
       final info = await PurchaseService.restorePurchases(
         gikyokutosyokanUserId: userId,
       );
@@ -533,8 +590,9 @@ class _TomoshibiWebViewState extends State<TomoshibiWebView>
       if (info.entitlements.active.isEmpty) {
         _showMessage('復元できる購入が見つかりませんでした');
       } else if (userId == null) {
-        _showMessage('購入を復元しました。反映するにはログインしてください');
+        _showMessage('購入を復元しました。ほかの端末やアカウントへの保存で使うには、ログインしてください');
       } else {
+        await _syncAppStoreToAccount();
         _showMessage('購入を復元しました');
         await _controller.reload();
       }
