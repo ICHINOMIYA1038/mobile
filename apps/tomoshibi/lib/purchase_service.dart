@@ -67,6 +67,14 @@ class PurchaseService {
     return Purchases.restorePurchases();
   }
 
+  /// ログアウト・退会のあと、RevenueCat の利用者も匿名に戻す。戻さないと、次にログインせずに買った分が
+  /// 前の人のアカウントに付いた（2026-11-19 点検）。もとから匿名なら何もしない
+  static Future<void> logOut() async {
+    await ensureConfigured();
+    if (await Purchases.isAnonymous) return;
+    await Purchases.logOut();
+  }
+
   /// アプリで買った Pro が有効か（広告を出さない判断に使う）
   static Future<bool> hasActivePro() async {
     await ensureConfigured();
